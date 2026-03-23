@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID" },
+        "email": { "type": "string", "format": "email", "description": "User email" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "photoURL": { "type": "string", "description": "User profile photo URL" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation time" }
+      },
+      "required": ["uid", "email", "createdAt"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "A chat session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Chat ID" },
+        "title": { "type": "string", "description": "Chat title" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation time" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update time" }
+      },
+      "required": ["id", "title", "createdAt", "updatedAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "A single message in a chat",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Message ID" },
+        "role": { "type": "string", "enum": ["user", "model"], "description": "Sender role" },
+        "content": { "type": "string", "description": "Message text content" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Message creation time" },
+        "hasImage": { "type": "boolean", "description": "Whether the message includes an image" },
+        "hasAudio": { "type": "boolean", "description": "Whether the message includes audio" }
+      },
+      "required": ["id", "role", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profiles"
+    },
+    "users/{userId}/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/Chat" },
+      "description": "User chat sessions"
+    },
+    "users/{userId}/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/Message" },
+      "description": "Messages within a chat session"
+    }
+  }
+}
