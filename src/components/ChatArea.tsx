@@ -382,7 +382,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                     <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
                     <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.4s' }} />
                   </div>
-                  <span className="text-xs text-gray-500 font-medium ml-1">Grok is thinking...</span>
+                  <span className="text-xs text-gray-500 font-medium ml-1">Chris is thinking...</span>
                 </div>
               </div>
             )}
@@ -399,7 +399,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
               <circle cx="12" cy="12" r="10" />
               <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
             </svg>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Grok</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Chris</h1>
           </div>
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
