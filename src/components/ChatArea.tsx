@@ -165,10 +165,14 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const handleVoiceInput = async (base64Audio: string) => {
     setIsLoading(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is missing. Please add it to your environment variables.");
+      }
+      const ai = new GoogleGenAI({ apiKey });
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: [{ parts: [{ inlineData: { data: base64Audio, mimeType: 'audio/wav' } }, { text: "Transcribe this audio accurately." }] }]
+        contents: { parts: [{ inlineData: { data: base64Audio, mimeType: 'audio/wav' } }, { text: "Transcribe this audio accurately." }] }
       });
       const transcription = response.text;
       if (transcription) {
@@ -232,7 +236,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
     let fullResponse = '';
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is missing. Please add it to your environment variables.");
+      }
+      
+      const ai = new GoogleGenAI({ apiKey });
       const parts: any[] = [];
       if (userMessage) {
         parts.push({ text: userMessage });
@@ -258,11 +267,16 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         config.tools = tools;
       }
 
-      const streamResponse = await ai.models.generateContentStream({
+      const requestParams: any = {
         model: 'gemini-3-flash-preview',
-        contents: [{ role: 'user', parts }],
-        config
-      });
+        contents: { parts }
+      };
+
+      if (Object.keys(config).length > 0) {
+        requestParams.config = config;
+      }
+
+      const streamResponse = await ai.models.generateContentStream(requestParams);
 
       for await (const chunk of streamResponse) {
         const text = chunk.text;
@@ -271,9 +285,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           setStreamingMessage(fullResponse);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gemini API Error:", error);
-      fullResponse = "I'm sorry, I encountered an error while processing your request.";
+      fullResponse = `I'm sorry, I encountered an error while processing your request: ${error.message || error}`;
     }
 
     try {
