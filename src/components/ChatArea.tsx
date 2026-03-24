@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, MapPin, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare } from 'lucide-react';
@@ -5,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
-import { db } from '../firebase';
+import { db, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 
@@ -54,7 +55,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       const scrollTop = textarea.scrollTop;
       const isAtBottom = textarea.scrollTop + textarea.clientHeight >= textarea.scrollHeight - 10;
       
-      textarea.style.height = '40px';
+      textarea.style.height = '24px';
       const maxHeight = 200;
       const newHeight = Math.min(textarea.scrollHeight, maxHeight);
       textarea.style.height = `${newHeight}px`;
@@ -78,7 +79,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
   useEffect(() => {
     if (input === '' && textareaRef.current) {
-      textareaRef.current.style.height = '40px';
+      textareaRef.current.style.height = '24px';
       textareaRef.current.scrollTop = 0;
     }
   }, [input]);
@@ -163,9 +164,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const handleVoiceInput = async (base64Audio: string) => {
     setIsLoading(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
       const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-preview-tts',
+        model: 'gemini-3-flash-preview',
         contents: [{ parts: [{ inlineData: { data: base64Audio, mimeType: 'audio/wav' } }, { text: "Transcribe this audio accurately." }] }]
       });
       const transcription = response.text;
@@ -181,7 +182,15 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!input.trim() && !selectedImage) || isLoading || !user) return;
+    if (!user) {
+      try {
+        await loginWithGoogle();
+      } catch (error) {
+        console.error("Login failed:", error);
+      }
+      return;
+    }
+    if ((!input.trim() && !selectedImage) || isLoading) return;
 
     const userMessage = input.trim();
     const currentImage = selectedImage;
@@ -214,9 +223,21 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         hasImage: !!currentImage,
         createdAt: serverTimestamp()
       });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+      setIsLoading(false);
+      return;
+    }
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const parts: any[] = [{ text: userMessage }];
+    let fullResponse = '';
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
+      const parts: any[] = [];
+      if (userMessage) {
+        parts.push({ text: userMessage });
+      } else if (currentImage) {
+        parts.push({ text: "Describe this image." });
+      }
       
       if (currentImage) {
         parts.push({
@@ -231,13 +252,17 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       if (mode === 'search') tools.push({ googleSearch: {} });
       if (mode === 'maps') tools.push({ googleMaps: {} });
 
+      const config: any = {};
+      if (tools.length > 0) {
+        config.tools = tools;
+      }
+
       const streamResponse = await ai.models.generateContentStream({
         model: 'gemini-3-flash-preview',
         contents: [{ role: 'user', parts }],
-        config: { tools }
+        config
       });
 
-      let fullResponse = '';
       for await (const chunk of streamResponse) {
         const text = chunk.text;
         if (text) {
@@ -245,7 +270,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           setStreamingMessage(fullResponse);
         }
       }
+    } catch (error) {
+      console.error("Gemini API Error:", error);
+      fullResponse = "I'm sorry, I encountered an error while processing your request.";
+    }
 
+    try {
       await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), {
         role: 'model',
         content: fullResponse,
@@ -255,7 +285,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
         updatedAt: serverTimestamp()
       });
-
     } catch (error) {
       handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
     } finally {
@@ -448,10 +477,10 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder={isRecording ? "Listening..." : "Ask anything"}
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500 py-2 px-1 text-[15px] font-medium resize-none overflow-y-auto leading-[24px] break-words"
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500 py-0 my-2 px-1 text-[15px] font-medium resize-none overflow-y-auto leading-[24px] break-words"
                 rows={1}
                 disabled={isLoading || isRecording}
-                style={{ minHeight: '40px', maxHeight: '200px' }}
+                style={{ minHeight: '24px', maxHeight: '200px' }}
               />
 
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
