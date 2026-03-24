@@ -3,8 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
 import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, MapPin, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { db, loginWithGoogle } from '../firebase';
@@ -360,11 +359,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                 <div className={`${msg.role === 'user' ? 'max-w-[85%] bg-[#1a1a1a] rounded-[24px] px-5 py-3.5 text-white shadow-sm' : 'max-w-[80%] relative bg-transparent text-white text-[15px] w-full'}`}>
                   {msg.role === 'model' ? (
                     <div className="w-full">
-                      <div className="prose prose-invert prose-p:leading-relaxed max-w-none font-medium break-words">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {msg.content}
-                        </ReactMarkdown>
-                      </div>
+                      <ResponseFormatter content={msg.content} />
                       
                       {/* Action Row */}
                       <div className="flex items-center gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
@@ -409,11 +404,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
               <div className="flex justify-start group w-full">
                 <div className="max-w-[80%] relative bg-transparent text-white text-[15px] w-full">
                   <div className="w-full">
-                    <div className="prose prose-invert prose-p:leading-relaxed max-w-none font-medium break-words">
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {streamingMessage}
-                      </ReactMarkdown>
-                    </div>
+                    <ResponseFormatter content={streamingMessage} />
                   </div>
                 </div>
               </div>
