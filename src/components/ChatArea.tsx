@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
+import { PlanetLogo } from './PlanetLogo';
 import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, MapPin, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -345,7 +346,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                 <div className={`${msg.role === 'user' ? 'max-w-[85%] bg-[#1a1a1a] rounded-[24px] px-5 py-3.5 text-white shadow-sm' : 'max-w-[80%] relative bg-transparent text-white text-[15px] w-full'}`}>
                   {msg.role === 'model' ? (
                     <div className="w-full">
-                      <div className="prose prose-invert prose-p:leading-relaxed max-w-none font-medium">
+                      <div className="prose prose-invert prose-p:leading-relaxed max-w-none font-medium break-words">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.content}
                         </ReactMarkdown>
@@ -385,7 +386,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                       </div>
                     </div>
                   ) : (
-                    <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                    <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.content}</p>
                   )}
                 </div>
               </div>
@@ -394,7 +395,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
               <div className="flex justify-start group w-full">
                 <div className="max-w-[80%] relative bg-transparent text-white text-[15px] w-full">
                   <div className="w-full">
-                    <div className="prose prose-invert prose-p:leading-relaxed max-w-none font-medium">
+                    <div className="prose prose-invert prose-p:leading-relaxed max-w-none font-medium break-words">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
                         {streamingMessage}
                       </ReactMarkdown>
@@ -424,10 +425,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       <div className={`absolute left-0 right-0 p-4 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0'}`}>
         {!isChatStarted && (
           <div className="flex items-center gap-4 mb-8">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white md:w-12 md:h-12">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="4.93" y1="19.07" x2="19.07" y2="4.93" />
-            </svg>
+            <PlanetLogo className="text-white w-10 h-10 md:w-12 md:h-12" />
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Chris</h1>
           </div>
         )}

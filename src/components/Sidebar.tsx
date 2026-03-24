@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn } from 'lucide-react';
+import { PlanetLogo } from './PlanetLogo';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { loginWithGoogle, db } from '../firebase';
@@ -98,10 +99,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         {/* Header / Logo */}
         <div className="flex items-center justify-between pl-[22px] pr-4 pt-5 pb-4">
           <div className="flex items-center justify-center w-6 h-6 flex-shrink-0">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <path d="M4.93 4.93l14.14 14.14" />
-            </svg>
+            <PlanetLogo className="text-white w-6 h-6" />
           </div>
           <button
             onClick={() => setIsCollapsed(true)}
