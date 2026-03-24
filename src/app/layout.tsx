@@ -3,6 +3,7 @@ import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
 import { ChatProvider } from "../contexts/ChatContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "Chris",
@@ -24,6 +25,13 @@ export default function RootLayout({
             </ChatProvider>
           </AuthProvider>
         </ErrorBoundary>
+        <Toaster theme="dark" position="top-center" toastOptions={{
+          style: {
+            background: '#1a1a1a',
+            border: '1px solid #333',
+            color: '#fff',
+          }
+        }} />
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
 import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, MapPin, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare } from 'lucide-react';
@@ -9,6 +10,7 @@ import { useChatContext } from '../contexts/ChatContext';
 import { db, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
+import { handleError, ErrorSeverity } from '../utils/errorHandler';
 
 interface Message {
   id: string;
@@ -41,7 +43,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const audioChunksRef = useRef<Blob[]>([]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -102,7 +104,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       });
       setMessages(messageData);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/chats/${currentChatId}/messages`);
+      try {
+        handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/chats/${currentChatId}/messages`);
+      } catch (e) {
+        handleError(e, "Failed to load messages");
+      }
     });
 
     return () => unsubscribe();
@@ -150,7 +156,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      console.error("Error accessing microphone:", err);
+      handleError(err, "Error accessing microphone");
     }
   };
 
@@ -178,7 +184,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         setInput(transcription);
       }
     } catch (error) {
-      console.error("Voice transcription error:", error);
+      handleError(error, "Voice transcription failed");
     } finally {
       setIsLoading(false);
     }
@@ -190,7 +196,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       try {
         await loginWithGoogle();
       } catch (error) {
-        console.error("Login failed:", error);
+        handleError(error, "Login failed");
       }
       return;
     }
@@ -214,8 +220,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         chatId = chatRef.id;
         setCurrentChatId(chatId);
       } catch (error) {
-        handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/chats`);
         setIsLoading(false);
+        try {
+          handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/chats`);
+        } catch (e) {
+          handleError(e, "Failed to create chat session");
+        }
         return;
       }
     }
@@ -228,8 +238,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         createdAt: serverTimestamp()
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
       setIsLoading(false);
+      try {
+        handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+      } catch (e) {
+        handleError(e, "Failed to send message");
+      }
       return;
     }
 
@@ -285,7 +299,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         }
       }
     } catch (error: any) {
-      console.error("Gemini API Error:", error);
+      handleError(error, "Failed to generate AI response");
       fullResponse = `I'm sorry, I encountered an error while processing your request: ${error.message || error}`;
     }
 
@@ -300,7 +314,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+      try {
+        handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+      } catch (e) {
+        handleError(e, "Failed to save AI response");
+      }
     } finally {
       setIsLoading(false);
       setStreamingMessage('');
@@ -351,76 +369,94 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           </div>
         ) : (
           <div className="max-w-3xl mx-auto w-full px-4 pt-6 pb-32 space-y-8">
-            {messages.map((msg) => (
-              <div 
-                key={msg.id} 
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group w-full`}
-              >
-                <div className={`${msg.role === 'user' ? 'max-w-[85%] bg-[#1a1a1a] rounded-[24px] px-5 py-3.5 text-white shadow-sm' : 'max-w-[80%] relative bg-transparent text-white text-[15px] w-full'}`}>
-                  {msg.role === 'model' ? (
-                    <div className="w-full">
-                      <ResponseFormatter content={msg.content} />
-                      
-                      {/* Action Row */}
-                      <div className="flex items-center gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
-                        {[
-                          { icon: <RefreshCcw size={14} />, title: "Regenerate" },
-                          { icon: <Copy size={14} />, title: "Copy" },
-                          { icon: <ThumbsUp size={14} />, title: "Good response" },
-                          { icon: <ThumbsDown size={14} />, title: "Bad response" },
-                          { icon: <Volume2 size={14} />, title: "Read aloud" },
-                          { icon: <Share size={14} />, title: "Share" },
-                          { icon: <MoreHorizontal size={14} />, title: "More options" }
-                        ].map((btn, i) => (
-                          <button 
-                            key={i}
-                            className="p-1.5 rounded-lg hover:bg-[#1a1a1a] hover:text-white transition-colors" 
-                            title={btn.title}
-                          >
-                            {btn.icon}
-                          </button>
-                        ))}
-                      </div>
+            <AnimatePresence initial={false}>
+              {messages.map((msg) => (
+                <motion.div 
+                  key={msg.id} 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group w-full`}
+                >
+                  <div className={`${msg.role === 'user' ? 'max-w-[85%] bg-[#1a1a1a] rounded-[24px] px-5 py-3.5 text-white shadow-sm' : 'max-w-[80%] relative bg-transparent text-white text-[15px] w-full'}`}>
+                    {msg.role === 'model' ? (
+                      <div className="w-full">
+                        <ResponseFormatter content={msg.content} />
+                        
+                        {/* Action Row */}
+                        <div className="flex items-center gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
+                          {[
+                            { icon: <RefreshCcw size={14} />, title: "Regenerate" },
+                            { icon: <Copy size={14} />, title: "Copy" },
+                            { icon: <ThumbsUp size={14} />, title: "Good response" },
+                            { icon: <ThumbsDown size={14} />, title: "Bad response" },
+                            { icon: <Volume2 size={14} />, title: "Read aloud" },
+                            { icon: <Share size={14} />, title: "Share" },
+                            { icon: <MoreHorizontal size={14} />, title: "More options" }
+                          ].map((btn, i) => (
+                            <button 
+                              key={i}
+                              className="p-1.5 rounded-lg hover:bg-[#1a1a1a] hover:text-white transition-colors" 
+                              title={btn.title}
+                            >
+                              {btn.icon}
+                            </button>
+                          ))}
+                        </div>
 
-                      {/* Suggestions */}
-                      <div className="mt-5 space-y-3">
-                        <button className="flex items-center gap-3 text-sm font-medium text-gray-200 hover:text-white transition-colors">
-                          <CornerDownRight size={16} className="text-gray-500" />
-                          Cebu Food Recommendations
-                        </button>
-                        <button className="flex items-center gap-3 text-sm font-medium text-gray-200 hover:text-white transition-colors">
-                          <CornerDownRight size={16} className="text-gray-500" />
-                          Cebu Nightlife Spots
-                        </button>
+                        {/* Suggestions */}
+                        <div className="mt-5 space-y-3">
+                          <button className="flex items-center gap-3 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+                            <CornerDownRight size={16} className="text-gray-500" />
+                            Cebu Food Recommendations
+                          </button>
+                          <button className="flex items-center gap-3 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+                            <CornerDownRight size={16} className="text-gray-500" />
+                            Cebu Nightlife Spots
+                          </button>
+                        </div>
                       </div>
+                    ) : (
+                      <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.content}</p>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+              {streamingMessage && (
+                <motion.div 
+                  key="streaming"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  className="flex justify-start group w-full"
+                >
+                  <div className="max-w-[80%] relative bg-transparent text-white text-[15px] w-full">
+                    <div className="w-full">
+                      <ResponseFormatter content={streamingMessage} />
                     </div>
-                  ) : (
-                    <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.content}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-            {streamingMessage && (
-              <div className="flex justify-start group w-full">
-                <div className="max-w-[80%] relative bg-transparent text-white text-[15px] w-full">
-                  <div className="w-full">
-                    <ResponseFormatter content={streamingMessage} />
                   </div>
-                </div>
-              </div>
-            )}
-            {isLoading && !streamingMessage && (
-              <div className="flex justify-start mb-4">
-                <div className="bg-[#1a1a1a]/50 border border-gray-800/50 rounded-2xl px-4 py-3 flex items-center gap-1.5">
-                  <div className="flex gap-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0s' }} />
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
-                    <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.4s' }} />
+                </motion.div>
+              )}
+              {isLoading && !streamingMessage && (
+                <motion.div 
+                  key="loading"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex justify-start mb-4"
+                >
+                  <div className="bg-[#1a1a1a]/50 border border-gray-800/50 rounded-2xl px-4 py-3 flex items-center gap-1.5">
+                    <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0s' }} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.4s' }} />
+                    </div>
+                    <span className="text-xs text-gray-500 font-medium ml-1">Chris is thinking...</span>
                   </div>
-                  <span className="text-xs text-gray-500 font-medium ml-1">Chris is thinking...</span>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div ref={messagesEndRef} />
           </div>
         )}

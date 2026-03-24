@@ -7,6 +7,7 @@ import { useChatContext } from '../contexts/ChatContext';
 import { loginWithGoogle, db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
+import { handleError } from '../utils/errorHandler';
 
 interface Chat {
   id: string;
@@ -65,7 +66,11 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       });
       setChats(chatData);
     }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/chats`);
+      try {
+        handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/chats`);
+      } catch (e) {
+        handleError(e, "Failed to load chats");
+      }
     });
 
     return () => unsubscribe();
@@ -81,7 +86,11 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       });
       setCurrentChatId(chatRef.id);
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/chats`);
+      try {
+        handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/chats`);
+      } catch (e) {
+        handleError(e, "Failed to create new chat");
+      }
     }
   };
 

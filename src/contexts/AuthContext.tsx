@@ -4,6 +4,7 @@ import { User, onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
+import { handleError } from '../utils/errorHandler';
 
 interface AuthContextType {
   user: User | null;
@@ -39,7 +40,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await setDoc(userRef, userData);
           }
         } catch (error) {
-          handleFirestoreError(error, OperationType.WRITE, `users/${currentUser.uid}`);
+          try {
+            handleFirestoreError(error, OperationType.WRITE, `users/${currentUser.uid}`);
+          } catch (e) {
+            handleError(e, "Failed to initialize user profile");
+          }
         }
       }
       
