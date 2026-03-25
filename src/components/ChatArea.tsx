@@ -44,6 +44,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [streamingMapData, setStreamingMapData] = useState<{ latitude: number; longitude: number; label?: string } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +59,21 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingMessage]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => console.error("Error getting location:", error),
+        { enableHighAccuracy: true }
+      );
+    }
+  }, []);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -322,11 +338,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       const tools: any[] = [];
       if (mode === 'search') tools.push({ googleSearch: {} });
       if (mode === 'maps') {
+        tools.push({ googleSearch: {} }); // Add search to help find accurate coordinates
         tools.push({
           functionDeclarations: [
             {
               name: "display_map",
-              description: "Display a visual interactive map at a specific location. You MUST provide highly precise, exact coordinates (latitude and longitude) for the specific building, address, or landmark requested, rather than approximate city or regional centers.",
+              description: "Display a visual interactive map at a specific location. You MUST provide highly precise, exact coordinates (latitude and longitude) for the specific building, address, or landmark requested. Use Google Search to find the exact coordinates if you are unsure.",
               parameters: {
                 type: "OBJECT",
                 properties: {
@@ -341,12 +358,23 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         });
       }
 
+      const systemInstruction = mode === 'maps' 
+        ? `You are Chris, a helpful AI assistant with mapping capabilities. 
+           When asked for a location, use Google Search to find the EXACT latitude and longitude for the specific place, building, or address. 
+           Do not provide approximate coordinates for a city if a specific place is requested.
+           User's current location: ${userLocation ? `Lat: ${userLocation.latitude}, Lng: ${userLocation.longitude}` : 'Unknown'}.
+           Always use the display_map tool to show the location.`
+        : "You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.";
+
       const config: any = {
-        systemInstruction: "You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers."
+        systemInstruction: systemInstruction
       };
       
       if (tools.length > 0) {
         config.tools = tools;
+        if (mode === 'maps') {
+          config.toolConfig = { includeServerSideToolInvocations: true };
+        }
       }
 
       let modelName = 'gemini-3-flash-preview';
