@@ -22,7 +22,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed }: any) => 
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center gap-3.5 px-3 py-2.5 w-full rounded-lg transition-colors relative pointer-events-auto ${active ? 'text-white' : 'text-gray-400 hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-[#1a1a1a]' : ''}`}
+        className={`flex items-center w-full rounded-lg transition-all relative pointer-events-auto ${active ? 'text-white' : 'text-gray-400 hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-[#1a1a1a]' : ''} ${isCollapsed ? 'justify-center py-3 gap-0' : 'gap-3.5 px-3 py-2.5'}`}
       >
         <div className="relative flex-shrink-0 flex items-center justify-center w-[18px] h-[18px]">
           {/* Hover Highlight Background */}
@@ -36,9 +36,9 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed }: any) => 
             <div className={`absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#5c6ad2] border-2 border-black transition-opacity duration-300 z-20 ${isCollapsed ? 'opacity-100' : 'opacity-0'}`}></div>
           )}
         </div>
-        <span className={`font-semibold text-[14px] whitespace-nowrap transition-opacity duration-300 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>{label}</span>
-        {hasDot && (
-          <div className={`w-1.5 h-1.5 rounded-full bg-[#5c6ad2] ml-auto flex-shrink-0 transition-opacity duration-300 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}></div>
+        <span className={`font-semibold text-[14px] whitespace-nowrap transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>{label}</span>
+        {hasDot && !isCollapsed && (
+          <div className="w-1.5 h-1.5 rounded-full bg-[#5c6ad2] ml-auto flex-shrink-0 transition-opacity duration-300 opacity-100"></div>
         )}
       </button>
       
@@ -118,10 +118,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           onClick={() => setIsMobileOpen?.(false)}
         />
       )}
-      <div className={`h-screen bg-[#000000] text-white border-r border-[#1a1a1a] z-50 font-sans transition-all duration-300 ease-in-out fixed md:relative w-[250px] ${isCollapsed ? 'md:w-[68px]' : 'md:w-[250px]'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className={`w-[250px] h-full flex flex-col ${isCollapsed ? 'pointer-events-none' : ''}`}>
+      <div className={`h-screen bg-[#000000] text-white border-r border-[#1a1a1a] z-50 font-sans transition-all duration-300 ease-in-out fixed md:relative overflow-x-hidden ${isCollapsed ? 'w-[68px]' : 'w-[250px]'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <div className={`w-full h-full flex flex-col ${isCollapsed ? 'pointer-events-none' : ''}`}>
         {/* Header / Logo */}
-        <div className="flex items-center justify-between pl-[22px] pr-4 pt-5 pb-4">
+        <div className={`flex items-center transition-all duration-300 pt-5 pb-4 ${isCollapsed ? 'justify-center px-0' : 'justify-between pl-[22px] pr-4'}`}>
           <div className="flex items-center justify-center w-6 h-6 flex-shrink-0">
             <PlanetLogo className="text-white w-6 h-6" />
           </div>
@@ -134,7 +134,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         </div>
 
         {/* Main Nav */}
-        <nav className="pl-[13px] pr-2">
+        <nav className={`transition-all duration-300 ${isCollapsed ? 'px-2' : 'pl-[13px] pr-2'}`}>
           <ul className="space-y-0.5">
             <NavItem icon={<Search size={18} strokeWidth={2} />} label="Search" onClick={() => {}} isCollapsed={isCollapsed} />
             <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId} isCollapsed={isCollapsed} />
@@ -189,7 +189,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             </button>
           </div>
 
-          <div className="pl-[16px]">
+          <div className={`transition-all duration-300 ${isCollapsed ? 'flex justify-center px-0' : 'pl-[16px]'}`}>
             {user ? (
               <div className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-bold text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
                 {user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'}
