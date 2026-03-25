@@ -11,6 +11,9 @@ import { db, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
+import dynamic from 'next/dynamic';
+
+const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false });
 
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
@@ -21,6 +24,7 @@ interface Message {
   content: string;
   hasImage?: boolean;
   hasAudio?: boolean;
+  mapData?: { latitude: number; longitude: number; label?: string };
   createdAt?: any;
 }
 
@@ -39,6 +43,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [isRecording, setIsRecording] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
+  const [streamingMapData, setStreamingMapData] = useState<{ latitude: number; longitude: number; label?: string } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -316,7 +321,25 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       const tools: any[] = [];
       if (mode === 'search') tools.push({ googleSearch: {} });
-      if (mode === 'maps') tools.push({ googleMaps: {} });
+      if (mode === 'maps') {
+        tools.push({
+          functionDeclarations: [
+            {
+              name: "display_map",
+              description: "Display a visual interactive map at a specific location.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  latitude: { type: "NUMBER", description: "Latitude of the location" },
+                  longitude: { type: "NUMBER", description: "Longitude of the location" },
+                  label: { type: "STRING", description: "Label or name of the place" }
+                },
+                required: ["latitude", "longitude", "label"]
+              }
+            }
+          ]
+        });
+      }
 
       const config: any = {
         systemInstruction: "You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers."
@@ -329,8 +352,10 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       let modelName = 'gemini-3-flash-preview';
       if (mode === 'fast') {
         modelName = 'gemini-3.1-flash-lite-preview';
-      } else if (mode === 'pro' || mode === 'search' || mode === 'maps') {
+      } else if (mode === 'pro' || mode === 'search') {
         modelName = 'gemini-3.1-pro-preview';
+      } else if (mode === 'maps') {
+        modelName = 'gemini-3-flash-preview';
       }
 
       const requestParams: any = {
@@ -342,39 +367,63 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         requestParams.config = config;
       }
 
-      const streamResponse = await ai.models.generateContentStream(requestParams);
+      let mapData: { latitude: number; longitude: number; label?: string } | undefined = undefined;
 
-      for await (const chunk of streamResponse) {
-        const text = chunk.text;
-        if (text) {
-          fullResponse += text;
-          setStreamingMessage(fullResponse);
+      try {
+        const streamResponse = await ai.models.generateContentStream(requestParams);
+
+        for await (const chunk of streamResponse) {
+          if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+            const call = chunk.functionCalls[0];
+            if (call.name === 'display_map') {
+              mapData = call.args as any;
+              setStreamingMapData(mapData!);
+              fullResponse += "\n\n*Displaying map...*";
+              setStreamingMessage(fullResponse);
+            }
+          }
+          const text = chunk.text;
+          if (text) {
+            fullResponse += text;
+            setStreamingMessage(fullResponse);
+          }
         }
+      } catch (error: any) {
+        handleError(error, "Failed to generate AI response");
+        fullResponse = "I'm sorry, I encountered an error while processing your request. Please try again later.";
+      }
+
+      try {
+        const messageData: any = {
+          role: 'model',
+          content: fullResponse,
+          createdAt: serverTimestamp()
+        };
+        
+        // @ts-ignore
+        if (typeof mapData !== 'undefined') {
+          messageData.mapData = mapData;
+        }
+
+        await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
+
+        await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+          updatedAt: serverTimestamp()
+        });
+      } catch (error) {
+        try {
+          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+        } catch (e) {
+          handleError(e, "Failed to save AI response");
+        }
+      } finally {
+        setIsLoading(false);
+        setStreamingMessage('');
+        setStreamingMapData(null);
       }
     } catch (error: any) {
-      handleError(error, "Failed to generate AI response");
-      fullResponse = "I'm sorry, I encountered an error while processing your request. Please try again later.";
-    }
-
-    try {
-      await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), {
-        role: 'model',
-        content: fullResponse,
-        createdAt: serverTimestamp()
-      });
-
-      await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
-        updatedAt: serverTimestamp()
-      });
-    } catch (error) {
-      try {
-        handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
-      } catch (e) {
-        handleError(e, "Failed to save AI response");
-      }
-    } finally {
       setIsLoading(false);
-      setStreamingMessage('');
+      handleError(error, "Failed to process request");
     }
   };
 
@@ -441,6 +490,13 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                     {msg.role === 'model' ? (
                       <div className="w-full">
                         <ResponseFormatter content={msg.content} />
+                        {msg.mapData && (
+                          <MapComponent 
+                            latitude={msg.mapData.latitude} 
+                            longitude={msg.mapData.longitude} 
+                            label={msg.mapData.label} 
+                          />
+                        )}
                         
                         {/* Action Row */}
                         <div className="flex items-center gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
@@ -492,6 +548,13 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                   <div className="max-w-[80%] relative bg-transparent text-white text-[15px] w-full">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} />
+                      {streamingMapData && (
+                        <MapComponent 
+                          latitude={streamingMapData.latitude} 
+                          longitude={streamingMapData.longitude} 
+                          label={streamingMapData.label} 
+                        />
+                      )}
                     </div>
                   </div>
                 </motion.div>
