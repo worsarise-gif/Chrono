@@ -24,7 +24,7 @@ interface Message {
   createdAt?: any;
 }
 
-type ChatMode = 'auto' | 'fast' | 'search' | 'maps';
+type ChatMode = 'auto' | 'fast' | 'pro' | 'search' | 'maps';
 
 export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user } = useAuth();
@@ -263,15 +263,39 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
       
       const ai = new GoogleGenAI({ apiKey });
-      const parts: any[] = [];
+      
+      const contents: any[] = [];
+      
+      // Add previous messages for context, ensuring alternating roles
+      for (const msg of messages) {
+        const textContent = msg.content || (msg.hasImage ? "[Image uploaded]" : "");
+        if (!textContent) continue;
+
+        if (contents.length > 0 && contents[contents.length - 1].role === msg.role) {
+          // Append to the previous message's parts
+          contents[contents.length - 1].parts.push({ text: "\n\n" + textContent });
+        } else {
+          contents.push({
+            role: msg.role,
+            parts: [{ text: textContent }]
+          });
+        }
+      }
+
+      // Ensure the first message is from 'user'
+      if (contents.length > 0 && contents[0].role !== 'user') {
+        contents.shift();
+      }
+
+      const currentParts: any[] = [];
       if (userMessage) {
-        parts.push({ text: userMessage });
+        currentParts.push({ text: userMessage });
       } else if (currentImage) {
-        parts.push({ text: "Describe this image." });
+        currentParts.push({ text: "Describe this image." });
       }
       
       if (currentImage) {
-        parts.push({
+        currentParts.push({
           inlineData: {
             data: currentImage.data,
             mimeType: currentImage.mimeType
@@ -279,18 +303,37 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         });
       }
 
+      if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+        contents[contents.length - 1].parts.push(...currentParts);
+      } else {
+        contents.push({
+          role: 'user',
+          parts: currentParts
+        });
+      }
+
       const tools: any[] = [];
       if (mode === 'search') tools.push({ googleSearch: {} });
       if (mode === 'maps') tools.push({ googleMaps: {} });
 
-      const config: any = {};
+      const config: any = {
+        systemInstruction: "You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers."
+      };
+      
       if (tools.length > 0) {
         config.tools = tools;
       }
 
+      let modelName = 'gemini-3-flash-preview';
+      if (mode === 'fast') {
+        modelName = 'gemini-3.1-flash-lite-preview';
+      } else if (mode === 'pro' || mode === 'search' || mode === 'maps') {
+        modelName = 'gemini-3.1-pro-preview';
+      }
+
       const requestParams: any = {
-        model: 'gemini-3-flash-preview',
-        contents: { parts }
+        model: modelName,
+        contents: contents
       };
 
       if (Object.keys(config).length > 0) {
@@ -336,6 +379,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const modeLabels: Record<ChatMode, string> = {
     auto: 'Auto',
     fast: 'Fast',
+    pro: 'Pro',
     search: 'Search',
     maps: 'Maps'
   };
@@ -343,6 +387,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const modeIcons: Record<ChatMode, React.ReactNode> = {
     auto: <Zap size={16} />,
     fast: <Zap size={16} className="text-yellow-500" />,
+    pro: <Zap size={16} className="text-purple-500" />,
     search: <Search size={16} />,
     maps: <MapPin size={16} />
   };
