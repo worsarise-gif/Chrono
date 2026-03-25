@@ -158,7 +158,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         <div className={`mx-4 h-px bg-[#1a1a1a] my-3 transition-opacity duration-300 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}></div>
 
         {/* Chat History (Scrollable) */}
-        <div className="flex-1 overflow-y-auto sidebar-scroll">
+        <div className={`flex-1 overflow-y-auto sidebar-scroll transition-all duration-300 ${isCollapsed ? 'scrollbar-hide' : ''}`}>
           <div className={`px-2 pb-2 flex flex-col min-h-full transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             {isLoadingChats ? (
               <div className="flex justify-center py-4">
