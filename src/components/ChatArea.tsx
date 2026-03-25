@@ -15,8 +15,8 @@ import dynamic from 'next/dynamic';
 
 const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false });
 
-import { Helix } from 'ldrs/react';
-import 'ldrs/react/Helix.css';
+// import { Helix } from 'ldrs/react';
+// import 'ldrs/react/Helix.css';
 
 interface Message {
   id: string;
@@ -469,7 +469,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       <div className="flex-1 overflow-y-auto scroll-smooth relative pt-16">
         {isLoadingMessages ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
-            <Helix size="35" speed="2.5" color="white" />
+            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : !isChatStarted ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
@@ -569,7 +569,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                   className="flex justify-start mb-4"
                 >
                   <div className="bg-[#1a1a1a]/50 border border-gray-800/50 rounded-2xl px-4 py-3 flex items-center gap-3">
-                    <Helix size="20" speed="2.5" color="white" />
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     <span className="text-xs text-gray-500 font-medium ml-1">Chris is thinking...</span>
                   </div>
                 </motion.div>
