@@ -22,29 +22,38 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed }: any) => 
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center w-full rounded-lg transition-all relative pointer-events-auto ${active ? 'text-white' : 'text-gray-400 hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-[#1a1a1a]' : ''} ${isCollapsed ? 'justify-center py-3 gap-0' : 'gap-3.5 px-3 py-2.5'}`}
+        className={`flex items-center w-full rounded-lg transition-all relative pointer-events-auto h-[44px] ${active ? 'text-white' : 'text-gray-400 hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-[#1a1a1a]' : ''}`}
       >
-        <div className="relative flex-shrink-0 flex items-center justify-center w-[18px] h-[18px]">
-          {/* Hover Highlight Background */}
+        {/* Stationary Icon Container */}
+        <div className="w-[68px] flex-shrink-0 flex items-center justify-center relative">
+          {/* Hover Highlight Background for Collapsed State */}
           {isCollapsed && (
-            <div className="absolute inset-[-10px] rounded-[14px] bg-transparent group-hover:bg-[#2D2D2D] transition-colors duration-200 ease-in-out z-0"></div>
+            <div className="absolute inset-0 flex items-center justify-center z-0">
+              <div className="w-10 h-10 rounded-[12px] bg-transparent group-hover:bg-[#2D2D2D] transition-colors duration-200"></div>
+            </div>
           )}
           <div className="relative z-10 flex items-center justify-center">
             {icon}
           </div>
           {hasDot && (
-            <div className={`absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#5c6ad2] border-2 border-black transition-opacity duration-300 z-20 ${isCollapsed ? 'opacity-100' : 'opacity-0'}`}></div>
+            <div className={`absolute top-3 right-6 w-2 h-2 rounded-full bg-[#5c6ad2] border-2 border-black transition-opacity duration-300 z-20 ${isCollapsed ? 'opacity-100' : 'opacity-0'}`}></div>
           )}
         </div>
-        <span className={`font-semibold text-[14px] whitespace-nowrap transition-all duration-300 ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>{label}</span>
+
+        {/* Label */}
+        <span className={`font-semibold text-[14px] whitespace-nowrap transition-all duration-300 flex-1 text-left ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>
+          {label}
+        </span>
+
+        {/* Dot for Expanded State */}
         {hasDot && !isCollapsed && (
-          <div className="w-1.5 h-1.5 rounded-full bg-[#5c6ad2] ml-auto flex-shrink-0 transition-opacity duration-300 opacity-100"></div>
+          <div className="w-1.5 h-1.5 rounded-full bg-[#5c6ad2] mr-4 flex-shrink-0 transition-opacity duration-300 opacity-100"></div>
         )}
       </button>
       
       {/* Tooltip */}
       {isCollapsed && (
-        <div className="absolute left-[calc(100%+8px)] top-1/2 -translate-y-1/2 bg-[#2D2D2D] text-white text-xs px-[10px] py-[6px] rounded-[8px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 font-medium shadow-xl transition-opacity duration-200 ease-in-out">
+        <div className="absolute left-[60px] top-1/2 -translate-y-1/2 bg-[#2D2D2D] text-white text-xs px-[10px] py-[6px] rounded-[8px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 font-medium shadow-xl transition-opacity duration-200 ease-in-out">
           {label}
         </div>
       )}
@@ -120,21 +129,23 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       )}
       <div className={`h-screen bg-[#000000] text-white border-r border-[#1a1a1a] z-50 font-sans transition-all duration-300 ease-in-out fixed md:relative overflow-x-hidden ${isCollapsed ? 'w-[68px]' : 'w-[250px]'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-full h-full flex flex-col">
-        {/* Header / Logo */}
-        <div className={`flex items-center transition-all duration-300 pt-5 pb-4 ${isCollapsed ? 'justify-center px-0' : 'justify-between pl-[22px] pr-4'}`}>
-          <div className="flex items-center justify-center w-6 h-6 flex-shrink-0">
+        {/* Header / Logo Section */}
+        <div className="flex items-center pt-5 pb-4 h-[60px] relative">
+          <div className="w-[68px] flex-shrink-0 flex items-center justify-center">
             <PlanetLogo className="text-white w-6 h-6" />
           </div>
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className={`text-gray-500 hover:text-white transition-opacity duration-300 p-1 rounded-md hover:bg-[#1a1a1a] hidden md:block ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100 pointer-events-auto'}`}
-          >
-            <ChevronsLeft size={16} strokeWidth={2} />
-          </button>
+          <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <button
+              onClick={() => setIsCollapsed(true)}
+              className="text-gray-500 hover:text-white transition-colors p-1 rounded-md hover:bg-[#1a1a1a] hidden md:block"
+            >
+              <ChevronsLeft size={16} strokeWidth={2} />
+            </button>
+          </div>
         </div>
 
         {/* Main Nav */}
-        <nav className={`transition-all duration-300 ${isCollapsed ? 'px-2' : 'pl-[13px] pr-2'}`}>
+        <nav className="transition-all duration-300">
           <ul className="space-y-0.5">
             <NavItem icon={<Search size={18} strokeWidth={2} />} label="Search" onClick={() => {}} isCollapsed={isCollapsed} />
             <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId} isCollapsed={isCollapsed} />
@@ -180,7 +191,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
 
         {/* Bottom Section */}
         <div className="mt-auto relative pb-4 pt-2">
-          <div className={`absolute bottom-[72px] left-[16px] transition-opacity duration-300 hidden md:block ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          {/* Expand Toggle Button */}
+          <div className={`absolute bottom-[72px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
               onClick={() => setIsCollapsed(false)}
               className="text-gray-500 hover:text-white transition-colors p-2 rounded-full hover:bg-[#1a1a1a] pointer-events-auto"
@@ -189,7 +201,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             </button>
           </div>
 
-          <div className={`transition-all duration-300 ${isCollapsed ? 'flex justify-center px-0' : 'pl-[16px]'}`}>
+          {/* User Profile / Login */}
+          <div className="w-[68px] flex-shrink-0 flex items-center justify-center">
             {user ? (
               <div className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-bold text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
                 {user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'}
