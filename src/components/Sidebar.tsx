@@ -17,7 +17,7 @@ interface Chat {
   updatedAt: any;
 }
 
-const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed }: any) => {
+const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: any) => {
   return (
     <li className="w-full relative group">
       <button
@@ -51,9 +51,15 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed }: any) => 
         )}
       </button>
       
-      {/* Tooltip */}
+      {/* Tooltip - Fixed positioning to float above everything */}
       {isCollapsed && (
-        <div className="absolute left-[72px] top-1/2 -translate-y-1/2 bg-[#2D2D2D] text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] font-semibold shadow-2xl transition-all duration-200 ease-in-out translate-x-[-10px] group-hover:translate-x-0 border border-gray-800/50">
+        <div 
+          className="fixed left-[76px] bg-[#2D2D2D] text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-semibold shadow-2xl transition-all duration-200 ease-in-out border border-gray-800/50 ml-[-10px] group-hover:ml-0"
+          style={{ 
+            top: `${60 + index * 46 + 22}px`,
+            transform: 'translateY(-50%)'
+          }}
+        >
           <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-[#2D2D2D] border-l border-b border-gray-800/50 rotate-45"></div>
           {label}
         </div>
@@ -148,10 +154,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         {/* Main Nav */}
         <nav className="transition-all duration-300">
           <ul className="space-y-0.5">
-            <NavItem icon={<Search size={18} strokeWidth={2} />} label="Search" onClick={() => {}} isCollapsed={isCollapsed} />
-            <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId} isCollapsed={isCollapsed} />
-            <NavItem icon={<AudioLines size={18} strokeWidth={2} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} />
-            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagine" onClick={() => {}} hasDot isCollapsed={isCollapsed} />
+            <NavItem icon={<Search size={18} strokeWidth={2} />} label="Search" onClick={() => {}} isCollapsed={isCollapsed} index={0} />
+            <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId} isCollapsed={isCollapsed} index={1} />
+            <NavItem icon={<AudioLines size={18} strokeWidth={2} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={2} />
+            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagine" onClick={() => {}} hasDot isCollapsed={isCollapsed} index={3} />
           </ul>
         </nav>
 
