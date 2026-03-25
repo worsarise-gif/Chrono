@@ -373,10 +373,10 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       let modelName = 'gemini-3-flash-preview';
       if (mode === 'fast') {
         modelName = 'gemini-3.1-flash-lite-preview';
-      } else if (mode === 'pro' || mode === 'search') {
-        modelName = 'gemini-3.1-pro-preview';
-      } else if (mode === 'maps') {
-        modelName = 'gemini-3.1-pro-preview';
+      } else {
+        // Use Flash for all other modes (auto, pro, search, maps) 
+        // to ensure high rate limits on the free tier.
+        modelName = 'gemini-3-flash-preview';
       }
 
       const requestParams: any = {
