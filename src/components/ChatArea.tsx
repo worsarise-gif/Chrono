@@ -370,29 +370,26 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         systemInstruction: systemInstruction
       };
       
-      if (tools.length > 0) {
-        config.tools = tools;
-        if (mode === 'maps') {
-          config.toolConfig = { includeServerSideToolInvocations: true };
-        }
-      }
-
       let modelName = 'gemini-3-flash-preview';
       if (mode === 'fast') {
         modelName = 'gemini-3.1-flash-lite-preview';
       } else if (mode === 'pro' || mode === 'search') {
         modelName = 'gemini-3.1-pro-preview';
       } else if (mode === 'maps') {
-        modelName = 'gemini-3-flash-preview';
+        modelName = 'gemini-3.1-pro-preview';
       }
 
       const requestParams: any = {
         model: modelName,
-        contents: contents
+        contents: contents,
+        config: config
       };
 
-      if (Object.keys(config).length > 0) {
-        requestParams.config = config;
+      if (tools.length > 0) {
+        requestParams.tools = tools;
+        if (mode === 'maps') {
+          requestParams.toolConfig = { includeServerSideToolInvocations: true };
+        }
       }
 
       let mapData: { latitude: number; longitude: number; label?: string } | undefined = undefined;
