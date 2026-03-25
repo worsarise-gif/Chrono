@@ -37,7 +37,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
             <h2 className="text-2xl font-semibold text-white mb-3 tracking-tight">Something went wrong</h2>
             <p className="text-[15px] text-gray-400 mb-8 leading-relaxed">
-              {this.state.error?.message || 'An unexpected error occurred while loading this page.'}
+              An unexpected error occurred while loading this page. Our team has been notified.
             </p>
             <button
               className="flex items-center gap-2 px-6 py-3 bg-white hover:bg-gray-100 text-black font-medium rounded-xl transition-colors w-full justify-center"

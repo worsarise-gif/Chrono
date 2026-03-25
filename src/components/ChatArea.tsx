@@ -12,6 +12,9 @@ import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, u
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
 
+import { Helix } from 'ldrs/react';
+import 'ldrs/react/Helix.css';
+
 interface Message {
   id: string;
   role: 'user' | 'model';
@@ -29,6 +32,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [mode, setMode] = useState<ChatMode>('auto');
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string } | null>(null);
@@ -89,9 +93,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   useEffect(() => {
     if (!user || !currentChatId) {
       setMessages([]);
+      setIsLoadingMessages(false);
       return;
     }
 
+    setIsLoadingMessages(true);
     const q = query(
       collection(db, 'users', user.uid, 'chats', currentChatId, 'messages'),
       orderBy('createdAt', 'asc')
@@ -103,7 +109,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         messageData.push({ id: doc.id, ...doc.data() } as Message);
       });
       setMessages(messageData);
+      setIsLoadingMessages(false);
     }, (error) => {
+      setIsLoadingMessages(false);
       try {
         handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/chats/${currentChatId}/messages`);
       } catch (e) {
@@ -300,7 +308,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
     } catch (error: any) {
       handleError(error, "Failed to generate AI response");
-      fullResponse = `I'm sorry, I encountered an error while processing your request: ${error.message || error}`;
+      fullResponse = "I'm sorry, I encountered an error while processing your request. Please try again later.";
     }
 
     try {
@@ -339,7 +347,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     maps: <MapPin size={16} />
   };
 
-  const isChatStarted = messages.length > 0 || streamingMessage;
+  const isChatStarted = messages.length > 0 || streamingMessage || isLoadingMessages;
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
@@ -363,7 +371,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto scroll-smooth relative pt-16">
-        {!isChatStarted ? (
+        {isLoadingMessages ? (
+          <div className="h-full flex flex-col items-center justify-center px-4">
+            <Helix size="35" speed="2.5" color="white" />
+          </div>
+        ) : !isChatStarted ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
             {/* Welcome screen is handled by the input area's positioning */}
           </div>
@@ -446,12 +458,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                   transition={{ duration: 0.2 }}
                   className="flex justify-start mb-4"
                 >
-                  <div className="bg-[#1a1a1a]/50 border border-gray-800/50 rounded-2xl px-4 py-3 flex items-center gap-1.5">
-                    <div className="flex gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0s' }} />
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.2s' }} />
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0.4s' }} />
-                    </div>
+                  <div className="bg-[#1a1a1a]/50 border border-gray-800/50 rounded-2xl px-4 py-3 flex items-center gap-3">
+                    <Helix size="20" speed="2.5" color="white" />
                     <span className="text-xs text-gray-500 font-medium ml-1">Chris is thinking...</span>
                   </div>
                 </motion.div>

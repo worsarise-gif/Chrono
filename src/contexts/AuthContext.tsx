@@ -5,6 +5,8 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
+import { Helix } from 'ldrs/react';
+import 'ldrs/react/Helix.css';
 
 interface AuthContextType {
   user: User | null;
@@ -53,6 +55,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => unsubscribe();
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen w-full bg-[#000000]">
+        <Helix size="45" speed="2.5" color="white" />
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading }}>

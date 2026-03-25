@@ -8,6 +8,8 @@ import { loginWithGoogle, db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
+import { Helix } from 'ldrs/react';
+import 'ldrs/react/Helix.css';
 
 interface Chat {
   id: string;
@@ -47,13 +49,16 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const { currentChatId, setCurrentChatId } = useChatContext();
   const [chats, setChats] = useState<Chat[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isLoadingChats, setIsLoadingChats] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setChats([]);
+      setIsLoadingChats(false);
       return;
     }
 
+    setIsLoadingChats(true);
     const q = query(
       collection(db, 'users', user.uid, 'chats'),
       orderBy('updatedAt', 'desc')
@@ -65,7 +70,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         chatData.push({ id: doc.id, ...doc.data() } as Chat);
       });
       setChats(chatData);
+      setIsLoadingChats(false);
     }, (error) => {
+      setIsLoadingChats(false);
       try {
         handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/chats`);
       } catch (e) {
@@ -134,7 +141,11 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         {/* Chat History (Scrollable) */}
         <div className="flex-1 overflow-y-auto sidebar-scroll">
           <div className={`px-2 pb-2 flex flex-col min-h-full transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-            {chats.length > 0 && (
+            {isLoadingChats ? (
+              <div className="flex justify-center py-4">
+                <Helix size="24" speed="2.5" color="white" />
+              </div>
+            ) : chats.length > 0 && (
               <>
                 <ul className="space-y-0.5 flex-1">
                   {chats.map(chat => (
