@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import { LocateFixed, Copy, Check, Navigation } from 'lucide-react';
 
 // Fix for default marker icon in react-leaflet
 const icon = L.icon({
@@ -26,14 +25,14 @@ interface MapProps {
 function ChangeView({ center, zoom }: { center: [number, number]; zoom: number }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, zoom, { animate: true });
+    map.setView(center, zoom);
   }, [center, zoom, map]);
   return null;
 }
 
 export default function MapComponent({ latitude, longitude, label }: MapProps) {
   const [position, setPosition] = useState<[number, number]>([latitude, longitude]);
-  const [copied, setCopied] = useState(false);
+  const [mapType, setMapType] = useState<'street' | 'satellite'>('street');
   const markerRef = useRef<L.Marker>(null);
 
   useEffect(() => {
@@ -53,38 +52,41 @@ export default function MapComponent({ latitude, longitude, label }: MapProps) {
     [],
   );
 
-  const handleLocateMe = useCallback(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setPosition([pos.coords.latitude, pos.coords.longitude]);
-        },
-        (err) => console.error("Error getting location:", err),
-        { enableHighAccuracy: true }
-      );
-    }
-  }, []);
-
-  const handleCopy = useCallback(() => {
-    const text = `${position[0].toFixed(6)}, ${position[1].toFixed(6)}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [position]);
-
   return (
-    <div className="w-full h-80 rounded-2xl overflow-hidden border border-gray-800 my-6 z-0 relative group shadow-2xl">
+    <div className="w-full h-80 rounded-2xl overflow-hidden border border-gray-800 my-6 z-0 relative shadow-2xl group">
+      <div className="absolute top-3 right-3 z-[1000] flex gap-2">
+        <button 
+          onClick={() => setMapType('street')}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${mapType === 'street' ? 'bg-white text-black shadow-lg' : 'bg-black/50 text-white backdrop-blur-md hover:bg-black/70'}`}
+        >
+          Street
+        </button>
+        <button 
+          onClick={() => setMapType('satellite')}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${mapType === 'satellite' ? 'bg-white text-black shadow-lg' : 'bg-black/50 text-white backdrop-blur-md hover:bg-black/70'}`}
+        >
+          Satellite
+        </button>
+      </div>
+
       <MapContainer 
         center={position} 
         zoom={15} 
         style={{ height: '100%', width: '100%' }}
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
       >
         <ChangeView center={position} zoom={15} />
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {mapType === 'street' ? (
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          />
+        ) : (
+          <TileLayer
+            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+            url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+          />
+        )}
         <Marker 
           draggable={true}
           eventHandlers={eventHandlers}
@@ -92,49 +94,28 @@ export default function MapComponent({ latitude, longitude, label }: MapProps) {
           ref={markerRef}
           icon={icon}
         >
-          <Popup>
-            <div className="text-sm min-w-[160px] font-sans">
-              {label && <div className="font-bold text-gray-900 mb-1.5 leading-tight">{label}</div>}
-              <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 mb-2">
-                <div className="text-gray-500 text-[10px] uppercase font-bold tracking-wider mb-0.5">Coordinates</div>
-                <div className="text-gray-900 text-xs font-mono font-medium">
-                  {position[0].toFixed(6)}, {position[1].toFixed(6)}
-                </div>
+          <Popup className="custom-popup">
+            <div className="p-1 min-w-[140px]">
+              {label && <div className="font-bold text-sm mb-1 text-gray-900">{label}</div>}
+              <div className="text-gray-500 text-[11px] font-mono leading-tight">
+                <span className="text-blue-500">LAT</span> {position[0].toFixed(6)}<br/>
+                <span className="text-blue-500">LNG</span> {position[1].toFixed(6)}
               </div>
-              <div className="flex items-center gap-2 text-[10px] text-blue-600 font-semibold">
-                <Navigation size={10} />
-                <span>Pin is draggable to refine location</span>
+              <div className="mt-2 pt-2 border-t border-gray-100 flex items-center justify-between">
+                <span className="text-[10px] text-gray-400 italic">Draggable Pin</span>
+                <a 
+                  href={`https://www.google.com/maps/search/?api=1&query=${position[0]},${position[1]}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-blue-600 font-bold hover:underline"
+                >
+                  Open in Google Maps
+                </a>
               </div>
             </div>
           </Popup>
         </Marker>
       </MapContainer>
-
-      {/* Floating Controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2 z-[400]">
-        <button 
-          onClick={handleLocateMe}
-          className="w-10 h-10 bg-white hover:bg-gray-50 text-gray-700 rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-95 border border-gray-200"
-          title="My Location"
-        >
-          <LocateFixed size={20} />
-        </button>
-        <button 
-          onClick={handleCopy}
-          className="w-10 h-10 bg-white hover:bg-gray-50 text-gray-700 rounded-xl shadow-lg flex items-center justify-center transition-all active:scale-95 border border-gray-200"
-          title="Copy Coordinates"
-        >
-          {copied ? <Check size={20} className="text-green-500" /> : <Copy size={20} />}
-        </button>
-      </div>
-
-      {/* Bottom Label Overlay */}
-      <div className="absolute bottom-4 left-4 right-4 z-[400] pointer-events-none">
-        <div className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-xl text-[11px] font-medium inline-flex items-center gap-2 border border-white/10 shadow-xl">
-          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
-          <span>Refine the marker position by dragging the pin</span>
-        </div>
-      </div>
     </div>
   );
 }

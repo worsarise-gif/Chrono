@@ -1,8 +1,33 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+@import "leaflet/dist/leaflet.css";
 
 @theme {
   --font-sans: var(--font-poppins), -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+/* Leaflet Custom Styles */
+.leaflet-container {
+  font-family: var(--font-sans) !important;
+}
+
+.custom-popup .leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.custom-popup .leaflet-popup-content {
+  margin: 12px;
+  line-height: 1.4;
+}
+
+.custom-popup .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
 }
 
 /* Custom Scrollbar for all elements */
