@@ -5,8 +5,8 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
-// import { Helix } from 'ldrs/react';
-// import 'ldrs/react/Helix.css';
+import { Helix } from 'ldrs/react';
+import 'ldrs/react/Helix.css';
 
 interface AuthContextType {
   user: User | null;
@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return (
       <div className="flex flex-col items-center justify-center h-screen w-full bg-[#000000] text-white">
         <div className="mb-4">
-          <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+          <Helix size="45" speed="2.5" color="white" />
         </div>
         <p className="text-gray-500 animate-pulse">Initializing application...</p>
       </div>

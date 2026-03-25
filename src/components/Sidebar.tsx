@@ -8,8 +8,8 @@ import { loginWithGoogle, db } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
-// import { Helix } from 'ldrs/react';
-// import 'ldrs/react/Helix.css';
+import { Helix } from 'ldrs/react';
+import 'ldrs/react/Helix.css';
 
 interface Chat {
   id: string;
@@ -119,7 +119,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         />
       )}
       <div className={`h-screen bg-[#000000] text-white border-r border-[#1a1a1a] z-50 font-sans transition-all duration-300 ease-in-out fixed md:relative overflow-x-hidden ${isCollapsed ? 'w-[68px]' : 'w-[250px]'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-        <div className={`w-full h-full flex flex-col ${isCollapsed ? 'pointer-events-none' : ''}`}>
+        <div className="w-full h-full flex flex-col">
         {/* Header / Logo */}
         <div className={`flex items-center transition-all duration-300 pt-5 pb-4 ${isCollapsed ? 'justify-center px-0' : 'justify-between pl-[22px] pr-4'}`}>
           <div className="flex items-center justify-center w-6 h-6 flex-shrink-0">
@@ -151,7 +151,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           <div className={`px-2 pb-2 flex flex-col min-h-full transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             {isLoadingChats ? (
               <div className="flex justify-center py-4">
-                <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <Helix size="24" speed="2.5" color="white" />
               </div>
             ) : chats.length > 0 && (
               <>
