@@ -123,7 +123,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity cursor-pointer"
           onClick={() => setIsMobileOpen?.(false)}
         />
       )}
