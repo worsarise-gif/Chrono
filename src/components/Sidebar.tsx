@@ -53,7 +53,8 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed }: any) => 
       
       {/* Tooltip */}
       {isCollapsed && (
-        <div className="absolute left-[60px] top-1/2 -translate-y-1/2 bg-[#2D2D2D] text-white text-xs px-[10px] py-[6px] rounded-[8px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 font-medium shadow-xl transition-opacity duration-200 ease-in-out">
+        <div className="absolute left-[72px] top-1/2 -translate-y-1/2 bg-[#2D2D2D] text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[100] font-semibold shadow-2xl transition-all duration-200 ease-in-out translate-x-[-10px] group-hover:translate-x-0 border border-gray-800/50">
+          <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-[#2D2D2D] border-l border-b border-gray-800/50 rotate-45"></div>
           {label}
         </div>
       )}
@@ -127,7 +128,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           onClick={() => setIsMobileOpen?.(false)}
         />
       )}
-      <div className={`h-screen bg-[#000000] text-white border-r border-[#1a1a1a] z-50 font-sans transition-all duration-300 ease-in-out fixed md:relative overflow-x-hidden ${isCollapsed ? 'w-[68px]' : 'w-[250px]'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className={`h-screen bg-[#000000] text-white border-r border-[#1a1a1a] z-50 font-sans transition-all duration-300 ease-in-out fixed md:relative ${isCollapsed ? 'w-[68px] overflow-visible' : 'w-[250px] overflow-x-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-full h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative">
