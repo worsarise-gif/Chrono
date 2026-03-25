@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from 'react';
-import Sidebar from '../components/Sidebar';
-import ChatArea from '../components/ChatArea';
-import StarryBackground from '../components/StarryBackground';
+import Sidebar from './Sidebar';
+import ChatArea from './ChatArea';
+import StarryBackground from './StarryBackground';
 
-export default function Home() {
+export default function ChatLayout({ children }: { children?: React.ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   return (
@@ -13,6 +13,7 @@ export default function Home() {
       <StarryBackground />
       <Sidebar isMobileOpen={isMobileSidebarOpen} setIsMobileOpen={setIsMobileSidebarOpen} />
       <ChatArea onMenuClick={() => setIsMobileSidebarOpen(true)} />
+      {children}
     </div>
   );
 }

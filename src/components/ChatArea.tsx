@@ -267,7 +267,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       const contents: any[] = [];
       
       // Add previous messages for context, ensuring alternating roles
-      for (const msg of messages) {
+      // Sliding Window: Only use the last 20 messages to manage token limits
+      const recentMessages = messages.slice(-20);
+      for (const msg of recentMessages) {
         const textContent = msg.content || (msg.hasImage ? "[Image uploaded]" : "");
         if (!textContent) continue;
 
