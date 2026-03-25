@@ -326,7 +326,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           functionDeclarations: [
             {
               name: "display_map",
-              description: "Display a visual interactive map at a specific location.",
+              description: "Display a visual interactive map at a specific location. You MUST provide highly precise, exact coordinates (latitude and longitude) for the specific building, address, or landmark requested, rather than approximate city or regional centers.",
               parameters: {
                 type: "OBJECT",
                 properties: {
