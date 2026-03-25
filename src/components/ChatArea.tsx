@@ -336,39 +336,52 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
 
       const tools: any[] = [];
-      if (mode === 'search') tools.push({ googleSearch: {} });
-      if (mode === 'maps') {
-        tools.push({ googleSearch: {} }); // Add search to help find accurate coordinates
-        tools.push({
-          functionDeclarations: [
-            {
-              name: "display_map",
-              description: "Display a visual interactive map at a specific location. You MUST provide highly precise, exact coordinates (latitude and longitude) for the specific building, address, or landmark requested. Use Google Search to find the exact coordinates if you are unsure.",
-              parameters: {
-                type: "OBJECT",
-                properties: {
-                  latitude: { type: "NUMBER", description: "Latitude of the location" },
-                  longitude: { type: "NUMBER", description: "Longitude of the location" },
-                  label: { type: "STRING", description: "Label or name of the place" }
-                },
-                required: ["latitude", "longitude", "label"]
-              }
+      const mapTool = {
+        functionDeclarations: [
+          {
+            name: "display_map",
+            description: "Display a visual interactive map at a specific location. You MUST provide highly precise, exact coordinates (latitude and longitude) for the specific building, address, or landmark requested. Use Google Search to find the exact coordinates if you are unsure.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                latitude: { type: "NUMBER", description: "Latitude of the location" },
+                longitude: { type: "NUMBER", description: "Longitude of the location" },
+                label: { type: "STRING", description: "Label or name of the place" }
+              },
+              required: ["latitude", "longitude", "label"]
             }
-          ]
-        });
+          }
+        ]
+      };
+
+      if (mode === 'search') {
+        tools.push({ googleSearch: {} });
+      } else if (mode === 'maps') {
+        tools.push({ googleSearch: {} });
+        tools.push(mapTool);
+      } else if (mode === 'auto' || mode === 'pro') {
+        tools.push(mapTool);
       }
 
-      const systemInstruction = mode === 'maps' 
-        ? `You are Chris, a helpful AI assistant with mapping capabilities. 
-           When asked for a location, use Google Search to find the EXACT latitude and longitude for the specific place, building, or address. 
-           Do not provide approximate coordinates for a city if a specific place is requested.
+      const systemInstruction = (mode === 'maps' || mode === 'auto' || mode === 'pro')
+        ? `You are Chris, a helpful AI assistant. 
+           When a user asks to locate a place or show a map, you MUST use the display_map tool.
+           DO NOT output raw URLs, links, or markdown images for maps. ONLY use the display_map tool.
+           If you are in 'maps' mode, use Google Search to find the EXACT latitude and longitude for the specific place.
            User's current location: ${userLocation ? `Lat: ${userLocation.latitude}, Lng: ${userLocation.longitude}` : 'Unknown'}.
-           Always use the display_map tool to show the location.`
+           Always provide a brief text response explaining what you found, alongside the map.`
         : "You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.";
 
       const config: any = {
         systemInstruction: systemInstruction
       };
+
+      if (tools.length > 0) {
+        config.tools = tools;
+        if (mode === 'maps') {
+          config.toolConfig = { includeServerSideToolInvocations: true };
+        }
+      }
       
       let modelName = 'gemini-3-flash-preview';
       if (mode === 'fast') {
@@ -385,13 +398,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         config: config
       };
 
-      if (tools.length > 0) {
-        requestParams.tools = tools;
-        if (mode === 'maps') {
-          requestParams.toolConfig = { includeServerSideToolInvocations: true };
-        }
-      }
-
       let mapData: { latitude: number; longitude: number; label?: string } | undefined = undefined;
 
       try {
@@ -403,8 +409,10 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
             if (call.name === 'display_map') {
               mapData = call.args as any;
               setStreamingMapData(mapData!);
-              fullResponse += "\n\n*Displaying map...*";
-              setStreamingMessage(fullResponse);
+              if (!fullResponse.includes("located")) {
+                fullResponse += "\n\n*I've located the place on the map for you.*";
+                setStreamingMessage(fullResponse);
+              }
             }
           }
           const text = chunk.text;
@@ -412,6 +420,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
             fullResponse += text;
             setStreamingMessage(fullResponse);
           }
+        }
+
+        // Fallback if the model only returned a function call without text
+        if (!fullResponse.trim() && mapData) {
+          fullResponse = "I've found the location you were looking for. Here it is on the map:";
         }
       } catch (error: any) {
         handleError(error, "Failed to generate AI response");
