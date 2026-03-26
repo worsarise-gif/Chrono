@@ -45,6 +45,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const modeDropdownRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -560,6 +561,24 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   }, [isLoading, isChatStarted]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modeDropdownRef.current && !modeDropdownRef.current.contains(event.target as Node)) {
+        setShowModeDropdown(false);
+      }
+    };
+
+    if (showModeDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showModeDropdown]);
+
   return (
     <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
       {/* Floating Actions */}
@@ -744,7 +763,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 {/* Mode Selector */}
-                <div className="relative">
+                <div className="relative" ref={modeDropdownRef}>
                   <button 
                     type="button" 
                     onClick={() => setShowModeDropdown(!showModeDropdown)}
