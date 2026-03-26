@@ -405,9 +405,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       } else if (mode === 'pro') {
         modelName = 'gemini-3.1-pro-preview';
       } else {
-        // Use Flash for all other modes (auto, search, maps) 
+        // Use Flash Lite for all other modes (auto, search, maps) 
         // to ensure high rate limits on the free tier.
-        modelName = 'gemini-3-flash-preview';
+        modelName = 'gemini-3.1-flash-lite-preview';
       }
 
       const requestParams: any = {
@@ -488,6 +488,10 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           });
           
           requestParams.contents = contents;
+
+          // Add a small delay to avoid hitting burst rate limits on the free tier
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
           const streamResponse2 = await ai.models.generateContentStream(requestParams);
           
           for await (const chunk of streamResponse2) {
