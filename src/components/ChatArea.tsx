@@ -15,7 +15,6 @@ import dynamic from 'next/dynamic';
 
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
-import { webSearch } from '../lib/tools/webSearch';
 
 const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false });
 
@@ -448,7 +447,20 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           fullResponse += "\n\n*Searching the web...*\n\n";
           setStreamingMessage(fullResponse);
           
-          const searchResults = await webSearch(searchWebCallArgs.query);
+          let searchResults = "Search unavailable. Rely on training data.";
+          try {
+            const searchRes = await fetch('/api/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: searchWebCallArgs.query })
+            });
+            if (searchRes.ok) {
+              const searchData = await searchRes.json();
+              searchResults = searchData.results;
+            }
+          } catch (err) {
+            console.error('Search API call failed:', err);
+          }
           
           contents.push({
             role: 'model',

@@ -1,5 +1,23 @@
-import { db } from '../../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import firebaseConfigJson from '../../../firebase-applet-config.json';
+
+// Firebase configuration: Prefer environment variables, fallback to JSON for AI Studio
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || firebaseConfigJson.appId,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || firebaseConfigJson.measurementId,
+};
+
+const firestoreDatabaseId = process.env.NEXT_PUBLIC_FIREBASE_FIRESTORE_DATABASE_ID || firebaseConfigJson.firestoreDatabaseId || '(default)';
+
+// Initialize Firebase (Server-side friendly)
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+const db = getFirestore(app, firestoreDatabaseId);
 
 export interface SearchResult {
   title: string;
@@ -41,71 +59,71 @@ export async function webSearch(query: string): Promise<string> {
     }
 
     let results: SearchResult[] = [];
-    let googleFailed = false;
+    let tavilyFailed = false;
 
-    // 2. Primary Search: Google Custom Search API
-    const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.GOOGLE_API_KEY;
-    const googleCx = process.env.NEXT_PUBLIC_GOOGLE_CX || process.env.GOOGLE_CX;
-
-    if (googleApiKey && googleCx) {
+    // 2. Primary Search: Tavily API
+    // Use the provided key as a fallback if the environment variable is missing
+    const tavilyApiKey = process.env.TAVILY_API_KEY || process.env.NEXT_PUBLIC_TAVILY_API_KEY || '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';
+    
+    if (tavilyApiKey) {
       try {
-        const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${googleCx}&q=${encodeURIComponent(query)}&num=5`;
-        const googleRes = await fetch(googleUrl);
-        
-        if (googleRes.status === 429) {
-          googleFailed = true;
-        } else if (googleRes.ok) {
-          const googleData = await googleRes.json();
-          if (googleData.items && googleData.items.length > 0) {
-            results = googleData.items.slice(0, 5).map((item: any) => ({
+        const tavilyRes = await fetch('https://api.tavily.com/search', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            api_key: tavilyApiKey,
+            query: query,
+            search_depth: 'basic',
+            max_results: 5,
+          }),
+        });
+
+        if (tavilyRes.ok) {
+          const tavilyData = await tavilyRes.json();
+          if (tavilyData.results && tavilyData.results.length > 0) {
+            results = tavilyData.results.map((item: any) => ({
               title: item.title,
-              link: item.link,
-              snippet: item.snippet,
+              link: item.url,
+              snippet: item.content,
             }));
           } else {
-            googleFailed = true;
+            tavilyFailed = true;
           }
         } else {
-          googleFailed = true;
+          tavilyFailed = true;
         }
       } catch (err) {
-        console.warn('Google CSE failed:', err);
-        googleFailed = true;
+        console.warn('Tavily primary search failed:', err);
+        tavilyFailed = true;
       }
     } else {
-      googleFailed = true;
+      tavilyFailed = true;
     }
 
-    // 3. Fallback Search: Tavily API
-    if (googleFailed || results.length === 0) {
-      const tavilyApiKey = process.env.NEXT_PUBLIC_TAVILY_API_KEY || process.env.TAVILY_API_KEY;
-      if (tavilyApiKey) {
-        try {
-          const tavilyRes = await fetch('https://api.tavily.com/search', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              api_key: tavilyApiKey,
-              query: query,
-              search_depth: 'basic',
-              max_results: 5,
-            }),
-          });
+    // 3. Fallback Search: Google Custom Search API
+    if (tavilyFailed || results.length === 0) {
+      const googleApiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+      const googleCx = process.env.GOOGLE_CX || process.env.NEXT_PUBLIC_GOOGLE_CX;
 
-          if (tavilyRes.ok) {
-            const tavilyData = await tavilyRes.json();
-            if (tavilyData.results && tavilyData.results.length > 0) {
-              results = tavilyData.results.map((item: any) => ({
+      if (googleApiKey && googleCx) {
+        try {
+          const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${googleCx}&q=${encodeURIComponent(query)}&num=5`;
+          const googleRes = await fetch(googleUrl);
+          
+          if (googleRes.ok) {
+            const googleData = await googleRes.json();
+            if (googleData.items && googleData.items.length > 0) {
+              results = googleData.items.slice(0, 5).map((item: any) => ({
                 title: item.title,
-                link: item.url,
-                snippet: item.content,
+                link: item.link,
+                snippet: item.snippet,
               }));
             }
           }
         } catch (err) {
-          console.warn('Tavily fallback failed:', err);
+          console.warn('Google CSE fallback failed:', err);
         }
       }
     }
