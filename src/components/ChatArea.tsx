@@ -16,8 +16,6 @@ import dynamic from 'next/dynamic';
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
 
-const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false });
-
 interface Message {
   id: string;
   role: 'user' | 'model';
@@ -43,7 +41,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [isRecording, setIsRecording] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
-  const [streamingMapData, setStreamingMapData] = useState<{ latitude: number; longitude: number; label?: string } | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -467,9 +464,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
             const call = chunk.functionCalls[0];
             if (call.name === 'display_map') {
               mapData = call.args as any;
-              setStreamingMapData(mapData!);
-              if (!fullResponse.includes("located")) {
-                fullResponse += "\n\n*I've located the place on the map for you.*";
+              const mapDataPayload = JSON.stringify(mapData);
+              if (!fullResponse.includes("```map-data")) {
+                fullResponse += `\n\n\`\`\`map-data\n${mapDataPayload}\n\`\`\`\n\n`;
                 setStreamingMessage(fullResponse);
               }
             } else if (call.name === 'search_web') {
@@ -556,7 +553,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
         // Fallback if the model only returned a function call without text
         if (!fullResponse.trim() && mapData) {
-          fullResponse = "I've found the location you were looking for. Here it is on the map:";
+          fullResponse = "I've found the location you were looking for. Here it is on the map:\n\n```map-data\n" + JSON.stringify(mapData) + "\n```";
         }
       } catch (error: any) {
         handleError(error, "Failed to generate AI response");
@@ -569,11 +566,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           content: fullResponse,
           createdAt: serverTimestamp()
         };
-        
-        // @ts-ignore
-        if (typeof mapData !== 'undefined') {
-          messageData.mapData = mapData;
-        }
 
         await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
 
@@ -660,13 +652,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                     {msg.role === 'model' ? (
                       <div className="w-full">
                         <ResponseFormatter content={msg.content} />
-                        {msg.mapData && (
-                          <MapComponent 
-                            latitude={msg.mapData.latitude} 
-                            longitude={msg.mapData.longitude} 
-                            label={msg.mapData.label} 
-                          />
-                        )}
                         
                         {/* Action Row */}
                         <div className="flex items-center gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
@@ -718,13 +703,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                   <div className="max-w-[80%] relative bg-transparent text-white text-[15px] w-full">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} />
-                      {streamingMapData && (
-                        <MapComponent 
-                          latitude={streamingMapData.latitude} 
-                          longitude={streamingMapData.longitude} 
-                          label={streamingMapData.label} 
-                        />
-                      )}
                     </div>
                   </div>
                 </motion.div>

@@ -3,7 +3,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Check, Copy, Search, ExternalLink } from 'lucide-react';
+import { Check, Copy, Search, ExternalLink, MapPin } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false });
 
 interface ResponseFormatterProps {
   content: string;
@@ -132,6 +135,27 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
                         );
                       })}
                     </div>
+                  </div>
+                );
+              } catch (e) {
+                return null;
+              }
+            }
+
+            if (language === 'map-data') {
+              try {
+                const data = JSON.parse(String(children));
+                return (
+                  <div className="my-6 not-prose">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-3 px-1">
+                      <MapPin size={16} className="text-red-400" />
+                      <span>Location map for <span className="text-gray-200">"{data.label || 'selected area'}"</span></span>
+                    </div>
+                    <MapComponent 
+                      latitude={data.latitude} 
+                      longitude={data.longitude} 
+                      label={data.label} 
+                    />
                   </div>
                 );
               } catch (e) {
