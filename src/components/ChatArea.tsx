@@ -676,11 +676,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
                         {/* Suggestions */}
                         <div className="mt-5 space-y-3">
-                          <button className="flex items-center gap-3 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+                          <button className="flex items-center gap-3 text-sm font-normal text-gray-200 hover:text-white transition-colors">
                             <CornerDownRight size={16} className="text-gray-500" />
                             Cebu Food Recommendations
                           </button>
-                          <button className="flex items-center gap-3 text-sm font-medium text-gray-200 hover:text-white transition-colors">
+                          <button className="flex items-center gap-3 text-sm font-normal text-gray-200 hover:text-white transition-colors">
                             <CornerDownRight size={16} className="text-gray-500" />
                             Cebu Nightlife Spots
                           </button>
@@ -718,7 +718,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                 >
                   <div className="bg-[#1a1a1a]/50 border border-gray-800/50 rounded-2xl px-4 py-3 flex items-center gap-3">
                     <Helix size="20" speed="2.5" color="white" />
-                    <span className="text-xs text-gray-500 font-medium ml-1">Chris is thinking...</span>
+                    <span className="text-xs text-gray-500 font-normal ml-1">Chris is thinking...</span>
                   </div>
                 </motion.div>
               )}
@@ -733,7 +733,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         {!isChatStarted && (
           <div className="flex items-center gap-4 mb-8">
             <PlanetLogo className="text-white w-10 h-10 md:w-12 md:h-12" />
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">Chris</h1>
+            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">Chris</h1>
           </div>
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
@@ -782,7 +782,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder={isRecording ? "Listening..." : "Ask anything"}
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500 py-0 my-2 px-1 text-[15px] font-medium resize-none overflow-y-auto leading-[24px] break-words"
+                className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500 py-0 my-2 px-1 text-[15px] font-normal resize-none overflow-y-auto leading-[24px] break-words"
                 rows={1}
                 disabled={isLoading || isRecording}
                 style={{ minHeight: '24px', maxHeight: '200px' }}
@@ -794,7 +794,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                   <button 
                     type="button" 
                     onClick={() => setShowModeDropdown(!showModeDropdown)}
-                    className="h-10 px-3 flex items-center gap-1.5 rounded-full text-white text-[13px] font-bold hover:bg-[#2a2a2a] transition-colors"
+                    className="h-10 px-3 flex items-center gap-1.5 rounded-full text-white text-[13px] font-medium hover:bg-[#2a2a2a] transition-colors"
                   >
                     <span className="hidden sm:inline">{modeLabels[mode]}</span>
                     <span className="sm:hidden">{modeIcons[mode]}</span>

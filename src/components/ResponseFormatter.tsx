@@ -53,7 +53,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
 
 export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content }) => {
   return (
-    <div className="prose prose-invert prose-p:leading-relaxed prose-headings:font-semibold prose-headings:tracking-tight prose-li:marker:text-gray-500 max-w-none font-medium break-words">
+    <div className="prose prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-gray-500 max-w-none font-normal break-words">
       <ReactMarkdown 
         remarkPlugins={[remarkGfm]}
         components={{
@@ -66,7 +66,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
                   href={href} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-bold bg-blue-500/20 text-blue-400 rounded-full ml-1 hover:bg-blue-500/40 transition-colors no-underline align-super border border-blue-500/30"
+                  className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-medium bg-blue-500/20 text-blue-400 rounded-full ml-1 hover:bg-blue-500/40 transition-colors no-underline align-super border border-blue-500/30"
                   title={href}
                   {...props}
                 >
@@ -75,7 +75,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
               );
             }
             return (
-              <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline decoration-blue-400/30 underline-offset-2 transition-colors font-semibold" {...props}>
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline decoration-blue-400/30 underline-offset-2 transition-colors font-medium" {...props}>
                 {children}
               </a>
             );
@@ -97,7 +97,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
             );
           },
           th({ node, children, ...props }: any) {
-            return <th className="bg-[#2d2d2d] px-4 py-3 font-semibold text-gray-200 border-b border-gray-800 whitespace-nowrap" {...props}>{children}</th>;
+            return <th className="bg-[#2d2d2d] px-4 py-3 font-medium text-gray-200 border-b border-gray-800 whitespace-nowrap" {...props}>{children}</th>;
           },
           td({ node, children, ...props }: any) {
             return <td className="px-4 py-3 border-b border-gray-800/50 text-gray-300" {...props}>{children}</td>;
@@ -112,7 +112,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
                 const data = JSON.parse(String(children));
                 return (
                   <div className="my-6 flex flex-col gap-3 not-prose">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-2 px-1">
+                    <div className="flex items-center gap-2 text-sm font-normal text-gray-400 mb-2 px-1">
                       <Search size={16} className="text-blue-400" />
                       <span>Search results for <span className="text-gray-200">"{data.query}"</span></span>
                     </div>
@@ -122,7 +122,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
                         try { hostname = new URL(res.link).hostname; } catch (e) {}
                         return (
                           <a key={idx} href={res.link} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-2 p-4 rounded-xl border border-gray-800 bg-[#1e1e1e]/50 hover:bg-[#2a2a2a] hover:border-gray-700 transition-all no-underline group shadow-sm">
-                            <div className="font-semibold text-blue-400 group-hover:text-blue-300 line-clamp-1 flex items-center justify-between text-sm">
+                            <div className="font-medium text-blue-400 group-hover:text-blue-300 line-clamp-1 flex items-center justify-between text-sm">
                               {res.title}
                               <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
                             </div>
@@ -147,7 +147,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
                 const data = JSON.parse(String(children));
                 return (
                   <div className="my-6 not-prose">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-3 px-1">
+                    <div className="flex items-center gap-2 text-sm font-normal text-gray-400 mb-3 px-1">
                       <MapPin size={16} className="text-red-400" />
                       <span>Location map for <span className="text-gray-200">"{data.label || 'selected area'}"</span></span>
                     </div>

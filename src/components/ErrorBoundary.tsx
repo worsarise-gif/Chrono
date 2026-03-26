@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
               <AlertTriangle className="text-red-500" size={32} />
             </div>
-            <h2 className="text-2xl font-semibold text-white mb-3 tracking-tight">Something went wrong</h2>
+            <h2 className="text-2xl font-medium text-white mb-3 tracking-tight">Something went wrong</h2>
             <p className="text-[15px] text-gray-400 mb-8 leading-relaxed">
               An unexpected error occurred while loading this page. Our team has been notified.
             </p>

@@ -57,13 +57,13 @@ export default function MapComponent({ latitude, longitude, label }: MapProps) {
       <div className="absolute top-3 right-3 z-[1000] flex gap-2">
         <button 
           onClick={() => setMapType('street')}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${mapType === 'street' ? 'bg-white text-black shadow-lg' : 'bg-black/50 text-white backdrop-blur-md hover:bg-black/70'}`}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${mapType === 'street' ? 'bg-white text-black shadow-lg' : 'bg-black/50 text-white backdrop-blur-md hover:bg-black/70'}`}
         >
           Street
         </button>
         <button 
           onClick={() => setMapType('satellite')}
-          className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${mapType === 'satellite' ? 'bg-white text-black shadow-lg' : 'bg-black/50 text-white backdrop-blur-md hover:bg-black/70'}`}
+          className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${mapType === 'satellite' ? 'bg-white text-black shadow-lg' : 'bg-black/50 text-white backdrop-blur-md hover:bg-black/70'}`}
         >
           Satellite
         </button>
@@ -96,7 +96,7 @@ export default function MapComponent({ latitude, longitude, label }: MapProps) {
         >
           <Popup className="custom-popup">
             <div className="p-1 min-w-[140px]">
-              {label && <div className="font-bold text-sm mb-1 text-gray-900">{label}</div>}
+              {label && <div className="font-medium text-sm mb-1 text-gray-900">{label}</div>}
               <div className="text-gray-500 text-[11px] font-mono leading-tight">
                 <span className="text-blue-500">LAT</span> {position[0].toFixed(6)}<br/>
                 <span className="text-blue-500">LNG</span> {position[1].toFixed(6)}
@@ -107,7 +107,7 @@ export default function MapComponent({ latitude, longitude, label }: MapProps) {
                   href={`https://www.google.com/maps/search/?api=1&query=${position[0]},${position[1]}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[10px] text-blue-600 font-bold hover:underline"
+                  className="text-[10px] text-blue-600 font-medium hover:underline"
                 >
                   Open in Google Maps
                 </a>

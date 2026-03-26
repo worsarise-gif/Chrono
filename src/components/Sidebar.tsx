@@ -41,7 +41,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
         </div>
 
         {/* Label */}
-        <span className={`font-semibold text-[14px] whitespace-nowrap transition-all duration-300 flex-1 text-left ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>
+        <span className={`font-medium text-[14px] whitespace-nowrap transition-all duration-300 flex-1 text-left ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>
           {label}
         </span>
 
@@ -54,7 +54,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
       {/* Tooltip - Fixed positioning to float above everything */}
       {isCollapsed && (
         <div 
-          className="fixed left-[76px] bg-[#2D2D2D] text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-semibold shadow-2xl transition-all duration-200 ease-in-out border border-gray-800/50 ml-[-10px] group-hover:ml-0"
+          className="fixed left-[76px] bg-[#2D2D2D] text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-gray-800/50 ml-[-10px] group-hover:ml-0"
           style={{ 
             top: `${60 + index * 46 + 22}px`,
             transform: 'translateY(-50%)'
@@ -181,14 +181,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                           setCurrentChatId(chat.id);
                           setIsMobileOpen?.(false);
                         }}
-                        className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-medium truncate ${currentChatId === chat.id ? 'text-white bg-[#1a1a1a]' : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'}`}
+                        className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate ${currentChatId === chat.id ? 'text-white bg-[#1a1a1a]' : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'}`}
                       >
                         {chat.title}
                       </button>
                     </li>
                   ))}
                 </ul>
-                <button className="text-left px-3 py-2 text-[13px] text-gray-400 hover:text-white mt-2 font-medium">
+                <button className="text-left px-3 py-2 text-[13px] text-gray-400 hover:text-white mt-2 font-normal">
                   See all
                 </button>
               </>
@@ -211,7 +211,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           {/* User Profile / Login */}
           <div className="w-[68px] flex-shrink-0 flex items-center justify-center">
             {user ? (
-              <div className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-bold text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
+              <div className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
                 {user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'}
               </div>
             ) : (
