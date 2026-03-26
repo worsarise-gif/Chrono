@@ -3,12 +3,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare } from 'lucide-react';
+import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Trash2 } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { db, loginWithGoogle } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
 
@@ -176,6 +176,20 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (!user || !currentChatId) return;
+    
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'chats', currentChatId, 'messages', messageId));
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/chats/${currentChatId}/messages/${messageId}`);
+      } catch (e) {
+        handleError(e, "Failed to delete message");
+      }
     }
   };
 
@@ -607,11 +621,13 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                             { icon: <ThumbsDown size={14} />, title: "Bad response" },
                             { icon: <Volume2 size={14} />, title: "Read aloud" },
                             { icon: <Share size={14} />, title: "Share" },
+                            { icon: <Trash2 size={14} />, title: "Delete message", onClick: () => handleDeleteMessage(msg.id), color: "hover:text-red-400" },
                             { icon: <MoreHorizontal size={14} />, title: "More options" }
-                          ].map((btn, i) => (
+                          ].map((btn: any, i) => (
                             <button 
                               key={i}
-                              className="p-1.5 rounded-lg hover:bg-[#1a1a1a] hover:text-white transition-colors" 
+                              onClick={btn.onClick}
+                              className={`p-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors ${btn.color || 'hover:text-white'}`} 
                               title={btn.title}
                             >
                               {btn.icon}
@@ -632,7 +648,16 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                         </div>
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.content}</p>
+                      <div className="relative group/user">
+                        <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.content}</p>
+                        <button 
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="absolute -left-8 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-0 group-hover/user:opacity-100 hover:bg-[#1a1a1a] hover:text-red-400 text-gray-500 transition-all"
+                          title="Delete message"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </motion.div>

@@ -1,11 +1,11 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn } from 'lucide-react';
+import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2 } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { loginWithGoogle, db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, deleteDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
 import { Helix } from 'ldrs/react';
@@ -74,6 +74,26 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const [chats, setChats] = useState<Chat[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
+
+  const handleDeleteChat = async (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation();
+    if (!user) return;
+    
+    if (window.confirm('Are you sure you want to delete this chat?')) {
+      try {
+        await deleteDoc(doc(db, 'users', user.uid, 'chats', chatId));
+        if (currentChatId === chatId) {
+          setCurrentChatId(null);
+        }
+      } catch (error) {
+        try {
+          handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/chats/${chatId}`);
+        } catch (e) {
+          handleError(e, "Failed to delete chat");
+        }
+      }
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -175,15 +195,22 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               <>
                 <ul className="space-y-0.5 flex-1">
                   {chats.map(chat => (
-                    <li key={chat.id}>
+                    <li key={chat.id} className="group relative">
                       <button
                         onClick={() => {
                           setCurrentChatId(chat.id);
                           setIsMobileOpen?.(false);
                         }}
-                        className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate ${currentChatId === chat.id ? 'text-white bg-[#1a1a1a]' : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'}`}
+                        className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-white bg-[#1a1a1a]' : 'text-gray-400 hover:bg-[#1a1a1a] hover:text-white'}`}
                       >
                         {chat.title}
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteChat(e, chat.id)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[#2a2a2a] text-gray-500 hover:text-red-400 transition-all"
+                        title="Delete chat"
+                      >
+                        <Trash2 size={12} />
                       </button>
                     </li>
                   ))}
