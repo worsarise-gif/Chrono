@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2 } from 'lucide-react';
+import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -74,6 +74,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const [chats, setChats] = useState<Chat[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const handleDeleteChat = async (e: React.MouseEvent, chatId: string) => {
     e.stopPropagation();
@@ -206,12 +207,36 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                         {chat.title}
                       </button>
                       <button
-                        onClick={(e) => handleDeleteChat(e, chat.id)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[#2a2a2a] text-gray-500 hover:text-red-400 transition-all"
-                        title="Delete chat"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-[#2a2a2a] text-gray-500 hover:text-white transition-all"
+                        title="More options"
                       >
-                        <Trash2 size={12} />
+                        <MoreVertical size={14} />
                       </button>
+
+                      {activeMenuId === chat.id && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-[100]" 
+                            onClick={() => setActiveMenuId(null)}
+                          />
+                          <div className="absolute right-2 top-10 bg-[#1e1e1e] border border-gray-800 rounded-lg shadow-xl py-1 z-[101] min-w-[120px]">
+                            <button
+                              onClick={(e) => {
+                                handleDeleteChat(e, chat.id);
+                                setActiveMenuId(null);
+                              }}
+                              className="w-full text-left px-3 py-1.5 text-[12px] text-red-400 hover:bg-[#2a2a2a] flex items-center gap-2 transition-colors"
+                            >
+                              <Trash2 size={12} />
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </li>
                   ))}
                 </ul>
