@@ -387,9 +387,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
            User's current location: ${userLocation ? `Lat: ${userLocation.latitude}, Lng: ${userLocation.longitude}` : 'Unknown'}.
            Always provide a brief text response explaining what you found, alongside the map.
            
-           When using the search_web tool, always output clear citations (e.g., appending [link] to facts).`
+           CRITICAL: You MUST use the search_web tool for any relevant queries requiring up-to-date, real-world, or specific factual information. When you use the search_web tool, you MUST cite your sources by appending [link] to the facts you provide.`
         : `You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
-           When using the search_web tool, always output clear citations (e.g., appending [link] to facts).`;
+           CRITICAL: You MUST use the search_web tool for any relevant queries requiring up-to-date, real-world, or specific factual information. When you use the search_web tool, you MUST cite your sources by appending [link] to the facts you provide.`;
 
       const config: any = {
         systemInstruction: systemInstruction
@@ -421,6 +421,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       try {
         let streamResponse = await ai.models.generateContentStream(requestParams);
         let searchWebCallArgs: any = null;
+        let searchWebCallId: string | null = null;
 
         for await (const chunk of streamResponse) {
           if (chunk.functionCalls && chunk.functionCalls.length > 0) {
@@ -434,6 +435,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
               }
             } else if (call.name === 'search_web') {
               searchWebCallArgs = call.args;
+              searchWebCallId = call.id || null;
             }
           }
           const text = chunk.text;
@@ -462,14 +464,27 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
             console.error('Search API call failed:', err);
           }
           
+          const functionCallPart: any = { name: 'search_web', args: searchWebCallArgs };
+          if (searchWebCallId) functionCallPart.id = searchWebCallId;
+
           contents.push({
             role: 'model',
-            parts: [{ functionCall: { name: 'search_web', args: searchWebCallArgs } }]
+            parts: [{ functionCall: functionCallPart }]
           });
           
+          let parsedResults;
+          try {
+            parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
+          } catch (e) {
+            parsedResults = searchResults;
+          }
+
+          const functionResponsePart: any = { name: 'search_web', response: { result: parsedResults } };
+          if (searchWebCallId) functionResponsePart.id = searchWebCallId;
+
           contents.push({
-            role: 'function',
-            parts: [{ functionResponse: { name: 'search_web', response: { result: searchResults } } }]
+            role: 'user',
+            parts: [{ functionResponse: functionResponsePart }]
           });
           
           requestParams.contents = contents;
