@@ -77,7 +77,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         <div className="mb-4">
           <Helix size="45" speed="2.5" color="white" />
         </div>
-        <p className="text-gray-500 animate-pulse">Initializing application...</p>
       </div>
     );
   }

@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, MapPin, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare } from 'lucide-react';
+import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -22,11 +22,10 @@ interface Message {
   content: string;
   hasImage?: boolean;
   hasAudio?: boolean;
-  mapData?: { latitude: number; longitude: number; label?: string };
   createdAt?: any;
 }
 
-type ChatMode = 'auto' | 'fast' | 'pro' | 'search' | 'maps';
+type ChatMode = 'auto' | 'fast' | 'pro' | 'search';
 
 export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user } = useAuth();
@@ -41,7 +40,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [isRecording, setIsRecording] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -56,21 +54,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   useEffect(() => {
     scrollToBottom();
   }, [messages, streamingMessage]);
-
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
-        },
-        (error) => console.error("Error getting location:", error),
-        { enableHighAccuracy: true }
-      );
-    }
-  }, []);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -333,24 +316,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
 
       const tools: any[] = [];
-      const mapTool = {
-        functionDeclarations: [
-          {
-            name: "display_map",
-            description: "Display a visual interactive map at a specific location. You MUST provide highly precise, exact coordinates (latitude and longitude) for the specific building, address, or landmark requested. Use Google Search to find the exact coordinates if you are unsure.",
-            parameters: {
-              type: "OBJECT",
-              properties: {
-                latitude: { type: "NUMBER", description: "Latitude of the location" },
-                longitude: { type: "NUMBER", description: "Longitude of the location" },
-                label: { type: "STRING", description: "Label or name of the place" }
-              },
-              required: ["latitude", "longitude", "label"]
-            }
-          }
-        ]
-      };
-
       const searchWebTool = {
         functionDeclarations: [
           {
@@ -369,23 +334,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       if (mode === 'search') {
         tools.push(searchWebTool);
-      } else if (mode === 'maps') {
-        tools.push(searchWebTool);
-        tools.push(mapTool);
       } else if (mode === 'auto' || mode === 'pro') {
-        tools.push(mapTool);
+        tools.push(searchWebTool);
       }
 
-      const systemInstruction = (mode === 'maps' || mode === 'auto' || mode === 'pro')
-        ? `You are Chris, a helpful AI assistant. 
-           When a user asks to locate a place or show a map, you MUST use the display_map tool.
-           DO NOT output raw URLs, links, or markdown images for maps. ONLY use the display_map tool.
-           If you are in 'maps' mode, use the search_web tool to find the EXACT latitude and longitude for the specific place.
-           User's current location: ${userLocation ? `Lat: ${userLocation.latitude}, Lng: ${userLocation.longitude}` : 'Unknown'}.
-           Always provide a brief text response explaining what you found, alongside the map.
-           
-           CRITICAL: You MUST use the search_web tool for any relevant queries requiring up-to-date, real-world, or specific factual information. When you use the search_web tool, you MUST cite your sources by appending [link] to the facts you provide.`
-        : `You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
+      const systemInstruction = `You are Q1, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
            CRITICAL: You MUST use the search_web tool for any relevant queries requiring up-to-date, real-world, or specific factual information. When you use the search_web tool, you MUST cite your sources by appending [link] to the facts you provide.`;
 
       const config: any = {
@@ -411,7 +364,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         modelName = isComplex ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
         if (!isComplex) fallbackModelName = 'gemini-2.5-flash-8b';
       } else {
-        // Default for search, maps, etc.
+        // Default for search, etc.
         modelName = 'gemini-2.5-flash';
         fallbackModelName = 'gemini-2.5-flash-8b';
       }
@@ -421,8 +374,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         contents: contents,
         config: config
       };
-
-      let mapData: { latitude: number; longitude: number; label?: string } | undefined = undefined;
 
       // Helper function to execute API call with retry logic and fallback model for 429 errors
       const executeWithRetry = async (params: any, maxRetries = 3, fallbackModel?: string) => {
@@ -462,14 +413,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         for await (const chunk of streamResponse) {
           if (chunk.functionCalls && chunk.functionCalls.length > 0) {
             const call = chunk.functionCalls[0];
-            if (call.name === 'display_map') {
-              mapData = call.args as any;
-              const mapDataPayload = JSON.stringify(mapData);
-              if (!fullResponse.includes("```map-data")) {
-                fullResponse += `\n\n\`\`\`map-data\n${mapDataPayload}\n\`\`\`\n\n`;
-                setStreamingMessage(fullResponse);
-              }
-            } else if (call.name === 'search_web') {
+            if (call.name === 'search_web') {
               searchWebCallArgs = call.args;
               searchWebCallId = call.id || null;
             }
@@ -550,11 +494,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           }
           setStreamingMessage(fullResponse);
         }
-
-        // Fallback if the model only returned a function call without text
-        if (!fullResponse.trim() && mapData) {
-          fullResponse = "I've found the location you were looking for. Here it is on the map:\n\n```map-data\n" + JSON.stringify(mapData) + "\n```";
-        }
       } catch (error: any) {
         handleError(error, "Failed to generate AI response");
         fullResponse = "I'm sorry, I encountered an error while processing your request. Please try again later.";
@@ -581,7 +520,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       } finally {
         setIsLoading(false);
         setStreamingMessage('');
-        setStreamingMapData(null);
       }
     } catch (error: any) {
       setIsLoading(false);
@@ -593,16 +531,14 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     auto: 'Auto',
     fast: 'Fast',
     pro: 'Pro',
-    search: 'Search',
-    maps: 'Maps'
+    search: 'Search'
   };
 
   const modeIcons: Record<ChatMode, React.ReactNode> = {
     auto: <Zap size={16} />,
     fast: <Zap size={16} className="text-yellow-500" />,
     pro: <Zap size={16} className="text-purple-500" />,
-    search: <Search size={16} />,
-    maps: <MapPin size={16} />
+    search: <Search size={16} />
   };
 
   const isChatStarted = messages.length > 0 || streamingMessage || isLoadingMessages;
@@ -718,7 +654,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                 >
                   <div className="bg-[#1a1a1a]/50 border border-gray-800/50 rounded-2xl px-4 py-3 flex items-center gap-3">
                     <Helix size="20" speed="2.5" color="white" />
-                    <span className="text-xs text-gray-500 font-normal ml-1">Chris is thinking...</span>
+                    <span className="text-xs text-gray-500 font-normal ml-1">Q1 is thinking...</span>
                   </div>
                 </motion.div>
               )}
@@ -733,7 +669,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         {!isChatStarted && (
           <div className="flex items-center gap-4 mb-8">
             <PlanetLogo className="text-white w-10 h-10 md:w-12 md:h-12" />
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">Chris</h1>
+            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">Q1</h1>
           </div>
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">

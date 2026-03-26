@@ -13,8 +13,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Chris",
-  description: "Chris Chat App",
+  title: "Q1",
+  description: "Q1 Chat App",
 };
 
 export default function RootLayout({
