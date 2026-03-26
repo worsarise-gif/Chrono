@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare } from 'lucide-react';
+import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -538,6 +538,13 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     search: 'Search'
   };
 
+  const modeDescriptions: Record<ChatMode, string> = {
+    auto: 'Smartly switches models based on task complexity.',
+    fast: 'Optimized for speed and simple tasks.',
+    pro: 'Best for complex reasoning and creative tasks.',
+    search: 'Real-time web search for up-to-date info.'
+  };
+
   const modeIcons: Record<ChatMode, React.ReactNode> = {
     auto: <Zap size={16} />,
     fast: <Zap size={16} className="text-yellow-500" />,
@@ -749,16 +756,30 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                   </button>
                   
                   {showModeDropdown && (
-                    <div className="absolute bottom-full mb-2 right-0 w-36 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-xl overflow-hidden z-50">
+                    <div className="absolute bottom-full mb-2 right-0 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-xl overflow-hidden z-50 py-1">
                       {(Object.keys(modeLabels) as ChatMode[]).map((m) => (
                         <button
                           key={m}
                           type="button"
                           onClick={() => { setMode(m); setShowModeDropdown(false); }}
-                          className={`w-full flex items-center gap-2 px-4 py-2 text-sm text-left hover:bg-[#2a2a2a] transition-colors ${mode === m ? 'text-white bg-gray-800/50' : 'text-gray-400'}`}
+                          className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[#2a2a2a] transition-colors relative ${mode === m ? 'bg-gray-800/50' : ''}`}
                         >
-                          {modeIcons[m]}
-                          {modeLabels[m]}
+                          <div className={`mt-0.5 ${mode === m ? 'text-white' : 'text-gray-500'}`}>
+                            {modeIcons[m]}
+                          </div>
+                          <div className="flex-1">
+                            <div className={`text-sm font-medium ${mode === m ? 'text-white' : 'text-gray-300'}`}>
+                              {modeLabels[m]}
+                            </div>
+                            <div className="text-[11px] text-gray-500 leading-tight mt-0.5">
+                              {modeDescriptions[m]}
+                            </div>
+                          </div>
+                          {mode === m && (
+                            <div className="text-blue-500 mt-0.5">
+                              <Check size={14} />
+                            </div>
+                          )}
                         </button>
                       ))}
                     </div>
