@@ -10,6 +10,7 @@ import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandl
 import { handleError } from '../utils/errorHandler';
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface Chat {
   id: string;
@@ -75,23 +76,29 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [chatToDelete, setChatToDelete] = useState<{ id: string, title: string } | null>(null);
 
-  const handleDeleteChat = async (e: React.MouseEvent, chatId: string) => {
+  const handleDeleteChat = async (e: React.MouseEvent, chatId: string, chatTitle: string) => {
     e.stopPropagation();
     if (!user) return;
+    setChatToDelete({ id: chatId, title: chatTitle });
+    setActiveMenuId(null);
+  };
+
+  const confirmDeleteChat = async () => {
+    if (!user || !chatToDelete) return;
     
-    if (window.confirm('Are you sure you want to delete this chat?')) {
+    try {
+      await deleteDoc(doc(db, 'users', user.uid, 'chats', chatToDelete.id));
+      if (currentChatId === chatToDelete.id) {
+        setCurrentChatId(null);
+      }
+      setChatToDelete(null);
+    } catch (error) {
       try {
-        await deleteDoc(doc(db, 'users', user.uid, 'chats', chatId));
-        if (currentChatId === chatId) {
-          setCurrentChatId(null);
-        }
-      } catch (error) {
-        try {
-          handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/chats/${chatId}`);
-        } catch (e) {
-          handleError(e, "Failed to delete chat");
-        }
+        handleFirestoreError(error, OperationType.DELETE, `users/${user.uid}/chats/${chatToDelete.id}`);
+      } catch (e) {
+        handleError(e, "Failed to delete chat");
       }
     }
   };
@@ -226,8 +233,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                           <div className="absolute right-2 top-10 bg-[#1e1e1e] border border-gray-800 rounded-lg shadow-xl py-1 z-[101] min-w-[120px]">
                             <button
                               onClick={(e) => {
-                                handleDeleteChat(e, chat.id);
-                                setActiveMenuId(null);
+                                handleDeleteChat(e, chat.id, chat.title);
                               }}
                               className="w-full text-left px-3 py-1.5 text-[12px] text-red-400 hover:bg-[#2a2a2a] flex items-center gap-2 transition-colors"
                             >
@@ -275,6 +281,53 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {chatToDelete && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setChatToDelete(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-[#111111] border border-gray-800 w-full max-w-[360px] rounded-[24px] p-6 shadow-2xl overflow-hidden"
+            >
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+                  <Trash2 size={24} />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold text-white">Delete Chat?</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">
+                    This will permanently delete <span className="text-white font-medium">"{chatToDelete.title}"</span> and all its messages. This action cannot be undone.
+                  </p>
+                </div>
+                <div className="flex flex-col w-full gap-2 pt-2">
+                  <button
+                    onClick={confirmDeleteChat}
+                    className="w-full py-3 px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => setChatToDelete(null)}
+                    className="w-full py-3 px-4 bg-transparent hover:bg-[#1a1a1a] text-gray-400 hover:text-white rounded-xl font-medium transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
