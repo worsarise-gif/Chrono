@@ -100,7 +100,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
             return <td className="px-4 py-3 border-b border-gray-800/50 text-gray-300" {...props}>{children}</td>;
           },
           code({ node, inline, className, children, ...props }: any) {
-            const match = /language-(\w+)/.exec(className || '');
+            const match = /language-([\w-]+)/.exec(className || '');
             const language = match ? match[1] : '';
             const isInline = !match && !String(children).includes('\n');
 

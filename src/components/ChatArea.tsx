@@ -493,7 +493,41 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
           if (Array.isArray(parsedResults) && parsedResults.length > 0) {
             fullResponse = fullResponse.replace("*Searching the web...*\n\n", "");
-            const searchDataPayload = JSON.stringify({ query: searchWebCallArgs.query, results: parsedResults });
+            
+            // Client-side filtering algorithm to clean up irrelevant or messy snippets
+            const cleanedResults = parsedResults.map((res: any) => {
+              let snippet = res.snippet || '';
+              
+              // 1. Remove markdown heading markers, bold/italic markers, and URL artifacts
+              snippet = snippet.replace(/[#*`_]/g, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/\[.*?\]/g, '');
+              
+              // 2. Remove repetitive nav/footer phrases and non-content text
+              const stopPhrases = [
+                'free download', 'log in', 'sign up', 'cookie policy', 'privacy policy', 
+                'all rights reserved', 'read more', 'click here', 'edit section', 
+                'other icons related', 'find a variety of', 'explore unique'
+              ];
+              
+              let lines = snippet.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+              
+              lines = lines.filter((line: string) => {
+                const lower = line.toLowerCase();
+                // Filter out lines that are mostly just a stop phrase (e.g. navigation buttons)
+                return !stopPhrases.some(phrase => lower.includes(phrase) && line.length < phrase.length + 20);
+              });
+              
+              // 3. Rejoin and normalize whitespace
+              let cleanedSnippet = lines.join(' ').replace(/\s+/g, ' ').trim();
+              
+              // 4. Truncate to a clean, readable length for the UI cards
+              if (cleanedSnippet.length > 180) {
+                cleanedSnippet = cleanedSnippet.substring(0, 180).trim() + '...';
+              }
+              
+              return { ...res, snippet: cleanedSnippet };
+            });
+
+            const searchDataPayload = JSON.stringify({ query: searchWebCallArgs.query, results: cleanedResults });
             fullResponse += `\n\n\`\`\`search-results\n${searchDataPayload}\n\`\`\`\n\n`;
           } else {
             fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`);
