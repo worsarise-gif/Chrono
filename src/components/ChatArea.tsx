@@ -399,15 +399,24 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         config.tools = tools;
       }
       
-      let modelName = 'gemini-3-flash-preview';
+      let modelName = 'gemini-2.5-flash';
+      let fallbackModelName: string | undefined = undefined;
+
       if (mode === 'fast') {
-        modelName = 'gemini-3.1-flash-lite-preview';
+        modelName = 'gemini-2.5-flash';
+        fallbackModelName = 'gemini-2.5-flash-8b'; // Gemini 2.5 Flash-lite equivalent
       } else if (mode === 'pro') {
-        modelName = 'gemini-3.1-pro-preview';
+        modelName = 'gemini-2.5-pro';
+      } else if (mode === 'auto') {
+        // Auto: Determine based on user message complexity
+        const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
+        const isComplex = lastMessage.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(lastMessage);
+        modelName = isComplex ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+        if (!isComplex) fallbackModelName = 'gemini-2.5-flash-8b';
       } else {
-        // Use Flash Lite for all other modes (auto, search, maps) 
-        // to ensure high rate limits on the free tier.
-        modelName = 'gemini-3.1-flash-lite-preview';
+        // Default for search, maps, etc.
+        modelName = 'gemini-2.5-flash';
+        fallbackModelName = 'gemini-2.5-flash-8b';
       }
 
       const requestParams: any = {
@@ -418,28 +427,38 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       let mapData: { latitude: number; longitude: number; label?: string } | undefined = undefined;
 
-      // Helper function to execute API call with retry logic for 429 errors
-      const executeWithRetry = async (params: any, maxRetries = 3) => {
+      // Helper function to execute API call with retry logic and fallback model for 429 errors
+      const executeWithRetry = async (params: any, maxRetries = 3, fallbackModel?: string) => {
         let retries = 0;
+        let currentParams = { ...params };
         while (true) {
           try {
-            return await ai.models.generateContentStream(params);
+            return await ai.models.generateContentStream(currentParams);
           } catch (error: any) {
             const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
-            if (isQuotaError && retries < maxRetries) {
-              retries++;
-              const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
-              console.warn(`Rate limit hit. Retrying in ${Math.round(delay/1000)}s... (Attempt ${retries}/${maxRetries})`);
-              await new Promise(resolve => setTimeout(resolve, delay));
-            } else {
-              throw error;
+            if (isQuotaError) {
+              if (fallbackModel && currentParams.model !== fallbackModel) {
+                console.warn(`Quota exceeded for ${currentParams.model}. Falling back to ${fallbackModel}...`);
+                currentParams.model = fallbackModel;
+                retries = 0; // Reset retries for the fallback model
+                continue; // Try immediately with fallback
+              }
+              
+              if (retries < maxRetries) {
+                retries++;
+                const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
+                console.warn(`Rate limit hit. Retrying in ${Math.round(delay/1000)}s... (Attempt ${retries}/${maxRetries})`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+              }
             }
+            throw error;
           }
         }
       };
 
       try {
-        let streamResponse = await executeWithRetry(requestParams);
+        let streamResponse = await executeWithRetry(requestParams, 3, fallbackModelName);
         let searchWebCallArgs: any = null;
         let searchWebCallId: string | null = null;
 
