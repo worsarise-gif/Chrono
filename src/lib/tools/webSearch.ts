@@ -33,6 +33,36 @@ async function sha256(message: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+function cleanSnippet(raw: string): string {
+  if (!raw) return '';
+  // Remove markdown links, images, etc (basic cleanup)
+  let text = raw.replace(/\[.*?\]\(.*?\)/g, '');
+  // Split into lines
+  let lines = text.split('\n');
+  
+  // Filter lines:
+  // 1. Must have at least 4 words OR be longer than 40 chars.
+  // 2. Shouldn't be typical nav words (Home, Contact, About us, etc.)
+  const navWords = /^(home|about|contact|menu|search|login|sign up|privacy policy|terms|topics|resources|guides|programs|categories|recent|api|learn|releases|plan|build|deploy|contribute|suggested|get started|core concepts|agents|tools|run and scale|evaluation|model optimization|specialized models|going live|legacy apis|using codex|configuration|administration|automation)$/i;
+  
+  lines = lines.filter(line => {
+    const trimmed = line.trim();
+    if (trimmed.length === 0) return false;
+    if (navWords.test(trimmed)) return false;
+    const wordCount = trimmed.split(/\s+/).length;
+    return wordCount >= 4 || trimmed.length > 40;
+  });
+  
+  // Join with space and normalize whitespace
+  let cleaned = lines.join(' ').replace(/\s+/g, ' ').trim();
+  
+  // Truncate to 300 chars to keep UI clean
+  if (cleaned.length > 300) {
+    cleaned = cleaned.substring(0, 300).trim() + '...';
+  }
+  return cleaned;
+}
+
 export async function webSearch(query: string): Promise<string> {
   try {
     const normalizedQuery = query.trim().toLowerCase();
@@ -78,7 +108,7 @@ export async function webSearch(query: string): Promise<string> {
           results = tavilyData.results.map((item: any) => ({
             title: item.title,
             link: item.url,
-            snippet: item.content,
+            snippet: cleanSnippet(item.content),
           }));
         } else {
           tavilyFailed = true;
@@ -107,7 +137,7 @@ export async function webSearch(query: string): Promise<string> {
               results = googleData.items.slice(0, 5).map((item: any) => ({
                 title: item.title,
                 link: item.link,
-                snippet: item.snippet,
+                snippet: cleanSnippet(item.snippet),
               }));
             }
           }

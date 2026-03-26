@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Check, Copy } from 'lucide-react';
+import { Check, Copy, Search, ExternalLink } from 'lucide-react';
 
 interface ResponseFormatterProps {
   content: string;
@@ -103,6 +103,41 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
             const match = /language-(\w+)/.exec(className || '');
             const language = match ? match[1] : '';
             const isInline = !match && !String(children).includes('\n');
+
+            if (language === 'search-results') {
+              try {
+                const data = JSON.parse(String(children));
+                return (
+                  <div className="my-6 flex flex-col gap-3 not-prose">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-400 mb-2 px-1">
+                      <Search size={16} className="text-blue-400" />
+                      <span>Search results for <span className="text-gray-200">"{data.query}"</span></span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {data.results.map((res: any, idx: number) => {
+                        let hostname = res.link;
+                        try { hostname = new URL(res.link).hostname; } catch (e) {}
+                        return (
+                          <a key={idx} href={res.link} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-2 p-4 rounded-xl border border-gray-800 bg-[#1e1e1e]/50 hover:bg-[#2a2a2a] hover:border-gray-700 transition-all no-underline group shadow-sm">
+                            <div className="font-semibold text-blue-400 group-hover:text-blue-300 line-clamp-1 flex items-center justify-between text-sm">
+                              {res.title}
+                              <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
+                            </div>
+                            <div className="text-[11px] text-gray-500 truncate flex items-center gap-1.5">
+                              <div className="w-3.5 h-3.5 rounded-full bg-gray-800 flex items-center justify-center text-[8px]">🌐</div>
+                              {hostname}
+                            </div>
+                            <div className="text-xs text-gray-300 line-clamp-3 leading-relaxed mt-1">{res.snippet}</div>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              } catch (e) {
+                return null;
+              }
+            }
 
             if (isInline) {
               return (

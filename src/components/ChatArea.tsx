@@ -492,10 +492,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           }
 
           if (Array.isArray(parsedResults) && parsedResults.length > 0) {
-            fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n`);
-            parsedResults.forEach((res: any, index: number) => {
-              fullResponse += `> **[${res.title}](${res.link})**\n> \n> ${res.snippet}\n\n`;
-            });
+            fullResponse = fullResponse.replace("*Searching the web...*\n\n", "");
+            const searchDataPayload = JSON.stringify({ query: searchWebCallArgs.query, results: parsedResults });
+            fullResponse += `\n\n\`\`\`search-results\n${searchDataPayload}\n\`\`\`\n\n`;
           } else {
             fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`);
           }
