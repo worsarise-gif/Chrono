@@ -492,12 +492,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           }
 
           if (Array.isArray(parsedResults) && parsedResults.length > 0) {
-            fullResponse = fullResponse.replace("*Searching the web...*\n\n", `*Search results for "${searchWebCallArgs.query}":*\n\n`);
+            fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n`);
             parsedResults.forEach((res: any, index: number) => {
-              fullResponse += `**${index + 1}. [${res.title}](${res.link})**\n${res.snippet}\n\n`;
+              fullResponse += `> **[${res.title}](${res.link})**\n> \n> ${res.snippet}\n\n`;
             });
           } else {
-            fullResponse = fullResponse.replace("*Searching the web...*\n\n", "*Search failed or returned no results.*\n\n");
+            fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`);
           }
           setStreamingMessage(fullResponse);
         }
