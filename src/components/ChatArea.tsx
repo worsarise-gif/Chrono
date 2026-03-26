@@ -236,7 +236,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     setStreamingMessage('');
 
     let chatId = currentChatId;
-    const isFirstMessage = messages.length === 0;
 
     if (!chatId) {
       try {
@@ -256,27 +255,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         }
         return;
       }
-    }
-
-    // Generate a more descriptive title if it's the first message
-    if (isFirstMessage && chatId) {
-      (async () => {
-        try {
-          const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
-          const titleResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: `Generate a very short, concise, and descriptive title (max 5 words) for a chat that starts with this message: "${userMessage}". Return ONLY the title text, no quotes or extra characters.`,
-          });
-          const generatedTitle = titleResponse.text?.trim()?.replace(/^["']|["']$/g, '');
-          if (generatedTitle && chatId) {
-            await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
-              title: generatedTitle
-            });
-          }
-        } catch (e) {
-          console.error("Failed to generate descriptive title:", e);
-        }
-      })();
     }
 
     try {
