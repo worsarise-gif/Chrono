@@ -15,6 +15,7 @@ import dynamic from 'next/dynamic';
 
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
+import { webSearch } from '../lib/tools/webSearch';
 
 const MapComponent = dynamic(() => import('./MapComponent'), { ssr: false });
 
@@ -354,10 +355,26 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         ]
       };
 
+      const searchWebTool = {
+        functionDeclarations: [
+          {
+            name: "search_web",
+            description: "Search the web for up-to-date information.",
+            parameters: {
+              type: "OBJECT",
+              properties: {
+                query: { type: "STRING", description: "The search query" }
+              },
+              required: ["query"]
+            }
+          }
+        ]
+      };
+
       if (mode === 'search') {
-        tools.push({ googleSearch: {} });
+        tools.push(searchWebTool);
       } else if (mode === 'maps') {
-        tools.push({ googleSearch: {} });
+        tools.push(searchWebTool);
         tools.push(mapTool);
       } else if (mode === 'auto' || mode === 'pro') {
         tools.push(mapTool);
@@ -367,10 +384,13 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         ? `You are Chris, a helpful AI assistant. 
            When a user asks to locate a place or show a map, you MUST use the display_map tool.
            DO NOT output raw URLs, links, or markdown images for maps. ONLY use the display_map tool.
-           If you are in 'maps' mode, use Google Search to find the EXACT latitude and longitude for the specific place.
+           If you are in 'maps' mode, use the search_web tool to find the EXACT latitude and longitude for the specific place.
            User's current location: ${userLocation ? `Lat: ${userLocation.latitude}, Lng: ${userLocation.longitude}` : 'Unknown'}.
-           Always provide a brief text response explaining what you found, alongside the map.`
-        : "You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.";
+           Always provide a brief text response explaining what you found, alongside the map.
+           
+           When using the search_web tool, always output clear citations (e.g., appending [link] to facts).`
+        : `You are Chris, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
+           When using the search_web tool, always output clear citations (e.g., appending [link] to facts).`;
 
       const config: any = {
         systemInstruction: systemInstruction
@@ -378,9 +398,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       if (tools.length > 0) {
         config.tools = tools;
-        if (mode === 'maps') {
-          config.toolConfig = { includeServerSideToolInvocations: true };
-        }
       }
       
       let modelName = 'gemini-3-flash-preview';
@@ -403,7 +420,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       let mapData: { latitude: number; longitude: number; label?: string } | undefined = undefined;
 
       try {
-        const streamResponse = await ai.models.generateContentStream(requestParams);
+        let streamResponse = await ai.models.generateContentStream(requestParams);
+        let searchWebCallArgs: any = null;
 
         for await (const chunk of streamResponse) {
           if (chunk.functionCalls && chunk.functionCalls.length > 0) {
@@ -415,12 +433,53 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
                 fullResponse += "\n\n*I've located the place on the map for you.*";
                 setStreamingMessage(fullResponse);
               }
+            } else if (call.name === 'search_web') {
+              searchWebCallArgs = call.args;
             }
           }
           const text = chunk.text;
           if (text) {
             fullResponse += text;
             setStreamingMessage(fullResponse);
+          }
+        }
+
+        if (searchWebCallArgs) {
+          fullResponse += "\n\n*Searching the web...*\n\n";
+          setStreamingMessage(fullResponse);
+          
+          const searchResults = await webSearch(searchWebCallArgs.query);
+          
+          contents.push({
+            role: 'model',
+            parts: [{ functionCall: { name: 'search_web', args: searchWebCallArgs } }]
+          });
+          
+          contents.push({
+            role: 'function',
+            parts: [{ functionResponse: { name: 'search_web', response: { result: searchResults } } }]
+          });
+          
+          requestParams.contents = contents;
+          const streamResponse2 = await ai.models.generateContentStream(requestParams);
+          
+          for await (const chunk of streamResponse2) {
+            if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+              const call = chunk.functionCalls[0];
+              if (call.name === 'display_map') {
+                mapData = call.args as any;
+                setStreamingMapData(mapData!);
+                if (!fullResponse.includes("located")) {
+                  fullResponse += "\n\n*I've located the place on the map for you.*";
+                  setStreamingMessage(fullResponse);
+                }
+              }
+            }
+            const text = chunk.text;
+            if (text) {
+              fullResponse += text;
+              setStreamingMessage(fullResponse);
+            }
           }
         }
 
