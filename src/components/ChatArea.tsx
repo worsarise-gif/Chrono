@@ -54,6 +54,10 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     scrollToBottom();
   }, [messages, streamingMessage]);
 
+  useEffect(() => {
+    textareaRef.current?.focus();
+  }, [currentChatId]);
+
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     if (textareaRef.current) {
@@ -541,6 +545,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   };
 
   const isChatStarted = messages.length > 0 || streamingMessage || isLoadingMessages;
+
+  useEffect(() => {
+    if (!isLoading && isChatStarted) {
+      textareaRef.current?.focus();
+    }
+  }, [isLoading, isChatStarted]);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
