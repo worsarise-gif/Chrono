@@ -11,7 +11,6 @@ import { db, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
-import dynamic from 'next/dynamic';
 
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';

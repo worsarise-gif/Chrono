@@ -4,7 +4,6 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Search, ExternalLink } from 'lucide-react';
-import dynamic from 'next/dynamic';
 
 interface ResponseFormatterProps {
   content: string;
