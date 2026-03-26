@@ -418,8 +418,28 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       let mapData: { latitude: number; longitude: number; label?: string } | undefined = undefined;
 
+      // Helper function to execute API call with retry logic for 429 errors
+      const executeWithRetry = async (params: any, maxRetries = 3) => {
+        let retries = 0;
+        while (true) {
+          try {
+            return await ai.models.generateContentStream(params);
+          } catch (error: any) {
+            const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
+            if (isQuotaError && retries < maxRetries) {
+              retries++;
+              const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
+              console.warn(`Rate limit hit. Retrying in ${Math.round(delay/1000)}s... (Attempt ${retries}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+            } else {
+              throw error;
+            }
+          }
+        }
+      };
+
       try {
-        let streamResponse = await ai.models.generateContentStream(requestParams);
+        let streamResponse = await executeWithRetry(requestParams);
         let searchWebCallArgs: any = null;
         let searchWebCallId: string | null = null;
 
@@ -464,54 +484,22 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
             console.error('Search API call failed:', err);
           }
           
-          const functionCallPart: any = { name: 'search_web', args: searchWebCallArgs };
-          if (searchWebCallId) functionCallPart.id = searchWebCallId;
-
-          contents.push({
-            role: 'model',
-            parts: [{ functionCall: functionCallPart }]
-          });
-          
-          let parsedResults;
+          let parsedResults: any[] = [];
           try {
             parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
           } catch (e) {
-            parsedResults = searchResults;
+            // ignore
           }
 
-          const functionResponsePart: any = { name: 'search_web', response: { result: parsedResults } };
-          if (searchWebCallId) functionResponsePart.id = searchWebCallId;
-
-          contents.push({
-            role: 'user',
-            parts: [{ functionResponse: functionResponsePart }]
-          });
-          
-          requestParams.contents = contents;
-
-          // Add a small delay to avoid hitting burst rate limits on the free tier
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          const streamResponse2 = await ai.models.generateContentStream(requestParams);
-          
-          for await (const chunk of streamResponse2) {
-            if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-              const call = chunk.functionCalls[0];
-              if (call.name === 'display_map') {
-                mapData = call.args as any;
-                setStreamingMapData(mapData!);
-                if (!fullResponse.includes("located")) {
-                  fullResponse += "\n\n*I've located the place on the map for you.*";
-                  setStreamingMessage(fullResponse);
-                }
-              }
-            }
-            const text = chunk.text;
-            if (text) {
-              fullResponse += text;
-              setStreamingMessage(fullResponse);
-            }
+          if (Array.isArray(parsedResults) && parsedResults.length > 0) {
+            fullResponse = fullResponse.replace("*Searching the web...*\n\n", `*Search results for "${searchWebCallArgs.query}":*\n\n`);
+            parsedResults.forEach((res: any, index: number) => {
+              fullResponse += `**${index + 1}. [${res.title}](${res.link})**\n${res.snippet}\n\n`;
+            });
+          } else {
+            fullResponse = fullResponse.replace("*Searching the web...*\n\n", "*Search failed or returned no results.*\n\n");
           }
+          setStreamingMessage(fullResponse);
         }
 
         // Fallback if the model only returned a function call without text

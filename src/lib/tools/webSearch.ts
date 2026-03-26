@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
+import { tavily } from '@tavily/core';
 import firebaseConfigJson from '../../../firebase-applet-config.json';
 
 // Firebase configuration: Prefer environment variables, fallback to JSON for AI Studio
@@ -67,30 +68,18 @@ export async function webSearch(query: string): Promise<string> {
     
     if (tavilyApiKey) {
       try {
-        const tavilyRes = await fetch('https://api.tavily.com/search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            api_key: tavilyApiKey,
-            query: query,
-            search_depth: 'basic',
-            max_results: 5,
-          }),
+        const client = tavily({ apiKey: tavilyApiKey });
+        const tavilyData = await client.search(query, {
+          searchDepth: "advanced",
+          maxResults: 5
         });
 
-        if (tavilyRes.ok) {
-          const tavilyData = await tavilyRes.json();
-          if (tavilyData.results && tavilyData.results.length > 0) {
-            results = tavilyData.results.map((item: any) => ({
-              title: item.title,
-              link: item.url,
-              snippet: item.content,
-            }));
-          } else {
-            tavilyFailed = true;
-          }
+        if (tavilyData && tavilyData.results && tavilyData.results.length > 0) {
+          results = tavilyData.results.map((item: any) => ({
+            title: item.title,
+            link: item.url,
+            snippet: item.content,
+          }));
         } else {
           tavilyFailed = true;
         }

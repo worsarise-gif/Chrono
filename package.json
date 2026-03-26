@@ -13,6 +13,7 @@
     "@google/genai": "^1.29.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@tailwindcss/typography": "^0.5.19",
+    "@tavily/core": "^0.7.2",
     "dotenv": "^17.2.3",
     "firebase": "^12.11.0",
     "ldrs": "^1.1.9",
