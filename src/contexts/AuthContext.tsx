@@ -73,9 +73,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen w-full bg-[#000000] text-white">
+      <div className="flex flex-col items-center justify-center h-[100dvh] w-full bg-background text-foreground">
         <div className="mb-4">
-          <Helix size="45" speed="2.5" color="white" />
+          <Helix size="45" speed="2.5" color="var(--color-foreground)" />
         </div>
       </div>
     );

@@ -3,6 +3,24 @@
 
 @theme {
   --font-sans: var(--font-poppins), -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  
+  --color-background: #ffffff;
+  --color-foreground: #111827;
+  --color-surface: #f3f4f6;
+  --color-surface-hover: #e5e7eb;
+  --color-border: #e5e7eb;
+  --color-muted: #6b7280;
+  --color-stars: rgba(0, 0, 0, 0.03);
+}
+
+.dark {
+  --color-background: #000000;
+  --color-foreground: #ffffff;
+  --color-surface: #1a1a1a;
+  --color-surface-hover: #2a2a2a;
+  --color-border: #1f2937;
+  --color-muted: #9ca3af;
+  --color-stars: rgba(255, 255, 255, 0.08);
 }
 
 /* Custom Scrollbar for all elements */
@@ -14,11 +32,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a2a;
+  background: var(--color-surface-hover);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--color-muted);
 }
 
 /* Keep sidebar specific if needed, but the global one covers it */
@@ -29,11 +47,11 @@
   background: transparent;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: #27272a;
+  background: var(--color-surface);
   border-radius: 4px;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--color-surface-hover);
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -79,4 +97,10 @@ input[type="tel"],
 input[type="url"],
 textarea {
   cursor: text;
+}
+
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+  }
 }

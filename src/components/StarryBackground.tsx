@@ -6,8 +6,8 @@ export default function StarryBackground() {
     <div
       className="fixed inset-0 pointer-events-none z-0"
       style={{
-        backgroundColor: '#000000',
-        backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)',
+        backgroundColor: 'var(--color-background)',
+        backgroundImage: 'radial-gradient(var(--color-stars) 1px, transparent 1px)',
         backgroundSize: '24px 24px'
       }}
     />

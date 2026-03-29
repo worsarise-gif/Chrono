@@ -739,19 +739,19 @@ Session Title Status: "false"`;
   }, [showModeDropdown]);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#000000] relative overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden font-sans">
       {/* Floating Actions */}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-40 pointer-events-none">
         <button 
           onClick={onMenuClick}
-          className="p-3 bg-[#1a1a1a]/80 backdrop-blur-md border border-gray-800/50 hover:bg-[#2a2a2a] rounded-full text-gray-400 hover:text-white md:hidden pointer-events-auto transition-all shadow-lg"
+          className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
         >
           <Menu size={20} />
         </button>
         <div className="flex-1" />
         <button 
           onClick={() => setCurrentChatId(null)}
-          className="p-3 bg-[#1a1a1a]/80 backdrop-blur-md border border-gray-800/50 hover:bg-[#2a2a2a] rounded-full text-gray-400 hover:text-white pointer-events-auto transition-all shadow-lg ml-auto group"
+          className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
           title="New Chat"
         >
           <SquarePen size={20} className="group-hover:scale-110 transition-transform" />
@@ -762,14 +762,14 @@ Session Title Status: "false"`;
       <div className="flex-1 overflow-y-auto scroll-smooth relative pt-16">
         {isLoadingMessages ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
-            <Helix size="35" speed="2.5" color="white" />
+            <Helix size="35" speed="2.5" color="currentColor" />
           </div>
         ) : !isChatStarted ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
             {/* Welcome screen is handled by the input area's positioning */}
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto w-full px-4 pt-6 pb-32 space-y-8">
+          <div className="max-w-3xl mx-auto w-full px-4 pt-6 pb-40 md:pb-32 space-y-6 md:space-y-8">
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
                 <motion.div 
@@ -779,13 +779,13 @@ Session Title Status: "false"`;
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group w-full`}
                 >
-                  <div className={`${msg.role === 'user' ? 'max-w-[85%] bg-[#1a1a1a] rounded-[24px] px-5 py-3.5 text-white shadow-sm' : 'max-w-[80%] relative bg-transparent text-white text-[15px] w-full'}`}>
+                  <div className={`${msg.role === 'user' ? 'max-w-[90%] md:max-w-[85%] bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-[15px] md:text-[15px]' : 'max-w-[95%] md:max-w-[80%] relative bg-transparent text-foreground text-[16px] md:text-[15px] w-full'}`}>
                     {msg.role === 'model' ? (
                       <div className="w-full">
                         <ResponseFormatter content={msg.content} />
                         
                         {/* Action Row */}
-                        <div className="flex items-center gap-1 mt-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500">
+                        <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted">
                           {[
                             { icon: <RefreshCcw size={14} />, title: "Regenerate" },
                             { icon: <Copy size={14} />, title: "Copy" },
@@ -798,7 +798,7 @@ Session Title Status: "false"`;
                             <button 
                               key={i}
                               onClick={btn.onClick}
-                              className={`p-1.5 rounded-lg hover:bg-[#1a1a1a] transition-colors ${btn.color || 'hover:text-white'}`} 
+                              className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-foreground'}`} 
                               title={btn.title}
                             >
                               {btn.icon}
@@ -808,12 +808,12 @@ Session Title Status: "false"`;
 
                         {/* Suggestions */}
                         <div className="mt-5 space-y-3">
-                          <button className="flex items-center gap-3 text-sm font-normal text-gray-200 hover:text-white transition-colors">
-                            <CornerDownRight size={16} className="text-gray-500" />
+                          <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
+                            <CornerDownRight size={16} className="text-muted" />
                             Cebu Food Recommendations
                           </button>
-                          <button className="flex items-center gap-3 text-sm font-normal text-gray-200 hover:text-white transition-colors">
-                            <CornerDownRight size={16} className="text-gray-500" />
+                          <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
+                            <CornerDownRight size={16} className="text-muted" />
                             Cebu Nightlife Spots
                           </button>
                         </div>
@@ -832,7 +832,7 @@ Session Title Status: "false"`;
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className="flex justify-start group w-full"
                 >
-                  <div className="max-w-[80%] relative bg-transparent text-white text-[15px] w-full">
+                  <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent text-foreground text-[16px] md:text-[15px] w-full">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} />
                     </div>
@@ -848,9 +848,9 @@ Session Title Status: "false"`;
                   transition={{ duration: 0.2 }}
                   className="flex justify-start mb-4"
                 >
-                  <div className="bg-[#1a1a1a]/50 border border-gray-800/50 rounded-2xl px-4 py-3 flex items-center gap-3">
-                    <Helix size="20" speed="2.5" color="white" />
-                    <span className="text-xs text-gray-500 font-normal ml-1">Q1 is thinking...</span>
+                  <div className="bg-surface/50 border border-border/50 rounded-2xl px-4 py-3 flex items-center gap-3">
+                    <Helix size="20" speed="2.5" color="currentColor" />
+                    <span className="text-xs text-muted font-normal ml-1">Q1 is thinking...</span>
                   </div>
                 </motion.div>
               )}
@@ -861,28 +861,28 @@ Session Title Status: "false"`;
       </div>
 
       {/* Input Area */}
-      <div className={`absolute left-0 right-0 p-4 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0'}`}>
+      <div className={`absolute left-0 right-0 p-3 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0 pb-safe'}`}>
         {!isChatStarted && (
-          <div className="flex items-center gap-4 mb-8">
-            <PlanetLogo className="text-white w-10 h-10 md:w-12 md:h-12" />
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">Q1</h1>
+          <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+            <PlanetLogo className="text-foreground w-10 h-10 md:w-12 md:h-12" />
+            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">Q1</h1>
           </div>
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
-          <div className="relative bg-[#1a1a1a] rounded-[28px] transition-all shadow-2xl border border-gray-800/50 focus-within:border-gray-700/50 flex flex-col p-1.5">
+          <div className="relative bg-surface rounded-[24px] md:rounded-[28px] transition-all shadow-2xl border border-border/50 focus-within:border-border flex flex-col p-1.5 md:p-2">
             {selectedImage && (
               <div className="px-2 pt-2 pb-1 flex overflow-hidden">
                 <div className="relative group">
                   <img 
                     src={`data:${selectedImage.mimeType};base64,${selectedImage.data}`} 
-                    className="w-16 h-16 object-cover rounded-xl border border-gray-800 shadow-lg" 
+                    className="w-16 h-16 object-cover rounded-xl border border-border shadow-lg" 
                     alt="Selected"
                     referrerPolicy="no-referrer"
                   />
                   <button 
                     type="button"
                     onClick={() => setSelectedImage(null)} 
-                    className="absolute -top-2 -right-2 bg-black border border-gray-800 rounded-full p-1 text-gray-400 hover:text-white shadow-xl transition-colors z-10"
+                    className="absolute -top-2 -right-2 bg-background border border-border rounded-full p-1 text-muted hover:text-foreground shadow-xl transition-colors z-10"
                   >
                     <X size={12} />
                   </button>
@@ -902,7 +902,7 @@ Session Title Status: "false"`;
               <button 
                 type="button" 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#2a2a2a] rounded-full transition-colors shrink-0"
+                className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
                 title="Attach image"
               >
                 <Paperclip size={20} />
@@ -914,7 +914,7 @@ Session Title Status: "false"`;
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder={isRecording ? "Listening..." : "Ask anything"}
-                className="flex-1 bg-transparent border-none outline-none text-white placeholder-gray-500 py-0 my-2 px-1 text-[15px] font-normal resize-none overflow-y-auto leading-[24px] break-words"
+                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-normal resize-none overflow-y-auto leading-[24px] break-words"
                 rows={1}
                 disabled={isLoading || isRecording}
                 style={{ minHeight: '24px', maxHeight: '200px' }}
@@ -926,30 +926,30 @@ Session Title Status: "false"`;
                   <button 
                     type="button" 
                     onClick={() => setShowModeDropdown(!showModeDropdown)}
-                    className="h-10 px-3 flex items-center gap-1.5 rounded-full text-white text-[13px] font-medium hover:bg-[#2a2a2a] transition-colors"
+                    className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-foreground text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
                   >
                     <span className="hidden sm:inline">{modeLabels[mode]}</span>
                     <span className="sm:hidden">{modeIcons[mode]}</span>
-                    <ChevronDown size={14} className="text-gray-400" />
+                    <ChevronDown size={14} className="text-muted" />
                   </button>
                   
                   {showModeDropdown && (
-                    <div className="absolute bottom-full mb-2 right-0 w-64 bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-xl overflow-hidden z-50 py-1">
+                    <div className="absolute bottom-full mb-2 right-0 md:left-0 w-[240px] md:w-64 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
                       {(Object.keys(modeLabels) as ChatMode[]).map((m) => (
                         <button
                           key={m}
                           type="button"
                           onClick={() => { setMode(m); setShowModeDropdown(false); }}
-                          className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-[#2a2a2a] transition-colors relative ${mode === m ? 'bg-gray-800/50' : ''}`}
+                          className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors relative ${mode === m ? 'bg-surface-hover/50' : ''}`}
                         >
-                          <div className={`mt-0.5 ${mode === m ? 'text-white' : 'text-gray-500'}`}>
+                          <div className={`mt-0.5 ${mode === m ? 'text-foreground' : 'text-muted'}`}>
                             {modeIcons[m]}
                           </div>
                           <div className="flex-1">
-                            <div className={`text-sm font-medium ${mode === m ? 'text-white' : 'text-gray-300'}`}>
+                            <div className={`text-sm font-medium ${mode === m ? 'text-foreground' : 'text-muted'}`}>
                               {modeLabels[m]}
                             </div>
-                            <div className="text-[11px] text-gray-500 leading-tight mt-0.5">
+                            <div className="text-[11px] text-muted leading-tight mt-0.5">
                               {modeDescriptions[m]}
                             </div>
                           </div>
@@ -969,18 +969,20 @@ Session Title Status: "false"`;
                   onMouseDown={startRecording}
                   onMouseUp={stopRecording}
                   onMouseLeave={stopRecording}
-                  className={`w-10 h-10 flex items-center justify-center transition-colors rounded-full shrink-0 ${isRecording ? 'text-red-500 bg-red-500/10 hover:bg-red-500/20' : 'text-gray-400 hover:text-white hover:bg-[#2a2a2a]'}`}
+                  onTouchStart={startRecording}
+                  onTouchEnd={stopRecording}
+                  className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center transition-colors rounded-full shrink-0 ${isRecording ? 'text-red-500 bg-red-500/10 hover:bg-red-500/20' : 'text-muted hover:text-foreground hover:bg-surface-hover'}`}
                   title="Hold to dictate"
                 >
-                  <Mic size={20} className={isRecording ? 'animate-pulse' : ''} />
+                  <Mic size={18} className={`md:w-5 md:h-5 ${isRecording ? 'animate-pulse' : ''}`} />
                 </button>
                 
                 <button 
                   type="submit" 
                   disabled={(!input.trim() && !selectedImage) || isLoading} 
-                  className="w-10 h-10 flex items-center justify-center bg-white text-black rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50 shrink-0"
+                  className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors disabled:opacity-50 shrink-0"
                 >
-                  {input.trim() || selectedImage ? <ArrowUp size={20} strokeWidth={2.5} /> : <AudioLines size={20} strokeWidth={2.5} />}
+                  {input.trim() || selectedImage ? <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} /> : <AudioLines size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />}
                 </button>
               </div>
             </div>
