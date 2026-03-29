@@ -403,16 +403,25 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
       
       let modelName = 'gemini-2.5-flash';
+      let bytezModel = 'openai/gpt-4o';
+      let groqModel = 'openai/gpt-oss-safeguard-20b';
+      
+      const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
+      const isComplex = lastMessage.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(lastMessage);
 
       if (mode === 'flash') {
-        modelName = 'meta-llama/Meta-Llama-3-8B-Instruct'; // Bytez
+        modelName = 'gemini-2.5-flash';
+        bytezModel = 'openai/gpt-4o';
+        groqModel = 'openai/gpt-oss-safeguard-20b';
       } else if (mode === 'pro') {
-        modelName = 'llama3-8b-8192'; // Groq
+        modelName = 'gemini-2.5-pro';
+        bytezModel = 'openai/gpt-4.1';
+        groqModel = 'qwen/qwen3-32b';
       } else if (mode === 'auto') {
         // Auto: Determine based on user message complexity
-        const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
-        const isComplex = lastMessage.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(lastMessage);
         modelName = isComplex ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
+        bytezModel = isComplex ? 'openai/gpt-4.1' : 'openai/gpt-4o';
+        groqModel = isComplex ? 'qwen/qwen3-32b' : 'openai/gpt-oss-safeguard-20b';
       } else {
         // Default for search, etc.
         modelName = 'gemini-2.5-flash';
@@ -438,8 +447,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         setStreamingMessage(fullResponse);
       };
 
-      const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, 'meta-llama/Meta-Llama-3-8B-Instruct', openAIMessages, handleChunk);
-      const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama3-8b-8192', openAIMessages, handleChunk);
+      const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, bytezModel, openAIMessages, handleChunk);
+      const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, groqModel, openAIMessages, handleChunk);
 
       // Helper function to execute API call with retry logic and fallback model for 429 errors
       const executeWithRetry = async (params: any, maxRetries = 3) => {
@@ -465,43 +474,33 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       };
 
       try {
-        if (mode === 'flash') {
-          await runBytez();
-        } else if (mode === 'pro') {
-          await runGroq();
-        } else {
-          // auto or search
-          let streamResponse;
-          try {
-            streamResponse = await executeWithRetry(requestParams, 3);
-          } catch (error: any) {
-            if (mode === 'auto') {
-              const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
-              if (isQuotaError) {
-                console.warn("Gemini quota exceeded. Falling back to Bytez...");
-                try {
-                  await runBytez();
-                  streamResponse = null; // Handled by runBytez
-                } catch (bytezError: any) {
-                  const isBytezQuotaError = bytezError?.message?.toLowerCase().includes('quota') || bytezError?.message?.includes('429') || bytezError?.message?.includes('402');
-                  if (isBytezQuotaError) {
-                    console.warn("Bytez quota exceeded. Falling back to Groq...");
-                    await runGroq();
-                    streamResponse = null; // Handled by runGroq
-                  } else {
-                    throw bytezError;
-                  }
-                }
+        let streamResponse;
+        try {
+          streamResponse = await executeWithRetry(requestParams, 3);
+        } catch (error: any) {
+          const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
+          if (isQuotaError) {
+            console.warn("Gemini quota exceeded. Falling back to Bytez...");
+            try {
+              await runBytez();
+              streamResponse = null; // Handled by runBytez
+            } catch (bytezError: any) {
+              const isBytezQuotaError = bytezError?.message?.toLowerCase().includes('quota') || bytezError?.message?.includes('429') || bytezError?.message?.includes('402');
+              if (isBytezQuotaError) {
+                console.warn("Bytez quota exceeded. Falling back to Groq...");
+                await runGroq();
+                streamResponse = null; // Handled by runGroq
               } else {
-                throw error;
+                throw bytezError;
               }
-            } else {
-              throw error;
             }
+          } else {
+            throw error;
           }
+        }
 
-          if (streamResponse) {
-            let searchWebCallArgs: any = null;
+        if (streamResponse) {
+          let searchWebCallArgs: any = null;
             let searchWebCallId: string | null = null;
 
             for await (const chunk of streamResponse) {
@@ -589,7 +588,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
               setStreamingMessage(fullResponse);
             }
           }
-        }
       } catch (error: any) {
         handleError(error, "Failed to generate AI response");
         fullResponse = "I'm sorry, I encountered an error while processing your request. Please try again later.";
