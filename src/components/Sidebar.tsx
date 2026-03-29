@@ -204,7 +204,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           <div className={`px-2 pb-2 flex flex-col min-h-full transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             {isLoadingChats ? (
               <div className="flex justify-center py-4">
-                <Helix size="24" speed="2.5" color="white" />
+                <Helix size="24" speed="2.5" color="var(--color-foreground)" />
               </div>
             ) : chats.length > 0 && (
               <>

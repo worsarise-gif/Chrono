@@ -762,7 +762,7 @@ Session Title Status: "false"`;
       <div className="flex-1 overflow-y-auto scroll-smooth relative pt-16">
         {isLoadingMessages ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
-            <Helix size="35" speed="2.5" color="currentColor" />
+            <Helix size="35" speed="2.5" color="var(--color-foreground)" />
           </div>
         ) : !isChatStarted ? (
           <div className="h-full flex flex-col items-center justify-center px-4">
@@ -846,12 +846,9 @@ Session Title Status: "false"`;
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="flex justify-start mb-4"
+                  className="flex justify-start mb-4 px-1"
                 >
-                  <div className="bg-surface/50 border border-border/50 rounded-2xl px-4 py-3 flex items-center gap-3">
-                    <Helix size="20" speed="2.5" color="currentColor" />
-                    <span className="text-xs text-muted font-normal ml-1">Q1 is thinking...</span>
-                  </div>
+                  <Helix size="20" speed="2.5" color="var(--color-foreground)" />
                 </motion.div>
               )}
             </AnimatePresence>
