@@ -74,6 +74,60 @@ const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs
   }
 };
 
+const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string) => {
+  const makeRequest = async (m: string) => {
+    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: JSON.stringify({ model: m, messages, temperature: 0.3 })
+    });
+    if (!res.ok) throw new Error(`Groq Error: ${await res.text()}`);
+    const data = await res.json();
+    return data.choices[0].message.content;
+  };
+
+  try {
+    return await makeRequest(model);
+  } catch (e) {
+    if (fallbackModel) {
+      console.warn(`Groq ${model} failed, falling back to ${fallbackModel}`);
+      return await makeRequest(fallbackModel);
+    }
+    throw e;
+  }
+};
+
+const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string) => {
+  const makeRequest = async (m: string) => {
+    const formData = new FormData();
+    formData.append('file', audioBlob, 'audio.wav');
+    formData.append('model', m);
+    const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`
+      },
+      body: formData
+    });
+    if (!res.ok) throw new Error(`Groq Transcription Error: ${await res.text()}`);
+    const data = await res.json();
+    return data.text;
+  };
+
+  try {
+    return await makeRequest(model);
+  } catch (e) {
+    if (fallbackModel) {
+      console.warn(`Groq ${model} failed, falling back to ${fallbackModel}`);
+      return await makeRequest(fallbackModel);
+    }
+    throw e;
+  }
+};
+
 export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user } = useAuth();
   const { currentChatId, setCurrentChatId } = useChatContext();
@@ -205,12 +259,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const base64Audio = (reader.result as string).split(',')[1];
-          await handleVoiceInput(base64Audio);
-        };
-        reader.readAsDataURL(audioBlob);
+        await handleVoiceInput(audioBlob);
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -228,19 +277,10 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   };
 
-  const handleVoiceInput = async (base64Audio: string) => {
+  const handleVoiceInput = async (audioBlob: Blob) => {
     setIsLoading(true);
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is missing. Please add it to your environment variables.");
-      }
-      const ai = new GoogleGenAI({ apiKey });
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: { parts: [{ inlineData: { data: base64Audio, mimeType: 'audio/wav' } }, { text: "Transcribe this audio accurately." }] }
-      });
-      const transcription = response.text;
+      const transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3', 'whisper-large-v3-turbo');
       if (transcription) {
         setInput(transcription);
       }
@@ -248,6 +288,36 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       handleError(error, "Voice transcription failed");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const generateSmartTitle = async (chatId: string, initialMessage: string) => {
+    if (!user) return;
+    try {
+      const prompt = `You are an intelligent assistant tasked with generating a **single, concise, and memorable chat title (5–8 words)** for this project.
+
+Rules:
+1. Generate the title **only once per session**. If a title has already been generated for this session, respond exactly: "Title already generated. Cannot create a new one."
+2. Focus on the **main topic, key ideas, or recurring themes** in the conversation.
+3. Avoid generic words like "chat", "discussion", or "conversation".
+4. If no clear topic is present, fallback to: "Chat on [Date]".
+5. Make the title **unique, context-aware, and easy to remember**.
+
+Conversation:
+"${initialMessage}"
+
+Session Title Status: "false"`;
+
+      const generatedTitle = await callGroqChatNonStream('qwen/qwen3-32b', [{ role: 'user', content: prompt }]);
+      
+      if (generatedTitle && !generatedTitle.includes("Title already generated")) {
+        const cleanTitle = generatedTitle.replace(/^["']|["']$/g, '').trim();
+        await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+          title: cleanTitle
+        });
+      }
+    } catch (error) {
+      console.error("Failed to generate smart title:", error);
     }
   };
 
@@ -281,6 +351,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         });
         chatId = chatRef.id;
         setCurrentChatId(chatId);
+        
+        // Generate smart title asynchronously
+        generateSmartTitle(chatId, userMessage);
       } catch (error) {
         setIsLoading(false);
         try {
@@ -321,8 +394,27 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       const contents: any[] = [];
       
       // Add previous messages for context, ensuring alternating roles
-      // Sliding Window: Only use the last 20 messages to manage token limits
-      const recentMessages = messages.slice(-20);
+      // Memory Summarization via Groq
+      let contextText = "";
+      const recentMessages = messages.slice(-6); // Keep last 6 messages intact
+      const olderMessages = messages.slice(0, -6);
+
+      if (olderMessages.length > 0) {
+        const historyText = olderMessages.map(m => `${m.role}: ${m.content}`).join('\n');
+        const summaryPrompt = `Summarize the following conversation history, keeping only important details to reduce token usage while retaining context for future responses:\n\n${historyText}`;
+        try {
+          const summary = await callGroqChatNonStream('llama-3.3-70b-versatile', [{ role: 'user', content: summaryPrompt }], 'llama-3.1-8b-instant');
+          contextText = `[Summary of older conversation: ${summary}]\n\n`;
+        } catch (e) {
+          console.error("Summarization failed", e);
+        }
+      }
+
+      if (contextText) {
+        contents.push({ role: 'user', parts: [{ text: contextText }] });
+        contents.push({ role: 'model', parts: [{ text: 'Understood. I will remember this context.' }] });
+      }
+
       for (const msg of recentMessages) {
         const textContent = msg.content || (msg.hasImage ? "[Image uploaded]" : "");
         if (!textContent) continue;
@@ -404,7 +496,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       
       let modelName = 'gemini-2.5-flash';
       let bytezModel = 'openai/gpt-4o';
-      let groqModel = 'openai/gpt-oss-safeguard-20b';
+      let groqModel = 'openai/gpt-oss-20b';
       
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
       const isComplex = lastMessage.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(lastMessage);
@@ -412,16 +504,16 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       if (mode === 'flash') {
         modelName = 'gemini-2.5-flash';
         bytezModel = 'openai/gpt-4o';
-        groqModel = 'openai/gpt-oss-safeguard-20b';
+        groqModel = 'openai/gpt-oss-20b';
       } else if (mode === 'pro') {
         modelName = 'gemini-2.5-pro';
         bytezModel = 'openai/gpt-4.1';
-        groqModel = 'qwen/qwen3-32b';
+        groqModel = 'openai/gpt-oss-120b';
       } else if (mode === 'auto') {
         // Auto: Determine based on user message complexity
         modelName = isComplex ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
         bytezModel = isComplex ? 'openai/gpt-4.1' : 'openai/gpt-4o';
-        groqModel = isComplex ? 'qwen/qwen3-32b' : 'openai/gpt-oss-safeguard-20b';
+        groqModel = isComplex ? 'openai/gpt-oss-120b' : 'openai/gpt-oss-20b';
       } else {
         // Default for search, etc.
         modelName = 'gemini-2.5-flash';
@@ -435,7 +527,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       const openAIMessages = [
         { role: 'system', content: systemInstruction },
-        ...messages.map(m => ({
+        ...(contextText ? [{ role: 'system', content: contextText }] : []),
+        ...recentMessages.map(m => ({
           role: m.role === 'model' ? 'assistant' : 'user',
           content: m.content
         })),
@@ -547,41 +640,18 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
               if (Array.isArray(parsedResults) && parsedResults.length > 0) {
                 fullResponse = fullResponse.replace("*Searching the web...*\n\n", "");
                 
-                // Client-side filtering algorithm to clean up irrelevant or messy snippets
-                const cleanedResults = parsedResults.map((res: any) => {
-                  let snippet = res.snippet || '';
-                  
-                  // 1. Remove markdown heading markers, bold/italic markers, and URL artifacts
-                  snippet = snippet.replace(/[#*`_]/g, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/\[.*?\]/g, '');
-                  
-                  // 2. Remove repetitive nav/footer phrases and non-content text
-                  const stopPhrases = [
-                    'free download', 'log in', 'sign up', 'cookie policy', 'privacy policy', 
-                    'all rights reserved', 'read more', 'click here', 'edit section', 
-                    'other icons related', 'find a variety of', 'explore unique'
-                  ];
-                  
-                  let lines = snippet.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
-                  
-                  lines = lines.filter((line: string) => {
-                    const lower = line.toLowerCase();
-                    // Filter out lines that are mostly just a stop phrase (e.g. navigation buttons)
-                    return !stopPhrases.some(phrase => lower.includes(phrase) && line.length < phrase.length + 20);
-                  });
-                  
-                  // 3. Rejoin and normalize whitespace
-                  let cleanedSnippet = lines.join(' ').replace(/\s+/g, ' ').trim();
-                  
-                  // 4. Truncate to a clean, readable length for the UI cards
-                  if (cleanedSnippet.length > 180) {
-                    cleanedSnippet = cleanedSnippet.substring(0, 180).trim() + '...';
-                  }
-                  
-                  return { ...res, snippet: cleanedSnippet };
-                });
+                const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
+                const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
+                
+                let formattedSearch = "";
+                try {
+                  formattedSearch = await callGroqChatNonStream('qwen/qwen3-32b', [{ role: 'user', content: formatPrompt }]);
+                } catch (e) {
+                  console.error("Search formatting failed", e);
+                  formattedSearch = rawSearchText;
+                }
 
-                const searchDataPayload = JSON.stringify({ query: searchWebCallArgs.query, results: cleanedResults });
-                fullResponse += `\n\n\`\`\`search-results\n${searchDataPayload}\n\`\`\`\n\n`;
+                fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
               } else {
                 fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`);
               }
