@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check } from 'lucide-react';
+import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -706,10 +706,10 @@ Session Title Status: "false"`;
   };
 
   const modeIcons: Record<ChatMode, React.ReactNode> = {
-    auto: <Zap size={16} />,
-    flash: <Zap size={16} className="text-yellow-500" />,
-    pro: <Zap size={16} className="text-purple-500" />,
-    search: <Search size={16} />
+    auto: <Cpu size={16} />,
+    flash: <Zap size={16} />,
+    pro: <Sparkles size={16} />,
+    search: <Globe size={16} />
   };
 
   const isChatStarted = messages.length > 0 || streamingMessage || isLoadingMessages;
