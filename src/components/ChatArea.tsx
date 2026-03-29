@@ -24,7 +24,55 @@ interface Message {
   createdAt?: any;
 }
 
-type ChatMode = 'auto' | 'fast' | 'pro' | 'search';
+type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
+
+const BYTEZ_API_KEY = process.env.NEXT_PUBLIC_BYTEZ_API_KEY || '62f9e959f3fff48ee9ec96bd091ba1ec';
+const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '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';
+
+const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs: any[], onChunk: (text: string) => void) => {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model,
+      messages: msgs,
+      stream: true
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error ${response.status}: ${await response.text()}`);
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error('No reader available');
+  const decoder = new TextDecoder();
+  let done = false;
+
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    if (value) {
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split('\n').filter(line => line.trim() !== '');
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+          try {
+            const data = JSON.parse(line.slice(6));
+            if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+              onChunk(data.choices[0].delta.content);
+            }
+          } catch (e) {
+            // ignore parse errors
+          }
+        }
+      }
+    }
+  }
+};
 
 export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user } = useAuth();
@@ -355,23 +403,19 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
       
       let modelName = 'gemini-2.5-flash';
-      let fallbackModelName: string | undefined = undefined;
 
-      if (mode === 'fast') {
-        modelName = 'gemini-2.5-flash';
-        fallbackModelName = 'gemini-2.5-flash-8b'; // Gemini 2.5 Flash-lite equivalent
+      if (mode === 'flash') {
+        modelName = 'meta-llama/Meta-Llama-3-8B-Instruct'; // Bytez
       } else if (mode === 'pro') {
-        modelName = 'gemini-2.5-pro';
+        modelName = 'llama3-8b-8192'; // Groq
       } else if (mode === 'auto') {
         // Auto: Determine based on user message complexity
         const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
         const isComplex = lastMessage.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(lastMessage);
         modelName = isComplex ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
-        if (!isComplex) fallbackModelName = 'gemini-2.5-flash-8b';
       } else {
         // Default for search, etc.
         modelName = 'gemini-2.5-flash';
-        fallbackModelName = 'gemini-2.5-flash-8b';
       }
 
       const requestParams: any = {
@@ -380,8 +424,25 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         config: config
       };
 
+      const openAIMessages = [
+        { role: 'system', content: systemInstruction },
+        ...messages.map(m => ({
+          role: m.role === 'model' ? 'assistant' : 'user',
+          content: m.content
+        })),
+        { role: 'user', content: userMessage }
+      ];
+
+      const handleChunk = (text: string) => {
+        fullResponse += text;
+        setStreamingMessage(fullResponse);
+      };
+
+      const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, 'meta-llama/Meta-Llama-3-8B-Instruct', openAIMessages, handleChunk);
+      const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama3-8b-8192', openAIMessages, handleChunk);
+
       // Helper function to execute API call with retry logic and fallback model for 429 errors
-      const executeWithRetry = async (params: any, maxRetries = 3, fallbackModel?: string) => {
+      const executeWithRetry = async (params: any, maxRetries = 3) => {
         let retries = 0;
         let currentParams = { ...params };
         while (true) {
@@ -390,13 +451,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           } catch (error: any) {
             const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
             if (isQuotaError) {
-              if (fallbackModel && currentParams.model !== fallbackModel) {
-                console.warn(`Quota exceeded for ${currentParams.model}. Falling back to ${fallbackModel}...`);
-                currentParams.model = fallbackModel;
-                retries = 0; // Reset retries for the fallback model
-                continue; // Try immediately with fallback
-              }
-              
               if (retries < maxRetries) {
                 retries++;
                 const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
@@ -411,93 +465,130 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       };
 
       try {
-        let streamResponse = await executeWithRetry(requestParams, 3, fallbackModelName);
-        let searchWebCallArgs: any = null;
-        let searchWebCallId: string | null = null;
-
-        for await (const chunk of streamResponse) {
-          if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-            const call = chunk.functionCalls[0];
-            if (call.name === 'search_web') {
-              searchWebCallArgs = call.args;
-              searchWebCallId = call.id || null;
+        if (mode === 'flash') {
+          await runBytez();
+        } else if (mode === 'pro') {
+          await runGroq();
+        } else {
+          // auto or search
+          let streamResponse;
+          try {
+            streamResponse = await executeWithRetry(requestParams, 3);
+          } catch (error: any) {
+            if (mode === 'auto') {
+              const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
+              if (isQuotaError) {
+                console.warn("Gemini quota exceeded. Falling back to Bytez...");
+                try {
+                  await runBytez();
+                  streamResponse = null; // Handled by runBytez
+                } catch (bytezError: any) {
+                  const isBytezQuotaError = bytezError?.message?.toLowerCase().includes('quota') || bytezError?.message?.includes('429') || bytezError?.message?.includes('402');
+                  if (isBytezQuotaError) {
+                    console.warn("Bytez quota exceeded. Falling back to Groq...");
+                    await runGroq();
+                    streamResponse = null; // Handled by runGroq
+                  } else {
+                    throw bytezError;
+                  }
+                }
+              } else {
+                throw error;
+              }
+            } else {
+              throw error;
             }
           }
-          const text = chunk.text;
-          if (text) {
-            fullResponse += text;
-            setStreamingMessage(fullResponse);
-          }
-        }
 
-        if (searchWebCallArgs) {
-          fullResponse += "\n\n*Searching the web...*\n\n";
-          setStreamingMessage(fullResponse);
-          
-          let searchResults = "Search unavailable. Rely on training data.";
-          try {
-            const searchRes = await fetch('/api/search', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query: searchWebCallArgs.query })
-            });
-            if (searchRes.ok) {
-              const searchData = await searchRes.json();
-              searchResults = searchData.results;
+          if (streamResponse) {
+            let searchWebCallArgs: any = null;
+            let searchWebCallId: string | null = null;
+
+            for await (const chunk of streamResponse) {
+              if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+                const call = chunk.functionCalls[0];
+                if (call.name === 'search_web') {
+                  searchWebCallArgs = call.args;
+                  searchWebCallId = call.id || null;
+                }
+              }
+              const text = chunk.text;
+              if (text) {
+                fullResponse += text;
+                setStreamingMessage(fullResponse);
+              }
             }
-          } catch (err) {
-            console.error('Search API call failed:', err);
-          }
-          
-          let parsedResults: any[] = [];
-          try {
-            parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
-          } catch (e) {
-            // ignore
-          }
 
-          if (Array.isArray(parsedResults) && parsedResults.length > 0) {
-            fullResponse = fullResponse.replace("*Searching the web...*\n\n", "");
-            
-            // Client-side filtering algorithm to clean up irrelevant or messy snippets
-            const cleanedResults = parsedResults.map((res: any) => {
-              let snippet = res.snippet || '';
+            if (searchWebCallArgs) {
+              fullResponse += "\n\n*Searching the web...*\n\n";
+              setStreamingMessage(fullResponse);
               
-              // 1. Remove markdown heading markers, bold/italic markers, and URL artifacts
-              snippet = snippet.replace(/[#*`_]/g, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/\[.*?\]/g, '');
-              
-              // 2. Remove repetitive nav/footer phrases and non-content text
-              const stopPhrases = [
-                'free download', 'log in', 'sign up', 'cookie policy', 'privacy policy', 
-                'all rights reserved', 'read more', 'click here', 'edit section', 
-                'other icons related', 'find a variety of', 'explore unique'
-              ];
-              
-              let lines = snippet.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
-              
-              lines = lines.filter((line: string) => {
-                const lower = line.toLowerCase();
-                // Filter out lines that are mostly just a stop phrase (e.g. navigation buttons)
-                return !stopPhrases.some(phrase => lower.includes(phrase) && line.length < phrase.length + 20);
-              });
-              
-              // 3. Rejoin and normalize whitespace
-              let cleanedSnippet = lines.join(' ').replace(/\s+/g, ' ').trim();
-              
-              // 4. Truncate to a clean, readable length for the UI cards
-              if (cleanedSnippet.length > 180) {
-                cleanedSnippet = cleanedSnippet.substring(0, 180).trim() + '...';
+              let searchResults = "Search unavailable. Rely on training data.";
+              try {
+                const searchRes = await fetch('/api/search', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ query: searchWebCallArgs.query })
+                });
+                if (searchRes.ok) {
+                  const searchData = await searchRes.json();
+                  searchResults = searchData.results;
+                }
+              } catch (err) {
+                console.error('Search API call failed:', err);
               }
               
-              return { ...res, snippet: cleanedSnippet };
-            });
+              let parsedResults: any[] = [];
+              try {
+                parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
+              } catch (e) {
+                // ignore
+              }
 
-            const searchDataPayload = JSON.stringify({ query: searchWebCallArgs.query, results: cleanedResults });
-            fullResponse += `\n\n\`\`\`search-results\n${searchDataPayload}\n\`\`\`\n\n`;
-          } else {
-            fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`);
+              if (Array.isArray(parsedResults) && parsedResults.length > 0) {
+                fullResponse = fullResponse.replace("*Searching the web...*\n\n", "");
+                
+                // Client-side filtering algorithm to clean up irrelevant or messy snippets
+                const cleanedResults = parsedResults.map((res: any) => {
+                  let snippet = res.snippet || '';
+                  
+                  // 1. Remove markdown heading markers, bold/italic markers, and URL artifacts
+                  snippet = snippet.replace(/[#*`_]/g, '').replace(/\[.*?\]\(.*?\)/g, '').replace(/\[.*?\]/g, '');
+                  
+                  // 2. Remove repetitive nav/footer phrases and non-content text
+                  const stopPhrases = [
+                    'free download', 'log in', 'sign up', 'cookie policy', 'privacy policy', 
+                    'all rights reserved', 'read more', 'click here', 'edit section', 
+                    'other icons related', 'find a variety of', 'explore unique'
+                  ];
+                  
+                  let lines = snippet.split('\n').map((l: string) => l.trim()).filter((l: string) => l.length > 0);
+                  
+                  lines = lines.filter((line: string) => {
+                    const lower = line.toLowerCase();
+                    // Filter out lines that are mostly just a stop phrase (e.g. navigation buttons)
+                    return !stopPhrases.some(phrase => lower.includes(phrase) && line.length < phrase.length + 20);
+                  });
+                  
+                  // 3. Rejoin and normalize whitespace
+                  let cleanedSnippet = lines.join(' ').replace(/\s+/g, ' ').trim();
+                  
+                  // 4. Truncate to a clean, readable length for the UI cards
+                  if (cleanedSnippet.length > 180) {
+                    cleanedSnippet = cleanedSnippet.substring(0, 180).trim() + '...';
+                  }
+                  
+                  return { ...res, snippet: cleanedSnippet };
+                });
+
+                const searchDataPayload = JSON.stringify({ query: searchWebCallArgs.query, results: cleanedResults });
+                fullResponse += `\n\n\`\`\`search-results\n${searchDataPayload}\n\`\`\`\n\n`;
+              } else {
+                fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`);
+              }
+              setStreamingMessage(fullResponse);
+            }
           }
-          setStreamingMessage(fullResponse);
         }
       } catch (error: any) {
         handleError(error, "Failed to generate AI response");
@@ -534,21 +625,21 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
   const modeLabels: Record<ChatMode, string> = {
     auto: 'Auto',
-    fast: 'Fast',
+    flash: 'Flash',
     pro: 'Pro',
     search: 'Search'
   };
 
   const modeDescriptions: Record<ChatMode, string> = {
     auto: 'Smartly switches models based on task complexity.',
-    fast: 'Optimized for speed and simple tasks.',
+    flash: 'Optimized for speed and simple tasks.',
     pro: 'Best for complex reasoning and creative tasks.',
     search: 'Real-time web search for up-to-date info.'
   };
 
   const modeIcons: Record<ChatMode, React.ReactNode> = {
     auto: <Zap size={16} />,
-    fast: <Zap size={16} className="text-yellow-500" />,
+    flash: <Zap size={16} className="text-yellow-500" />,
     pro: <Zap size={16} className="text-purple-500" />,
     search: <Search size={16} />
   };
