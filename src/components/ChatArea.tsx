@@ -142,6 +142,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [lastError, setLastError] = useState<{ message: string, retryParams?: any } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -510,7 +511,34 @@ Session Title Status: "false"`;
       let groqModel = 'openai/gpt-oss-20b';
       
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
-      const isComplex = lastMessage.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(lastMessage);
+      let classification = 'simple';
+
+      if (mode === 'auto') {
+        try {
+          const classifierPrompt = `Analyze the following user request and classify its intent and complexity.
+Categories:
+- 'simple': General questions, quick facts, casual conversation.
+- 'complex': Analytical tasks, creative writing, deep reasoning, complex logic.
+- 'code': Programming, debugging, software architecture, scripting.
+
+User Request: "${lastMessage}"
+
+Return ONLY the category name (simple, complex, or code) in lowercase, with no other text.`;
+          
+          const result = await callGroqChatNonStream('meta-llama/llama-4-scout-17b-16e-instruct', [{ role: 'user', content: classifierPrompt }], 'llama-3.3-70b-versatile');
+          const cleanResult = result.toLowerCase().trim();
+          if (cleanResult.includes('code')) classification = 'code';
+          else if (cleanResult.includes('complex')) classification = 'complex';
+          else classification = 'simple';
+          
+          console.log(`Auto Mode Classification: ${classification}`);
+        } catch (e) {
+          console.error("Classification failed, defaulting to simple", e);
+          classification = lastMessage.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(lastMessage) ? 'complex' : 'simple';
+        }
+      }
+
+      let dynamicSystemInstruction = systemInstruction;
 
       if (mode === 'flash') {
         modelName = 'gemini-2.5-flash';
@@ -521,14 +549,26 @@ Session Title Status: "false"`;
         bytezModel = 'openai/gpt-4.1';
         groqModel = 'openai/gpt-oss-120b';
       } else if (mode === 'auto') {
-        // Auto: Determine based on user message complexity
-        modelName = isComplex ? 'gemini-2.5-pro' : 'gemini-2.5-flash';
-        bytezModel = isComplex ? 'openai/gpt-4.1' : 'openai/gpt-4o';
-        groqModel = isComplex ? 'openai/gpt-oss-120b' : 'openai/gpt-oss-20b';
+        if (classification === 'code') {
+          modelName = 'gemini-2.5-pro';
+          bytezModel = 'openai/gpt-4.1';
+          groqModel = 'openai/gpt-oss-120b';
+          dynamicSystemInstruction += `\n\n[CODE NORMALIZATION LAYER ACTIVE]\nYou are an expert software engineer. Provide clean, efficient, and well-documented code.\n- ALWAYS wrap code snippets in standard Markdown triple-backtick blocks with the correct language identifier.\n- Ensure proper indentation.\n- Do not use HTML tags for code.\n- Structure your response with clear headings and explanations.\n- Avoid incomplete code blocks.`;
+        } else if (classification === 'complex') {
+          modelName = 'gemini-2.5-pro';
+          bytezModel = 'openai/gpt-4.1';
+          groqModel = 'openai/gpt-oss-120b';
+          dynamicSystemInstruction += `\n\n[COMPLEXITY LAYER ACTIVE]\nProvide a thorough, well-structured, and deeply reasoned response. Break down complex topics into digestible parts.`;
+        } else {
+          modelName = 'gemini-2.5-flash';
+          bytezModel = 'openai/gpt-4o';
+          groqModel = 'openai/gpt-oss-20b';
+        }
       } else {
-        // Default for search, etc.
         modelName = 'gemini-2.5-flash';
       }
+
+      config.systemInstruction = dynamicSystemInstruction;
 
       const requestParams: any = {
         model: modelName,
@@ -537,7 +577,7 @@ Session Title Status: "false"`;
       };
 
       const openAIMessages = [
-        { role: 'system', content: systemInstruction },
+        { role: 'system', content: dynamicSystemInstruction },
         ...(contextText ? [{ role: 'system', content: contextText }] : []),
         ...recentMessages.map(m => ({
           role: m.role === 'model' ? 'assistant' : 'user',
@@ -627,8 +667,7 @@ Session Title Status: "false"`;
             }
 
             if (searchWebCallArgs) {
-              fullResponse += "\n\n*Searching the web...*\n\n";
-              setStreamingMessage(fullResponse);
+              setIsSearching(true);
               
               let searchResults = "Search unavailable. Rely on training data.";
               try {
@@ -653,8 +692,6 @@ Session Title Status: "false"`;
               }
 
               if (Array.isArray(parsedResults) && parsedResults.length > 0) {
-                fullResponse = fullResponse.replace("*Searching the web...*\n\n", "");
-                
                 const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
                 const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
                 
@@ -668,8 +705,9 @@ Session Title Status: "false"`;
 
                 fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
               } else {
-                fullResponse = fullResponse.replace("*Searching the web...*\n\n", `### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`);
+                fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
               }
+              setIsSearching(false);
               setStreamingMessage(fullResponse);
             }
           }
@@ -702,6 +740,7 @@ Session Title Status: "false"`;
         }
       } finally {
         setIsLoading(false);
+        setIsSearching(false);
         setStreamingMessage('');
       }
     } catch (error: any) {
@@ -867,7 +906,23 @@ Session Title Status: "false"`;
                   </div>
                 </motion.div>
               )}
-              {isLoading && !streamingMessage && (
+              {isSearching && (
+                <motion.div 
+                  key="searching"
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex justify-start px-1 mb-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <Search size={14} className="text-muted animate-pulse" />
+                    <span className="text-[13px] font-medium font-[family-name:var(--font-roboto)] glowing-text">
+                      Searching the web...
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+              {isLoading && !streamingMessage && !isSearching && (
                 <motion.div 
                   key="loading"
                   initial={{ opacity: 0, y: 5 }}

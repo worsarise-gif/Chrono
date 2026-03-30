@@ -56,6 +56,29 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
 };
 
 export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content }) => {
+  // Robust Normalization Layer
+  const normalizeContent = (text: string) => {
+    if (!text) return text;
+    
+    let normalized = text;
+    
+    // 1. Fix unclosed code blocks (ensure even number of backticks)
+    const codeBlockMatches = normalized.match(/```/g);
+    if (codeBlockMatches && codeBlockMatches.length % 2 !== 0) {
+      normalized += '\n```';
+    }
+
+    // 2. Fix malformed bold formatting (e.g., ** text ** -> **text**)
+    normalized = normalized.replace(/\*\* (.*?) \*\*/g, '**$1**');
+
+    // 3. Ensure proper spacing around headings to prevent rendering issues
+    normalized = normalized.replace(/([^\n])\n(#+ )/g, '$1\n\n$2');
+
+    return normalized;
+  };
+
+  const normalizedContent = normalizeContent(content);
+
   return (
     <div className="prose prose-invert dark:prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-foreground">
       <ReactMarkdown 
@@ -158,7 +181,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
           }
         }}
       >
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );
