@@ -54,7 +54,7 @@ const useSmoothTyping = (text: string, isStreaming: boolean) => {
   return displayedText;
 };
 
-const CodeBlock = React.memo(({ language, value }: { language: string, value: string }) => {
+const CodeBlock = ({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -114,11 +114,9 @@ const CodeBlock = React.memo(({ language, value }: { language: string, value: st
       </div>
     </div>
   );
-});
+};
 
-CodeBlock.displayName = 'CodeBlock';
-
-const ThinkingProcess = React.memo(({ content }: { content: string }) => {
+const ThinkingProcess = ({ content }: { content: string }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -161,15 +159,13 @@ const ThinkingProcess = React.memo(({ content }: { content: string }) => {
       </AnimatePresence>
     </div>
   );
-});
+};
 
-ThinkingProcess.displayName = 'ThinkingProcess';
-
-export const ResponseFormatter = React.memo(({ content, isStreaming = false }: ResponseFormatterProps) => {
+export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, isStreaming = false }) => {
   const displayedContent = useSmoothTyping(content, isStreaming);
 
-  // Robust Normalization Layer - Memoized to prevent re-calculation on every render
-  const normalizeContent = React.useCallback((text: string) => {
+  // Robust Normalization Layer
+  const normalizeContent = (text: string) => {
     if (!text) return text;
     
     let normalized = text;
@@ -187,12 +183,9 @@ export const ResponseFormatter = React.memo(({ content, isStreaming = false }: R
     normalized = normalized.replace(/([^\n])\n(#+ )/g, '$1\n\n$2');
 
     return normalized;
-  }, []);
+  };
 
-  const parts = React.useMemo(() => 
-    displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g),
-    [displayedContent]
-  );
+  const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
     <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-foreground ${isStreaming ? 'streaming-content' : ''}`}>
@@ -310,10 +303,8 @@ export const ResponseFormatter = React.memo(({ content, isStreaming = false }: R
       >
         {normalizedContent}
       </ReactMarkdown>
-        );
-      })}
-    </div>
-  );
-});
-
-ResponseFormatter.displayName = 'ResponseFormatter';
+    );
+  })}
+</div>
+);
+};
