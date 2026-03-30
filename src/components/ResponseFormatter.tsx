@@ -54,7 +54,7 @@ const useSmoothTyping = (text: string, isStreaming: boolean) => {
   return displayedText;
 };
 
-const CodeBlock = ({ language, value }: { language: string, value: string }) => {
+const CodeBlock = React.memo(({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -114,9 +114,11 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
       </div>
     </div>
   );
-};
+});
 
-const ThinkingProcess = ({ content }: { content: string }) => {
+CodeBlock.displayName = 'CodeBlock';
+
+const ThinkingProcess = React.memo(({ content }: { content: string }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -159,13 +161,15 @@ const ThinkingProcess = ({ content }: { content: string }) => {
       </AnimatePresence>
     </div>
   );
-};
+});
 
-export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, isStreaming = false }) => {
+ThinkingProcess.displayName = 'ThinkingProcess';
+
+export const ResponseFormatter = React.memo(({ content, isStreaming = false }: ResponseFormatterProps) => {
   const displayedContent = useSmoothTyping(content, isStreaming);
 
-  // Robust Normalization Layer
-  const normalizeContent = (text: string) => {
+  // Robust Normalization Layer - Memoized to prevent re-calculation on every render
+  const normalizeContent = React.useCallback((text: string) => {
     if (!text) return text;
     
     let normalized = text;
@@ -183,9 +187,12 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
     normalized = normalized.replace(/([^\n])\n(#+ )/g, '$1\n\n$2');
 
     return normalized;
-  };
+  }, []);
 
-  const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
+  const parts = React.useMemo(() => 
+    displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g),
+    [displayedContent]
+  );
 
   return (
     <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-foreground ${isStreaming ? 'streaming-content' : ''}`}>
@@ -303,8 +310,10 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
       >
         {normalizedContent}
       </ReactMarkdown>
-    );
-  })}
-</div>
-);
-};
+        );
+      })}
+    </div>
+  );
+});
+
+ResponseFormatter.displayName = 'ResponseFormatter';
