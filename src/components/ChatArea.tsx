@@ -128,7 +128,8 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
 const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string) => {
   const makeRequest = async (m: string) => {
     const formData = new FormData();
-    formData.append('file', audioBlob, 'audio.wav');
+    const ext = audioBlob.type.includes('webm') ? 'webm' : 'wav';
+    formData.append('file', audioBlob, `audio.${ext}`);
     formData.append('model', m);
     formData.append('apiKey', GROQ_API_KEY);
     const res = await fetch('/api/transcribe', {
@@ -175,6 +176,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const isTranscribingRef = useRef(false);
+  const initialInputRef = useRef("");
   const modeDropdownRef = useRef<HTMLDivElement>(null);
 
   const retryLastMessage = async () => {
@@ -279,26 +282,69 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   };
 
+  const transcribeCurrentBuffer = async (isFinal = false) => {
+    if (isTranscribingRef.current && !isFinal) return; // Prevent overlapping requests
+    if (audioChunksRef.current.length === 0) return;
+
+    isTranscribingRef.current = true;
+    try {
+      // Create a Blob from all chunks collected so far
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/wav';
+      const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+      
+      // Call Groq Whisper API
+      const transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3', 'whisper-large-v3-turbo');
+      
+      if (transcription) {
+        // Append the new transcription to the initial input
+        const base = initialInputRef.current;
+        setInput(base ? `${base} ${transcription.trim()}` : transcription.trim());
+      }
+    } catch (error) {
+      console.error("Real-time transcription error:", error);
+      // We don't throw here to allow the next chunk to try again seamlessly
+    } finally {
+      isTranscribingRef.current = false;
+    }
+  };
+
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      // Advanced audio preprocessing for clarity
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        } 
+      });
+      
+      const options = MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : undefined;
+      const mediaRecorder = new MediaRecorder(stream, options);
+      
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      initialInputRef.current = input; // Store current input to append to
 
-      mediaRecorder.ondataavailable = (e) => {
+      mediaRecorder.ondataavailable = async (e) => {
         if (e.data.size > 0) {
           audioChunksRef.current.push(e.data);
+          // Trigger real-time transcription on every chunk
+          await transcribeCurrentBuffer();
         }
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        await handleVoiceInput(audioBlob);
+        setIsLoading(true);
+        // Final transcription pass to catch the last bit of audio
+        await transcribeCurrentBuffer(true);
         stream.getTracks().forEach(track => track.stop());
+        setIsLoading(false);
+        setIsRecording(false);
       };
 
-      mediaRecorder.start();
+      // Start recording and emit data every 2000ms (2 seconds) for real-time processing
+      mediaRecorder.start(2000);
       setIsRecording(true);
     } catch (err) {
       handleError(err, "Error accessing microphone");
@@ -308,21 +354,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
-      setIsRecording(false);
-    }
-  };
-
-  const handleVoiceInput = async (audioBlob: Blob) => {
-    setIsLoading(true);
-    try {
-      const transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3', 'whisper-large-v3-turbo');
-      if (transcription) {
-        setInput(transcription);
-      }
-    } catch (error) {
-      handleError(error, "Voice transcription failed");
-    } finally {
-      setIsLoading(false);
+      // setIsRecording(false) is handled in onstop
     }
   };
 
