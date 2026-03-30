@@ -39,14 +39,14 @@ const useSmoothTyping = (text: string, isStreaming: boolean) => {
           setDisplayedText(target);
         } else {
           const diff = target.length - current.length;
-          // Slower, more natural typing speed
-          const charsToAdd = Math.max(1, Math.floor(diff / 10)); 
+          // Even slower, more natural typing speed - adding 1-2 chars at a time
+          const charsToAdd = Math.max(1, Math.floor(diff / 30)); 
           const nextText = target.slice(0, current.length + charsToAdd);
           displayedTextRef.current = nextText;
           setDisplayedText(nextText);
         }
       }
-    }, 30); // Increased interval for slower typing
+    }, 60); // Slightly slower interval for more natural feel
 
     return () => clearInterval(interval);
   }, [isStreaming]);
@@ -64,25 +64,27 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   };
 
   return (
-    <div className="relative group my-5 rounded-xl overflow-hidden border border-border/50 bg-[#1e1e1e] font-sans">
-      <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-border/10">
-        <span className="text-xs font-mono text-gray-400 lowercase">{language || 'text'}</span>
+    <div className="relative group my-6 rounded-xl overflow-hidden border border-border/30 bg-transparent font-sans transition-all duration-300">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-transparent border-b border-border/20 backdrop-blur-sm">
+        <span className="text-[11px] font-mono text-muted/80 uppercase tracking-wider">{language || 'text'}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
+          className="flex items-center gap-1.5 text-[11px] text-muted/60 hover:text-foreground transition-colors"
         >
-          {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
+          {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <div className="text-[13px] leading-relaxed overflow-x-auto">
+      <div className="text-[13px] leading-relaxed overflow-x-auto bg-transparent p-1">
         <SyntaxHighlighter
           language={language || 'text'}
           style={vscDarkPlus}
           customStyle={{
             margin: 0,
-            padding: '1rem',
+            padding: '1.25rem',
             background: 'transparent',
+            fontSize: '13px',
+            lineHeight: '1.6',
           }}
           PreTag="div"
         >
