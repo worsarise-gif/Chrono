@@ -81,7 +81,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   // Sleek light mode background: very subtle off-white/gray
   // Sleek dark mode background: existing surface/50
   const containerBg = 'bg-transparent';
-  const headerBg = currentTheme === 'dark' ? 'bg-surface/40' : 'bg-surface/10';
+  const headerBg = currentTheme === 'dark' ? 'bg-surface/10' : 'bg-[#f1f3f5]';
   const borderColor = currentTheme === 'dark' ? 'border-border/30' : 'border-gray-200';
 
   return (
