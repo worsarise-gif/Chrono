@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe } from 'lucide-react';
+import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -141,6 +141,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [isRecording, setIsRecording] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
+  const [lastError, setLastError] = useState<{ message: string, retryParams?: any } | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -148,6 +149,13 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
+
+  const retryLastMessage = async () => {
+    if (!lastError || !lastError.retryParams) return;
+    const params = lastError.retryParams;
+    setLastError(null);
+    await handleSubmit(undefined, params.text, params.image);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -321,8 +329,9 @@ Session Title Status: "false"`;
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, text?: string, image?: { data: string, mimeType: string }) => {
+    if (e) e.preventDefault();
+    setLastError(null);
     if (!user) {
       try {
         await loginWithGoogle();
@@ -331,12 +340,14 @@ Session Title Status: "false"`;
       }
       return;
     }
-    if ((!input.trim() && !selectedImage) || isLoading) return;
+    
+    const userMessage = text || input.trim();
+    const currentImage = image || selectedImage;
+    
+    if ((!userMessage && !currentImage) || isLoading) return;
 
-    const userMessage = input.trim();
-    const currentImage = selectedImage;
-    setInput('');
-    setSelectedImage(null);
+    if (!text) setInput('');
+    if (!image) setSelectedImage(null);
     setIsLoading(true);
     setStreamingMessage('');
 
@@ -544,22 +555,22 @@ Session Title Status: "false"`;
       const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, groqModel, openAIMessages, handleChunk);
 
       // Helper function to execute API call with retry logic and fallback model for 429 errors
-      const executeWithRetry = async (params: any, maxRetries = 3) => {
+      const executeWithRetry = async (fn: () => Promise<any>, maxRetries = 3) => {
         let retries = 0;
-        let currentParams = { ...params };
         while (true) {
           try {
-            return await ai.models.generateContentStream(currentParams);
+            return await fn();
           } catch (error: any) {
-            const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
-            if (isQuotaError) {
-              if (retries < maxRetries) {
-                retries++;
-                const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
-                console.warn(`Rate limit hit. Retrying in ${Math.round(delay/1000)}s... (Attempt ${retries}/${maxRetries})`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                continue;
-              }
+            const isQuotaError = error?.message?.toLowerCase().includes('quota') || 
+                               error?.message?.includes('429') || 
+                               error?.status === 429 ||
+                               error?.message?.includes('402');
+            if (isQuotaError && retries < maxRetries) {
+              retries++;
+              const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+              console.warn(`Rate limit hit. Retrying in ${Math.round(delay/1000)}s... (Attempt ${retries}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, delay));
+              continue;
             }
             throw error;
           }
@@ -569,20 +580,24 @@ Session Title Status: "false"`;
       try {
         let streamResponse;
         try {
-          streamResponse = await executeWithRetry(requestParams, 3);
+          streamResponse = await executeWithRetry(() => ai.models.generateContentStream(requestParams), 2);
         } catch (error: any) {
           const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
           if (isQuotaError) {
             console.warn("Gemini quota exceeded. Falling back to Bytez...");
             try {
-              await runBytez();
-              streamResponse = null; // Handled by runBytez
+              await executeWithRetry(runBytez, 1);
+              streamResponse = null;
             } catch (bytezError: any) {
               const isBytezQuotaError = bytezError?.message?.toLowerCase().includes('quota') || bytezError?.message?.includes('429') || bytezError?.message?.includes('402');
               if (isBytezQuotaError) {
                 console.warn("Bytez quota exceeded. Falling back to Groq...");
-                await runGroq();
-                streamResponse = null; // Handled by runGroq
+                try {
+                  await executeWithRetry(runGroq, 1);
+                  streamResponse = null;
+                } catch (groqError: any) {
+                  throw new Error("All AI models are currently at capacity. Please try again in a moment.");
+                }
               } else {
                 throw bytezError;
               }
@@ -660,7 +675,11 @@ Session Title Status: "false"`;
           }
       } catch (error: any) {
         handleError(error, "Failed to generate AI response");
-        fullResponse = "I'm sorry, I encountered an error while processing your request. Please try again later.";
+        setLastError({ 
+          message: error.message || "Something went wrong. Please try again.",
+          retryParams: { text: userMessage, image: currentImage }
+        });
+        fullResponse = `Error: ${error.message || "I'm sorry, I encountered an error while processing your request. Please try again later."}`;
       }
 
       try {
@@ -782,7 +801,16 @@ Session Title Status: "false"`;
                   <div className={`${msg.role === 'user' ? 'max-w-[90%] md:max-w-[85%] bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-[15px] md:text-[15px]' : 'max-w-[95%] md:max-w-[80%] relative bg-transparent text-foreground text-[16px] md:text-[15px] w-full'}`}>
                     {msg.role === 'model' ? (
                       <div className="w-full">
-                        <ResponseFormatter content={msg.content} />
+                        {msg.content.startsWith('Error:') ? (
+                          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 flex items-start gap-3 mb-2">
+                            <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                            <div className="text-sm font-medium leading-relaxed">
+                              {msg.content.replace('Error:', '').trim()}
+                            </div>
+                          </div>
+                        ) : (
+                          <ResponseFormatter content={msg.content} />
+                        )}
                         
                         {/* Action Row */}
                         <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted">
@@ -867,6 +895,35 @@ Session Title Status: "false"`;
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
           <div className="relative bg-surface rounded-[24px] md:rounded-[28px] transition-all shadow-2xl border border-border/50 focus-within:border-border flex flex-col p-1.5 md:p-2">
+            {lastError && (
+              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+                    <AlertCircle size={18} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">Generation Failed</p>
+                    <p className="text-xs text-muted leading-tight mt-0.5">{lastError.message}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <button 
+                    onClick={() => setLastError(null)}
+                    className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-muted hover:text-foreground hover:bg-surface-hover rounded-lg transition-colors"
+                  >
+                    Dismiss
+                  </button>
+                  <button 
+                    onClick={retryLastMessage}
+                    className="flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium bg-foreground text-background hover:opacity-90 rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                  >
+                    <RefreshCw size={12} />
+                    Retry
+                  </button>
+                </div>
+              </div>
+            )}
+
             {selectedImage && (
               <div className="px-2 pt-2 pb-1 flex overflow-hidden">
                 <div className="relative group">
