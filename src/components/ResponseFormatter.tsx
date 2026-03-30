@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Search, ExternalLink, ChevronDown } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
@@ -39,13 +39,14 @@ const useSmoothTyping = (text: string, isStreaming: boolean) => {
           setDisplayedText(target);
         } else {
           const diff = target.length - current.length;
-          const charsToAdd = Math.max(1, Math.floor(diff / 4)); // Smooth catch-up
+          // Slower, more natural typing speed
+          const charsToAdd = Math.max(1, Math.floor(diff / 10)); 
           const nextText = target.slice(0, current.length + charsToAdd);
           displayedTextRef.current = nextText;
           setDisplayedText(nextText);
         }
       }
-    }, 20);
+    }, 30); // Increased interval for slower typing
 
     return () => clearInterval(interval);
   }, [isStreaming]);
@@ -55,12 +56,6 @@ const useSmoothTyping = (text: string, isStreaming: boolean) => {
 
 const CodeBlock = ({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
-  const { theme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
@@ -69,12 +64,12 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   };
 
   return (
-    <div className="relative group my-5 rounded-xl overflow-hidden border border-border bg-surface font-sans">
-      <div className="flex items-center justify-between px-4 py-2 bg-surface-hover border-b border-border">
-        <span className="text-xs font-mono text-muted lowercase">{language || 'text'}</span>
+    <div className="relative group my-5 rounded-xl overflow-hidden border border-border/50 bg-[#1e1e1e] font-sans">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-border/10">
+        <span className="text-xs font-mono text-gray-400 lowercase">{language || 'text'}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-200 transition-colors"
         >
           {copied ? <Check size={14} className="text-green-400" /> : <Copy size={14} />}
           {copied ? 'Copied!' : 'Copy'}
@@ -83,7 +78,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
       <div className="text-[13px] leading-relaxed overflow-x-auto">
         <SyntaxHighlighter
           language={language || 'text'}
-          style={mounted && theme === 'dark' ? vscDarkPlus : prism}
+          style={vscDarkPlus}
           customStyle={{
             margin: 0,
             padding: '1rem',
