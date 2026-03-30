@@ -3,8 +3,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Check, Copy, Search, ExternalLink } from 'lucide-react';
+import { Check, Copy, Search, ExternalLink, ChevronDown } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface ResponseFormatterProps {
   content: string;
@@ -55,6 +56,51 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   );
 };
 
+const ThinkingProcess = ({ content }: { content: string }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="my-4 border border-border/50 rounded-xl overflow-hidden bg-surface/20 transition-all duration-300">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-muted group"
+      >
+        <div className="flex items-center gap-2.5">
+          <div className="relative flex items-center justify-center">
+            <div className={`absolute inset-0 rounded-full blur-sm transition-opacity duration-500 ${isOpen ? 'bg-blue-500/20 opacity-100' : 'bg-transparent opacity-0'}`} />
+            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 relative z-10 ${isOpen ? 'bg-blue-500 scale-125' : 'bg-muted/40'}`} />
+          </div>
+          <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 ${isOpen ? 'text-foreground' : 'text-muted'}`}>
+            Thinking Process
+          </span>
+        </div>
+        <ChevronDown 
+          size={14} 
+          className={`transition-transform duration-500 ease-in-out ${isOpen ? 'rotate-180 text-foreground' : 'text-muted/60 group-hover:text-muted'}`} 
+        />
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <div className="px-5 pb-5 pt-1 text-[13px] text-muted/80 leading-relaxed border-t border-border/30 bg-surface/10">
+              <div className="prose prose-sm prose-invert max-w-none italic">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {content}
+                </ReactMarkdown>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content }) => {
   // Robust Normalization Layer
   const normalizeContent = (text: string) => {
@@ -74,28 +120,28 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
     // 3. Ensure proper spacing around headings to prevent rendering issues
     normalized = normalized.replace(/([^\n])\n(#+ )/g, '$1\n\n$2');
 
-    // 4. Handle <think> tags from reasoning models
-    normalized = normalized.replace(/<think>([\s\S]*?)<\/think>/g, (match, p1) => {
-      return `> **Thinking Process:**\n> ${p1.trim().replace(/\n/g, '\n> ')}\n\n`;
-    });
-    
-    // Also handle unclosed <think> tags if the stream is still generating
-    if (normalized.includes('<think>') && !normalized.includes('</think>')) {
-      const parts = normalized.split('<think>');
-      const thinkingPart = parts[1];
-      normalized = parts[0] + `> **Thinking Process:**\n> ${thinkingPart.trim().replace(/\n/g, '\n> ')}`;
-    }
-
     return normalized;
   };
 
-  const normalizedContent = normalizeContent(content);
+  const parts = content.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
     <div className="prose prose-invert dark:prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-foreground">
-      <ReactMarkdown 
-        remarkPlugins={[remarkGfm]}
-        components={{
+      {parts.map((part, index) => {
+        if (part.startsWith('<think>')) {
+          const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
+          if (!thinkingContent) return null;
+          return <ThinkingProcess key={index} content={thinkingContent} />;
+        }
+
+        const normalizedContent = normalizeContent(part);
+        if (!normalizedContent) return null;
+
+        return (
+          <ReactMarkdown 
+            key={index}
+            remarkPlugins={[remarkGfm]}
+            components={{
           a({ node, children, href, ...props }: any) {
             const text = String(children);
             // Check if it's a citation like [link] or [1]
@@ -195,6 +241,8 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
       >
         {normalizedContent}
       </ReactMarkdown>
-    </div>
-  );
+    );
+  })}
+</div>
+);
 };
