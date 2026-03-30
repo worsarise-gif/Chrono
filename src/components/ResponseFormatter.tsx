@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Search, ExternalLink, ChevronDown } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
@@ -56,6 +56,12 @@ const useSmoothTyping = (text: string, isStreaming: boolean) => {
 
 const CodeBlock = ({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
+  const { theme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(value);
@@ -63,27 +69,36 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const currentTheme = resolvedTheme || theme || 'dark';
+  const syntaxStyle = currentTheme === 'dark' ? vscDarkPlus : prism;
+
+  if (!mounted) {
+    return (
+      <div className="relative group my-6 rounded-xl overflow-hidden border border-border/30 bg-surface/50 font-sans animate-pulse h-32" />
+    );
+  }
+
   return (
-    <div className="relative group my-6 rounded-xl overflow-hidden border border-border/30 bg-transparent font-sans transition-all duration-300">
-      <div className="flex items-center justify-between px-4 py-2.5 bg-transparent border-b border-border/20 backdrop-blur-sm">
-        <span className="text-[11px] font-mono text-muted/80 uppercase tracking-wider">{language || 'text'}</span>
+    <div className="relative group my-6 rounded-xl overflow-hidden border border-border/30 bg-surface/50 font-sans transition-all duration-300 shadow-sm">
+      <div className="flex items-center justify-between px-4 py-2.5 bg-surface/80 border-b border-border/20 backdrop-blur-sm">
+        <span className="text-[11px] font-mono text-muted uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-[11px] text-muted/60 hover:text-foreground transition-colors"
+          className="flex items-center gap-1.5 text-[11px] text-muted hover:text-foreground transition-colors font-medium"
         >
           {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <div className="text-[13px] leading-relaxed overflow-x-auto bg-transparent p-1">
+      <div className="text-[13px] leading-relaxed overflow-x-auto p-1">
         <SyntaxHighlighter
           language={language || 'text'}
-          style={vscDarkPlus}
+          style={syntaxStyle}
           customStyle={{
             margin: 0,
             padding: '1.25rem',
             background: 'transparent',
-            fontSize: '13px',
+            fontSize: '13.5px',
             lineHeight: '1.6',
           }}
           PreTag="div"
