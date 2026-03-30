@@ -80,8 +80,8 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
 
   // Sleek light mode background: very subtle off-white/gray
   // Sleek dark mode background: existing surface/50
-  const containerBg = currentTheme === 'dark' ? 'bg-surface/50' : 'bg-[#f8f9fa]';
-  const headerBg = currentTheme === 'dark' ? 'bg-surface/80' : 'bg-[#f1f3f5]';
+  const containerBg = 'bg-transparent';
+  const headerBg = currentTheme === 'dark' ? 'bg-surface/40' : 'bg-surface/10';
   const borderColor = currentTheme === 'dark' ? 'border-border/30' : 'border-gray-200';
 
   return (
@@ -120,7 +120,7 @@ const ThinkingProcess = ({ content }: { content: string }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="my-4 border border-border/50 rounded-2xl overflow-hidden bg-surface/20 transition-all duration-300">
+    <div className="my-4 border border-border/50 rounded-2xl overflow-hidden bg-transparent transition-all duration-300">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-muted group"
@@ -147,7 +147,7 @@ const ThinkingProcess = ({ content }: { content: string }) => {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
           >
-            <div className="px-5 pb-5 pt-1 text-[13px] text-muted/80 leading-relaxed border-t border-border/30 bg-surface/10">
+            <div className="px-5 pb-5 pt-1 text-[13px] text-muted/80 leading-relaxed border-t border-border/30 bg-transparent">
               <div className="prose prose-sm prose-invert max-w-none italic">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {content}
@@ -236,7 +236,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
           },
           table({ node, children, ...props }: any) {
             return (
-              <div className="overflow-x-auto my-6 rounded-2xl border border-border bg-surface/50">
+              <div className="overflow-x-auto my-6 rounded-2xl border border-border bg-transparent">
                 <table className="w-full text-sm text-left m-0" {...props}>
                   {children}
                 </table>
@@ -268,7 +268,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
                         let hostname = res.link;
                         try { hostname = new URL(res.link).hostname; } catch (e) {}
                         return (
-                          <a key={idx} href={res.link} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-2 p-4 rounded-2xl border border-border bg-surface/50 hover:bg-surface-hover hover:border-border/80 transition-all no-underline group shadow-sm">
+                          <a key={idx} href={res.link} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-2 p-4 rounded-2xl border border-border bg-transparent hover:bg-surface-hover hover:border-border/80 transition-all no-underline group shadow-sm">
                             <div className="font-medium text-blue-500 group-hover:text-blue-400 line-clamp-1 flex items-center justify-between text-sm">
                               {res.title}
                               <ExternalLink size={14} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
@@ -291,7 +291,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
 
             if (isInline) {
               return (
-                <code className="bg-surface text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border" {...props}>
+                <code className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50" {...props}>
                   {children}
                 </code>
               );
