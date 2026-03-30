@@ -85,8 +85,8 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   const borderColor = currentTheme === 'dark' ? 'border-border/30' : 'border-gray-200';
 
   return (
-    <div className={`relative group my-6 rounded-xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
-      <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}/50 backdrop-blur-sm`}>
+    <div className={`relative group my-6 rounded-2xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
+      <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}/50 backdrop-blur-sm rounded-t-2xl`}>
         <span className="text-[11px] font-mono text-muted uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
@@ -120,7 +120,7 @@ const ThinkingProcess = ({ content }: { content: string }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="my-4 border border-border/50 rounded-xl overflow-hidden bg-surface/20 transition-all duration-300">
+    <div className="my-4 border border-border/50 rounded-2xl overflow-hidden bg-surface/20 transition-all duration-300">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-muted group"
@@ -229,14 +229,14 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
           },
           blockquote({ node, children, ...props }: any) {
             return (
-              <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-xl my-5 text-muted not-italic shadow-sm" {...props}>
+              <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-muted not-italic shadow-sm" {...props}>
                 {children}
               </blockquote>
             );
           },
           table({ node, children, ...props }: any) {
             return (
-              <div className="overflow-x-auto my-6 rounded-xl border border-border bg-surface/50">
+              <div className="overflow-x-auto my-6 rounded-2xl border border-border bg-surface/50">
                 <table className="w-full text-sm text-left m-0" {...props}>
                   {children}
                 </table>
@@ -268,7 +268,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
                         let hostname = res.link;
                         try { hostname = new URL(res.link).hostname; } catch (e) {}
                         return (
-                          <a key={idx} href={res.link} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-2 p-4 rounded-xl border border-border bg-surface/50 hover:bg-surface-hover hover:border-border/80 transition-all no-underline group shadow-sm">
+                          <a key={idx} href={res.link} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-2 p-4 rounded-2xl border border-border bg-surface/50 hover:bg-surface-hover hover:border-border/80 transition-all no-underline group shadow-sm">
                             <div className="font-medium text-blue-500 group-hover:text-blue-400 line-clamp-1 flex items-center justify-between text-sm">
                               {res.title}
                               <ExternalLink size={14} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
@@ -291,7 +291,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
 
             if (isInline) {
               return (
-                <code className="bg-surface text-foreground px-1.5 py-0.5 rounded-md text-sm font-mono before:content-none after:content-none border border-border" {...props}>
+                <code className="bg-surface text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border" {...props}>
                   {children}
                 </code>
               );
