@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus, prism } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Search, ExternalLink, ChevronDown } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
@@ -70,7 +70,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   };
 
   const currentTheme = resolvedTheme || theme || 'dark';
-  const syntaxStyle = currentTheme === 'dark' ? vscDarkPlus : prism;
+  const syntaxStyle = currentTheme === 'dark' ? vscDarkPlus : oneLight;
 
   if (!mounted) {
     return (
@@ -78,9 +78,15 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
     );
   }
 
+  // Sleek light mode background: very subtle off-white/gray
+  // Sleek dark mode background: existing surface/50
+  const containerBg = currentTheme === 'dark' ? 'bg-surface/50' : 'bg-[#f8f9fa]';
+  const headerBg = currentTheme === 'dark' ? 'bg-surface/80' : 'bg-[#f1f3f5]';
+  const borderColor = currentTheme === 'dark' ? 'border-border/30' : 'border-gray-200';
+
   return (
-    <div className="relative group my-6 rounded-xl overflow-hidden border border-border/30 bg-surface/50 font-sans transition-all duration-300 shadow-sm">
-      <div className="flex items-center justify-between px-4 py-2.5 bg-surface/80 border-b border-border/20 backdrop-blur-sm">
+    <div className={`relative group my-6 rounded-xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
+      <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}/50 backdrop-blur-sm`}>
         <span className="text-[11px] font-mono text-muted uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
@@ -182,7 +188,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`prose prose-invert dark:prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-foreground ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-foreground ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
