@@ -620,7 +620,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
       const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, bytezModel, openAIMessages, handleChunk);
       const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, groqModel, openAIMessages, handleChunk);
 
-      // Helper function to execute API call with retry logic and fallback model for 429 errors
+      // Helper function to execute API call with retry logic and fallback model for 429/503 errors
       const executeWithRetry = async (fn: () => Promise<any>, maxRetries = 3) => {
         let retries = 0;
         while (true) {
@@ -631,10 +631,14 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                                error?.message?.includes('429') || 
                                error?.status === 429 ||
                                error?.message?.includes('402');
-            if (isQuotaError && retries < maxRetries) {
+            const isUnavailableError = error?.message?.includes('503') || 
+                                     error?.status === 503 || 
+                                     error?.message?.toLowerCase().includes('unavailable');
+            
+            if ((isQuotaError || isUnavailableError) && retries < maxRetries) {
               retries++;
               const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
-              console.warn(`Rate limit hit. Retrying in ${Math.round(delay/1000)}s... (Attempt ${retries}/${maxRetries})`);
+              console.warn(`${isQuotaError ? 'Rate limit' : 'Service unavailable'} hit. Retrying in ${Math.round(delay/1000)}s... (Attempt ${retries}/${maxRetries})`);
               await new Promise(resolve => setTimeout(resolve, delay));
               continue;
             }
@@ -858,7 +862,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                     {msg.role === 'model' ? (
                       <div className="w-full">
                         {msg.content.startsWith('Error:') ? (
-                          <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-500 flex items-start gap-3 mb-2">
+                          <div className="p-4 bg-surface-hover border border-border rounded-xl text-muted flex items-start gap-3 mb-2">
                             <AlertCircle size={18} className="mt-0.5 shrink-0" />
                             <div className="text-sm font-medium leading-relaxed">
                               {msg.content.replace('Error:', '').trim()}
@@ -980,9 +984,9 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
           <div className="relative bg-surface rounded-[24px] md:rounded-[28px] transition-all shadow-2xl border border-border/50 focus-within:border-border flex flex-col p-1.5 md:p-2">
             {lastError && (
-              <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
+              <div className="mb-4 p-4 bg-surface-hover border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center text-muted shrink-0">
                     <AlertCircle size={18} />
                   </div>
                   <div>

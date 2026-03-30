@@ -52,6 +52,9 @@ function getFriendlyErrorMessage(rawMessage: string): string {
   if (msg.includes('popup-closed-by-user')) {
     return "Login was cancelled.";
   }
+  if (msg.includes('503') || msg.includes('unavailable') || msg.includes('high demand')) {
+    return "The AI model is currently experiencing high demand. Please try again in a few moments.";
+  }
   
   // If it's a very long error message, it's likely a raw stack trace or complex error.
   // Return a generic message to avoid showing code to the user.
@@ -117,7 +120,8 @@ export const handleError = (error: unknown, customMessage?: string, options: App
     switch (severity) {
       case ErrorSeverity.CRITICAL:
       case ErrorSeverity.ERROR:
-        toast.error(displayMessage);
+        // Use default toast style (gray/neutral) instead of red toast.error
+        toast(displayMessage);
         break;
       case ErrorSeverity.WARNING:
         toast.warning(displayMessage);

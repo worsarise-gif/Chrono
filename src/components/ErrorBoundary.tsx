@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo);
-    toast.error('An unexpected application error occurred.');
+    toast('An unexpected application error occurred.');
   }
 
   public render() {
@@ -32,8 +32,8 @@ export class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex items-center justify-center h-[100dvh] bg-[#000000] text-white font-sans">
           <div className="max-w-md w-full mx-4 p-8 bg-[#111111] border border-gray-800 rounded-2xl shadow-2xl flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
-              <AlertTriangle className="text-red-500" size={32} />
+            <div className="w-16 h-16 bg-gray-500/10 rounded-full flex items-center justify-center mb-6">
+              <AlertTriangle className="text-gray-500" size={32} />
             </div>
             <h2 className="text-2xl font-medium text-white mb-3 tracking-tight">Something went wrong</h2>
             <p className="text-[15px] text-gray-400 mb-8 leading-relaxed">
