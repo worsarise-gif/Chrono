@@ -963,7 +963,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                 >
                   <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent text-foreground text-[16px] md:text-[15px] w-full">
                     <div className="w-full">
-                      <ResponseFormatter content={streamingMessage} />
+                      <ResponseFormatter content={streamingMessage} isStreaming={true} />
                     </div>
                   </div>
                 </motion.div>

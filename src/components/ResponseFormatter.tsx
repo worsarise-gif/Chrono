@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -9,7 +9,49 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface ResponseFormatterProps {
   content: string;
+  isStreaming?: boolean;
 }
+
+const useSmoothTyping = (text: string, isStreaming: boolean) => {
+  const [displayedText, setDisplayedText] = useState(isStreaming ? '' : text);
+  const textRef = useRef(text);
+  const displayedTextRef = useRef(isStreaming ? '' : text);
+
+  useEffect(() => {
+    textRef.current = text;
+    if (!isStreaming) {
+      setDisplayedText(text);
+      displayedTextRef.current = text;
+    }
+  }, [text, isStreaming]);
+
+  useEffect(() => {
+    if (!isStreaming) return;
+
+    const interval = setInterval(() => {
+      const target = textRef.current;
+      const current = displayedTextRef.current;
+      
+      if (current !== target) {
+        if (target.length < current.length || !target.startsWith(current)) {
+          // If target was reset or changed completely
+          displayedTextRef.current = target;
+          setDisplayedText(target);
+        } else {
+          const diff = target.length - current.length;
+          const charsToAdd = Math.max(1, Math.floor(diff / 4)); // Smooth catch-up
+          const nextText = target.slice(0, current.length + charsToAdd);
+          displayedTextRef.current = nextText;
+          setDisplayedText(nextText);
+        }
+      }
+    }, 20);
+
+    return () => clearInterval(interval);
+  }, [isStreaming]);
+
+  return displayedText;
+};
 
 const CodeBlock = ({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
@@ -101,7 +143,9 @@ const ThinkingProcess = ({ content }: { content: string }) => {
   );
 };
 
-export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content }) => {
+export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, isStreaming = false }) => {
+  const displayedContent = useSmoothTyping(content, isStreaming);
+
   // Robust Normalization Layer
   const normalizeContent = (text: string) => {
     if (!text) return text;
@@ -123,10 +167,10 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
     return normalized;
   };
 
-  const parts = content.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
+  const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className="prose prose-invert dark:prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-foreground">
+    <div className={`prose prose-invert dark:prose-invert prose-p:leading-relaxed prose-headings:font-medium prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:text-foreground prose-code:text-foreground ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
