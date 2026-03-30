@@ -30,13 +30,14 @@ const BYTEZ_API_KEY = process.env.NEXT_PUBLIC_BYTEZ_API_KEY || '62f9e959f3fff48e
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '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';
 
 const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs: any[], onChunk: (text: string) => void) => {
-  const response = await fetch(url, {
+  const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
+      url,
+      apiKey,
       model,
       messages: msgs,
       stream: true
@@ -51,17 +52,21 @@ const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs
   if (!reader) throw new Error('No reader available');
   const decoder = new TextDecoder();
   let done = false;
+  let buffer = '';
 
   while (!done) {
     const { value, done: doneReading } = await reader.read();
     done = doneReading;
     if (value) {
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter(line => line.trim() !== '');
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      
       for (const line of lines) {
-        if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
           try {
-            const data = JSON.parse(line.slice(6));
+            const data = JSON.parse(trimmedLine.slice(6));
             if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
               onChunk(data.choices[0].delta.content);
             }
@@ -72,17 +77,37 @@ const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs
       }
     }
   }
+
+  if (buffer.trim()) {
+    const trimmedLine = buffer.trim();
+    if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+      try {
+        const data = JSON.parse(trimmedLine.slice(6));
+        if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+          onChunk(data.choices[0].delta.content);
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
+    }
+  }
 };
 
 const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string) => {
   const makeRequest = async (m: string) => {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ model: m, messages, temperature: 0.3 })
+      body: JSON.stringify({ 
+        url: 'https://api.groq.com/openai/v1/chat/completions',
+        apiKey: GROQ_API_KEY,
+        model: m, 
+        messages, 
+        stream: false,
+        temperature: 0.3
+      })
     });
     if (!res.ok) throw new Error(`Groq Error: ${await res.text()}`);
     const data = await res.json();
@@ -105,14 +130,15 @@ const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackMod
     const formData = new FormData();
     formData.append('file', audioBlob, 'audio.wav');
     formData.append('model', m);
-    const res = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+    formData.append('apiKey', GROQ_API_KEY);
+    const res = await fetch('/api/transcribe', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
       body: formData
     });
-    if (!res.ok) throw new Error(`Groq Transcription Error: ${await res.text()}`);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || `Groq Transcription Error: ${res.statusText}`);
+    }
     const data = await res.json();
     return data.text;
   };
@@ -506,9 +532,9 @@ Session Title Status: "false"`;
         config.tools = tools;
       }
       
-      let modelName = 'gemini-2.5-flash';
+      let modelName = 'gemini-3-flash-preview';
       let bytezModel = 'openai/gpt-4o';
-      let groqModel = 'openai/gpt-oss-20b';
+      let groqModel = 'llama-3.1-8b-instant';
       
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
       let classification = 'simple';
@@ -525,7 +551,7 @@ User Request: "${lastMessage}"
 
 Return ONLY the category name (simple, complex, or code) in lowercase, with no other text.`;
           
-          const result = await callGroqChatNonStream('meta-llama/llama-4-scout-17b-16e-instruct', [{ role: 'user', content: classifierPrompt }], 'llama-3.3-70b-versatile');
+          const result = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: classifierPrompt }], 'llama-3.3-70b-versatile');
           const cleanResult = result.toLowerCase().trim();
           if (cleanResult.includes('code')) classification = 'code';
           else if (cleanResult.includes('complex')) classification = 'complex';
@@ -541,31 +567,31 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
       let dynamicSystemInstruction = systemInstruction;
 
       if (mode === 'flash') {
-        modelName = 'gemini-2.5-flash';
+        modelName = 'gemini-3-flash-preview';
         bytezModel = 'openai/gpt-4o';
-        groqModel = 'openai/gpt-oss-20b';
+        groqModel = 'llama-3.1-8b-instant';
       } else if (mode === 'pro') {
-        modelName = 'gemini-2.5-pro';
-        bytezModel = 'openai/gpt-4.1';
-        groqModel = 'openai/gpt-oss-120b';
+        modelName = 'gemini-3.1-pro-preview';
+        bytezModel = 'openai/gpt-4-turbo';
+        groqModel = 'llama-3.3-70b-versatile';
       } else if (mode === 'auto') {
         if (classification === 'code') {
-          modelName = 'gemini-2.5-pro';
-          bytezModel = 'openai/gpt-4.1';
-          groqModel = 'openai/gpt-oss-120b';
+          modelName = 'gemini-3.1-pro-preview';
+          bytezModel = 'openai/gpt-4-turbo';
+          groqModel = 'llama-3.3-70b-versatile';
           dynamicSystemInstruction += `\n\n[CODE NORMALIZATION LAYER ACTIVE]\nYou are an expert software engineer. Provide clean, efficient, and well-documented code.\n- ALWAYS wrap code snippets in standard Markdown triple-backtick blocks with the correct language identifier.\n- Ensure proper indentation.\n- Do not use HTML tags for code.\n- Structure your response with clear headings and explanations.\n- Avoid incomplete code blocks.`;
         } else if (classification === 'complex') {
-          modelName = 'gemini-2.5-pro';
-          bytezModel = 'openai/gpt-4.1';
-          groqModel = 'openai/gpt-oss-120b';
+          modelName = 'gemini-3.1-pro-preview';
+          bytezModel = 'openai/gpt-4-turbo';
+          groqModel = 'llama-3.3-70b-versatile';
           dynamicSystemInstruction += `\n\n[COMPLEXITY LAYER ACTIVE]\nProvide a thorough, well-structured, and deeply reasoned response. Break down complex topics into digestible parts.`;
         } else {
-          modelName = 'gemini-2.5-flash';
+          modelName = 'gemini-3-flash-preview';
           bytezModel = 'openai/gpt-4o';
-          groqModel = 'openai/gpt-oss-20b';
+          groqModel = 'llama-3.1-8b-instant';
         }
       } else {
-        modelName = 'gemini-2.5-flash';
+        modelName = 'gemini-3-flash-preview';
       }
 
       config.systemInstruction = dynamicSystemInstruction;
@@ -581,9 +607,9 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         ...(contextText ? [{ role: 'system', content: contextText }] : []),
         ...recentMessages.map(m => ({
           role: m.role === 'model' ? 'assistant' : 'user',
-          content: m.content
+          content: m.content || (m.hasImage ? "[Image uploaded]" : " ")
         })),
-        { role: 'user', content: userMessage }
+        { role: 'user', content: userMessage || (currentImage ? "[Image uploaded]" : " ") }
       ];
 
       const handleChunk = (text: string) => {
@@ -622,28 +648,19 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         try {
           streamResponse = await executeWithRetry(() => ai.models.generateContentStream(requestParams), 2);
         } catch (error: any) {
-          const isQuotaError = error?.message?.toLowerCase().includes('quota') || error?.message?.includes('429') || error?.status === 429;
-          if (isQuotaError) {
-            console.warn("Gemini quota exceeded. Falling back to Bytez...");
+          console.warn("Gemini failed. Falling back to Bytez...", error);
+          try {
+            await executeWithRetry(runBytez, 1);
+            streamResponse = null;
+          } catch (bytezError: any) {
+            console.warn("Bytez failed. Falling back to Groq...", bytezError);
             try {
-              await executeWithRetry(runBytez, 1);
+              await executeWithRetry(runGroq, 1);
               streamResponse = null;
-            } catch (bytezError: any) {
-              const isBytezQuotaError = bytezError?.message?.toLowerCase().includes('quota') || bytezError?.message?.includes('429') || bytezError?.message?.includes('402');
-              if (isBytezQuotaError) {
-                console.warn("Bytez quota exceeded. Falling back to Groq...");
-                try {
-                  await executeWithRetry(runGroq, 1);
-                  streamResponse = null;
-                } catch (groqError: any) {
-                  throw new Error("All AI models are currently at capacity. Please try again in a moment.");
-                }
-              } else {
-                throw bytezError;
-              }
+            } catch (groqError: any) {
+              console.error("Groq failed as well.", groqError);
+              throw error; // Throw the original Gemini error so the user sees the actual network error if they are offline
             }
-          } else {
-            throw error;
           }
         }
 

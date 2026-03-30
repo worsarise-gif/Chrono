@@ -74,6 +74,18 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content })
     // 3. Ensure proper spacing around headings to prevent rendering issues
     normalized = normalized.replace(/([^\n])\n(#+ )/g, '$1\n\n$2');
 
+    // 4. Handle <think> tags from reasoning models
+    normalized = normalized.replace(/<think>([\s\S]*?)<\/think>/g, (match, p1) => {
+      return `> **Thinking Process:**\n> ${p1.trim().replace(/\n/g, '\n> ')}\n\n`;
+    });
+    
+    // Also handle unclosed <think> tags if the stream is still generating
+    if (normalized.includes('<think>') && !normalized.includes('</think>')) {
+      const parts = normalized.split('<think>');
+      const thinkingPart = parts[1];
+      normalized = parts[0] + `> **Thinking Process:**\n> ${thinkingPart.trim().replace(/\n/g, '\n> ')}`;
+    }
+
     return normalized;
   };
 
