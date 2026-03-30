@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe } from 'lucide-react';
+import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -125,13 +125,16 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
   }
 };
 
-const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string) => {
+const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string, prompt?: string) => {
   const makeRequest = async (m: string) => {
     const formData = new FormData();
     const ext = audioBlob.type.includes('webm') ? 'webm' : 'wav';
     formData.append('file', audioBlob, `audio.${ext}`);
     formData.append('model', m);
     formData.append('apiKey', GROQ_API_KEY);
+    if (prompt) {
+      formData.append('prompt', prompt);
+    }
     const res = await fetch('/api/transcribe', {
       method: 'POST',
       body: formData
@@ -177,6 +180,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const isTranscribingRef = useRef(false);
+  const transcriptionVersionRef = useRef(0);
   const initialInputRef = useRef("");
   const modeDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -287,6 +291,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     if (audioChunksRef.current.length === 0) return;
 
     isTranscribingRef.current = true;
+    const currentVersion = ++transcriptionVersionRef.current;
+    
     try {
       // Create a Blob from all chunks collected so far
       const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/wav';
@@ -295,7 +301,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       // Call Groq Whisper API
       const transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3', 'whisper-large-v3-turbo');
       
-      if (transcription) {
+      if (transcription && currentVersion === transcriptionVersionRef.current) {
         // Append the new transcription to the initial input
         const base = initialInputRef.current;
         setInput(base ? `${base} ${transcription.trim()}` : transcription.trim());
@@ -304,7 +310,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       console.error("Real-time transcription error:", error);
       // We don't throw here to allow the next chunk to try again seamlessly
     } finally {
-      isTranscribingRef.current = false;
+      if (currentVersion === transcriptionVersionRef.current) {
+        isTranscribingRef.current = false;
+      }
     }
   };
 
@@ -324,6 +332,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
+      transcriptionVersionRef.current = 0;
       initialInputRef.current = input; // Store current input to append to
 
       mediaRecorder.ondataavailable = async (e) => {
@@ -343,8 +352,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         setIsRecording(false);
       };
 
-      // Start recording and emit data every 2000ms (2 seconds) for real-time processing
-      mediaRecorder.start(2000);
+      // Start recording and emit data every 1000ms (1 second) for near-instant processing
+      mediaRecorder.start(1000);
       setIsRecording(true);
     } catch (err) {
       handleError(err, "Error accessing microphone");
@@ -851,36 +860,36 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
 
   return (
     <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden font-sans">
-      {/* Floating Actions */}
-      <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-40 pointer-events-none">
-        <button 
-          onClick={onMenuClick}
-          className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
-        >
-          <Menu size={20} />
-        </button>
-        <div className="flex-1" />
-        <button 
-          onClick={() => setCurrentChatId(null)}
-          className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
-          title="New Chat"
-        >
-          <SquarePen size={20} className="group-hover:scale-110 transition-transform" />
-        </button>
-      </div>
-
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto scroll-smooth relative pt-16">
+      <div className="flex-1 overflow-y-auto scroll-smooth relative flex flex-col">
+        {/* Sticky Floating Actions */}
+        <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
+          <button 
+            onClick={onMenuClick}
+            className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex-1" />
+          <button 
+            onClick={() => setCurrentChatId(null)}
+            className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
+            title="New Chat"
+          >
+            <SquarePen size={20} className="group-hover:scale-110 transition-transform" />
+          </button>
+        </div>
+
         {isLoadingMessages ? (
-          <div className="h-full flex flex-col items-center justify-center px-4">
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
             <Helix size="35" speed="2.5" color="var(--color-foreground)" />
           </div>
         ) : !isChatStarted ? (
-          <div className="h-full flex flex-col items-center justify-center px-4">
+          <div className="flex-1 flex flex-col items-center justify-center px-4">
             {/* Welcome screen is handled by the input area's positioning */}
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto w-full px-4 pt-6 pb-40 md:pb-32 space-y-6 md:space-y-8">
+          <div className="max-w-3xl mx-auto w-full px-4 pb-40 md:pb-32 space-y-6 md:space-y-8 flex-1">
             <AnimatePresence initial={false}>
               {messages.map((msg) => (
                 <motion.div 
@@ -1140,15 +1149,15 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
 
                 <button 
                   type="button" 
-                  onMouseDown={startRecording}
-                  onMouseUp={stopRecording}
-                  onMouseLeave={stopRecording}
-                  onTouchStart={startRecording}
-                  onTouchEnd={stopRecording}
+                  onClick={() => isRecording ? stopRecording() : startRecording()}
                   className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center transition-colors rounded-full shrink-0 ${isRecording ? 'text-red-500 bg-red-500/10 hover:bg-red-500/20' : 'text-muted hover:text-foreground hover:bg-surface-hover'}`}
-                  title="Hold to dictate"
+                  title={isRecording ? "Stop dictating" : "Click to dictate"}
                 >
-                  <Mic size={18} className={`md:w-5 md:h-5 ${isRecording ? 'animate-pulse' : ''}`} />
+                  {isRecording ? (
+                    <Square size={16} className="md:w-4 md:h-4 fill-current animate-pulse" />
+                  ) : (
+                    <Mic size={18} className="md:w-5 md:h-5" />
+                  )}
                 </button>
                 
                 <button 

@@ -14,6 +14,16 @@ export async function POST(req: NextRequest) {
     const groqFormData = new FormData();
     groqFormData.append('file', file);
     groqFormData.append('model', model);
+    
+    const prompt = formData.get('prompt');
+    if (prompt) {
+      groqFormData.append('prompt', prompt);
+    }
+    
+    const language = formData.get('language');
+    if (language) {
+      groqFormData.append('language', language);
+    }
 
     const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
       method: 'POST',
