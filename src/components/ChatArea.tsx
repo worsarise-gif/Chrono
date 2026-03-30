@@ -870,13 +870,25 @@ Session Title Status: "false"`;
               {isLoading && !streamingMessage && (
                 <motion.div 
                   key="loading"
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex justify-start mb-4 px-1"
+                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
+                  className="flex justify-start group w-full"
                 >
-                  <Helix size="20" speed="2.5" color="var(--color-foreground)" />
+                  <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent py-4 px-1 w-full">
+                    <motion.div
+                      animate={{ 
+                        opacity: [0.3, 0.6, 0.3],
+                        width: [40, 70, 40],
+                      }}
+                      transition={{ 
+                        duration: 1.8, 
+                        repeat: Infinity, 
+                        ease: "easeInOut" 
+                      }}
+                      className="h-[2px] bg-gradient-to-r from-transparent via-muted to-transparent rounded-full"
+                    />
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
