@@ -249,6 +249,9 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
           td({ node, children, ...props }: any) {
             return <td className="px-4 py-3 border-b border-border/50 text-muted" {...props}>{children}</td>;
           },
+          pre({ node, children, ...props }: any) {
+            return <div className="not-prose m-0 p-0 bg-transparent">{children}</div>;
+          },
           code({ node, inline, className, children, ...props }: any) {
             const match = /language-([\w-]+)/.exec(className || '');
             const language = match ? match[1] : '';
