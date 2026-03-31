@@ -143,3 +143,9 @@ textarea {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
+
+@keyframes shimmer-skeleton {
+  100% {
+    transform: translateX(100%);
+  }
+}

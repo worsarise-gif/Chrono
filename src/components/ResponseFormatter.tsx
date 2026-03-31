@@ -3,7 +3,7 @@ import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { Check, Copy, Search, ExternalLink, ChevronDown } from 'lucide-react';
+import { Check, Copy, Search, ExternalLink, ChevronDown, Maximize2, Download, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -172,14 +172,79 @@ const ThinkingProcess = ({ content }: { content: string }) => {
   );
 };
 
+const ImageRenderer = ({ src, alt, ...props }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const link = document.createElement('a');
+    link.href = src;
+    link.download = alt || 'generated-image.png';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  return (
+    <>
+      <div 
+        className="relative inline-block max-w-lg my-6 rounded-2xl overflow-hidden border border-border/50 shadow-md bg-surface/10 cursor-pointer group w-fit"
+        onClick={() => setIsOpen(true)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt || 'Generated Image'} className="w-full h-auto object-contain block" loading="lazy" {...props} />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+          <div className="opacity-0 group-hover:opacity-100 bg-black/50 text-white p-2 rounded-full backdrop-blur-sm transition-opacity">
+            <Maximize2 size={20} />
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-8"
+            onClick={() => setIsOpen(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative max-w-5xl w-full max-h-full flex flex-col items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute top-0 right-0 -mt-12 flex gap-3">
+                <button 
+                  onClick={handleDownload}
+                  className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors"
+                  title="Download Image"
+                >
+                  <Download size={20} />
+                </button>
+                <button 
+                  onClick={() => setIsOpen(false)}
+                  className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors"
+                  title="Close"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={src} alt={alt || 'Generated Image'} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
 const markdownComponents = {
   img({ node, src, alt, ...props }: any) {
-    return (
-      <div className="relative w-full max-w-lg my-6 rounded-2xl overflow-hidden border border-border/50 shadow-md bg-surface/10">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt || 'Generated Image'} className="w-full h-auto object-contain" loading="lazy" {...props} />
-      </div>
-    );
+    return <ImageRenderer src={src} alt={alt} {...props} />;
   },
   a({ node, children, href, ...props }: any) {
     const text = String(children);

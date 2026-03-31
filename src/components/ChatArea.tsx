@@ -171,6 +171,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [isRecording, setIsRecording] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [lastError, setLastError] = useState<{ message: string, retryParams?: any } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   
@@ -464,7 +465,7 @@ Session Title Status: "false"`;
     const isImageRequest = /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(userMessage.trim());
 
     if (isImageRequest && !currentImage) {
-      setStreamingMessage('🎨 **Generating your image...**\n\n*This usually takes a few seconds. Please wait...*');
+      setIsGeneratingImage(true);
       
       let finalImageResponse = '';
       try {
@@ -547,7 +548,7 @@ Session Title Status: "false"`;
         }
       }
       
-      setStreamingMessage('');
+      setIsGeneratingImage(false);
       setIsLoading(false);
       return;
     }
@@ -1075,7 +1076,34 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   </div>
                 </motion.div>
               )}
-              {isLoading && !streamingMessage && !isSearching && (
+              {isGeneratingImage && (
+                <motion.div 
+                  key="generating-image"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="flex justify-start group w-full my-4"
+                >
+                  <div className="w-full max-w-lg rounded-2xl overflow-hidden border border-border/50 shadow-md bg-surface/10 relative aspect-square">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full" style={{ animation: 'shimmer-skeleton 2s infinite' }} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted">
+                      <motion.div
+                        animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      >
+                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-muted/50 flex items-center justify-center">
+                          <span className="text-xl">✨</span>
+                        </div>
+                      </motion.div>
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-sm font-medium">Generating your image...</span>
+                        <span className="text-xs opacity-70">This usually takes a few seconds</span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+              {isLoading && !streamingMessage && !isSearching && !isGeneratingImage && (
                 <motion.div 
                   key="loading"
                   initial={{ opacity: 0, y: 5 }}
