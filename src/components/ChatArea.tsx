@@ -461,6 +461,63 @@ Session Title Status: "false"`;
       return;
     }
 
+    const isImageRequest = /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(userMessage.trim());
+
+    if (isImageRequest && !currentImage) {
+      setStreamingMessage('🎨 **Generating your image...**\n\n*This usually takes a few seconds. Please wait...*');
+      
+      let finalImageResponse = '';
+      try {
+        const res = await fetch('/api/generate-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: userMessage })
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          if (res.status === 429 || errData.error === 'QUOTA_EXCEEDED') {
+            finalImageResponse = "I'm sorry, but it looks like we've reached our image generation quota for now. Please try again later!";
+          } else {
+            finalImageResponse = "I'm sorry, I encountered an error while generating the image. Please try again.";
+          }
+        } else {
+          const blob = await res.blob();
+          const reader = new FileReader();
+          const base64data = await new Promise<string>((resolve) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+          
+          finalImageResponse = `Here is your generated image:\n\n![${userMessage}](${base64data})`;
+        }
+      } catch (err) {
+        finalImageResponse = "I'm sorry, I encountered a network error while generating the image.";
+      }
+
+      try {
+        await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), {
+          role: 'model',
+          content: finalImageResponse,
+          createdAt: serverTimestamp()
+        });
+        await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+          updatedAt: serverTimestamp()
+        });
+      } catch (error) {
+        console.error("Failed to save image response", error);
+        try {
+          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+        } catch (e) {
+          handleError(e, "Failed to save image response");
+        }
+      }
+      
+      setStreamingMessage('');
+      setIsLoading(false);
+      return;
+    }
+
     let fullResponse = '';
     try {
       const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;

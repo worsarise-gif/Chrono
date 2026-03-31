@@ -167,6 +167,14 @@ const ThinkingProcess = ({ content }: { content: string }) => {
 };
 
 const markdownComponents = {
+  img({ node, src, alt, ...props }: any) {
+    return (
+      <div className="relative w-full max-w-lg my-6 rounded-2xl overflow-hidden border border-border/50 shadow-md bg-surface/10">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt || 'Generated Image'} className="w-full h-auto object-contain" loading="lazy" {...props} />
+      </div>
+    );
+  },
   a({ node, children, href, ...props }: any) {
     const text = String(children);
     // Check if it's a citation like [link] or [1]
