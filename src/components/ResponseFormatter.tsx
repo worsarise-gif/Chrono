@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -154,7 +154,13 @@ const ThinkingProcess = ({ content }: { content: string }) => {
           >
             <div className="px-5 pb-5 pt-1 text-[13px] text-muted/80 leading-relaxed border-t border-border/30 bg-transparent">
               <div className="prose prose-sm prose-invert max-w-none italic">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  urlTransform={(url) => {
+                    if (url.startsWith('data:image/')) return url;
+                    return defaultUrlTransform(url);
+                  }}
+                >
                   {content}
                 </ReactMarkdown>
               </div>
@@ -318,6 +324,10 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
             key={index}
             remarkPlugins={[remarkGfm]}
             components={markdownComponents}
+            urlTransform={(url) => {
+              if (url.startsWith('data:image/')) return url;
+              return defaultUrlTransform(url);
+            }}
           >
             {normalizedContent}
           </ReactMarkdown>
