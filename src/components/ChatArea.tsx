@@ -11,6 +11,7 @@ import { db, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
+import Loader from './Loader';
 
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
@@ -239,6 +240,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [lastError, setLastError] = useState<{ message: string, retryParams?: any } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState('Thinking...');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -484,6 +486,20 @@ Session Title Status: "false"`;
     if (!image) setSelectedImage(null);
     setIsLoading(true);
     setStreamingMessage('');
+    
+    // Quick classification for loader text
+    const lowerMsg = userMessage.toLowerCase();
+    if (mode === 'search' || /search|find|lookup|who is|what is|current|latest/i.test(lowerMsg)) {
+      setLoadingStatus('Searching...');
+    } else if (/code|debug|function|class|implement|script|programming|syntax/i.test(lowerMsg)) {
+      setLoadingStatus('Crafting Code...');
+    } else if (/analyze|explain|reason|complex|calculate|solve/i.test(lowerMsg)) {
+      setLoadingStatus('Analyzing...');
+    } else if (currentImage) {
+      setLoadingStatus('Viewing Image...');
+    } else {
+      setLoadingStatus('Thinking...');
+    }
 
     let chatId = currentChatId;
 
@@ -531,6 +547,7 @@ Session Title Status: "false"`;
 
     if (isImageRequest && !currentImage) {
       setIsGeneratingImage(true);
+      setLoadingStatus('Creating Art...');
       
       let finalImageResponse = '';
       try {
@@ -757,9 +774,16 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
           
           const result = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: classifierPrompt }], 'llama-3.3-70b-versatile');
           const cleanResult = result.toLowerCase().trim();
-          if (cleanResult.includes('code')) classification = 'code';
-          else if (cleanResult.includes('complex')) classification = 'complex';
-          else classification = 'simple';
+          if (cleanResult.includes('code')) {
+            classification = 'code';
+            setLoadingStatus('Crafting Code...');
+          } else if (cleanResult.includes('complex')) {
+            classification = 'complex';
+            setLoadingStatus('Analyzing...');
+          } else {
+            classification = 'simple';
+            setLoadingStatus('Thinking...');
+          }
           
           console.log(`Auto Mode Classification: ${classification}`);
         } catch (e) {
@@ -908,6 +932,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
 
             if (searchWebCallArgs) {
               setIsSearching(true);
+              setLoadingStatus('Searching...');
               
               let searchResults = "Search unavailable. Rely on training data.";
               try {
@@ -1154,12 +1179,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   exit={{ opacity: 0 }}
                   className="flex justify-start px-1 mb-4"
                 >
-                  <div className="flex items-center gap-2">
-                    <Search size={14} className="text-muted animate-pulse" />
-                    <span className="text-[13px] font-medium font-[family-name:var(--font-roboto)] glowing-text">
-                      Searching the web...
-                    </span>
-                  </div>
+                  <Loader text="Searching..." />
                 </motion.div>
               )}
               {isGeneratingImage && (
@@ -1182,7 +1202,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                         </div>
                       </motion.div>
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-sm font-medium">Generating your image...</span>
+                        <span className="text-sm font-medium">Creating Art...</span>
                         <span className="text-xs opacity-70">This usually takes a few seconds</span>
                       </div>
                     </div>
@@ -1197,20 +1217,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   exit={{ opacity: 0, transition: { duration: 0.2 } }}
                   className="flex justify-start group w-full"
                 >
-                  <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent py-4 px-1 w-full">
-                    <motion.div
-                      animate={{ 
-                        opacity: [0.3, 0.6, 0.3],
-                        width: [40, 70, 40],
-                      }}
-                      transition={{ 
-                        duration: 1.8, 
-                        repeat: Infinity, 
-                        ease: "easeInOut" 
-                      }}
-                      className="h-[2px] bg-gradient-to-r from-transparent via-muted to-transparent rounded-full"
-                    />
-                  </div>
+                  <Loader text={loadingStatus} />
                 </motion.div>
               )}
             </AnimatePresence>
