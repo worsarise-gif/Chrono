@@ -9,7 +9,8 @@ async function generateWithModel(model: string, prompt: string) {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${CF_API_TOKEN}`,
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'Accept': 'image/png'
     },
     body: JSON.stringify({ prompt })
   });
@@ -17,6 +18,16 @@ async function generateWithModel(model: string, prompt: string) {
   if (!response.ok) {
     const err = await response.text();
     throw new Error(`Cloudflare API error (${response.status}): ${err}`);
+  }
+
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const data = await response.json();
+    if (data.result && data.result.image) {
+      // Convert base64 string to ArrayBuffer using Buffer
+      return Buffer.from(data.result.image, 'base64');
+    }
+    throw new Error('Invalid JSON response format from Cloudflare');
   }
 
   return await response.arrayBuffer();

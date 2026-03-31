@@ -483,15 +483,49 @@ Session Title Status: "false"`;
           }
         } else {
           const blob = await res.blob();
-          const reader = new FileReader();
-          const base64data = await new Promise<string>((resolve) => {
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.readAsDataURL(blob);
+          
+          // Compress the image to avoid Firestore's 1MB document limit
+          const compressedBase64 = await new Promise<string>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              // Max dimensions to keep size small but quality decent
+              const MAX_WIDTH = 800;
+              const MAX_HEIGHT = 800;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height *= MAX_WIDTH / width;
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width *= MAX_HEIGHT / height;
+                  height = MAX_HEIGHT;
+                }
+              }
+              canvas.width = width;
+              canvas.height = height;
+              
+              const ctx = canvas.getContext('2d');
+              if (!ctx) {
+                reject(new Error('Failed to get canvas context'));
+                return;
+              }
+              ctx.drawImage(img, 0, 0, width, height);
+              // Compress as JPEG with 0.7 quality
+              resolve(canvas.toDataURL('image/jpeg', 0.7));
+            };
+            img.onerror = () => reject(new Error('Failed to load image for compression'));
+            img.src = URL.createObjectURL(blob);
           });
           
-          finalImageResponse = `Here is your generated image:\n\n![${userMessage}](${base64data})`;
+          finalImageResponse = `Here is your generated image:\n\n![${userMessage}](${compressedBase64})`;
         }
       } catch (err) {
+        console.error("Image generation error:", err);
         finalImageResponse = "I'm sorry, I encountered a network error while generating the image.";
       }
 
