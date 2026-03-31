@@ -1323,7 +1323,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   
                   {showModeDropdown && (
                     <div className="absolute bottom-full mb-2 right-0 md:left-0 w-[240px] md:w-64 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
-                      {(Object.keys(modeLabels) as ChatMode[]).map((m) => (
+                      {(Object.keys(modeLabels) as ChatMode[]).filter(m => m !== 'flash').map((m) => (
                         <button
                           key={m}
                           type="button"
