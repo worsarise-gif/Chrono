@@ -93,6 +93,71 @@ const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs
   }
 };
 
+const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void) => {
+  const res = await fetch('/api/cloudflare-chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ 
+      model, 
+      messages, 
+      stream: true,
+      temperature: 0.3
+    })
+  });
+
+  if (!res.ok) throw new Error(`Cloudflare Error: ${await res.text()}`);
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error('No reader available');
+  const decoder = new TextDecoder();
+  let done = false;
+  let buffer = '';
+
+  while (!done) {
+    const { value, done: doneReading } = await reader.read();
+    done = doneReading;
+    if (value) {
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+      
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+          try {
+            const data = JSON.parse(trimmedLine.slice(6));
+            if (data.response) {
+              onChunk(data.response);
+            } else if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+              onChunk(data.choices[0].delta.content);
+            }
+          } catch (e) {
+            // ignore parse errors
+          }
+        }
+      }
+    }
+  }
+
+  if (buffer.trim()) {
+    const trimmedLine = buffer.trim();
+    if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+      try {
+        const data = JSON.parse(trimmedLine.slice(6));
+        if (data.response) {
+          onChunk(data.response);
+        } else if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+          onChunk(data.choices[0].delta.content);
+        }
+      } catch (e) {
+        // ignore parse errors
+      }
+    }
+  }
+};
+
 const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string) => {
   const makeRequest = async (m: string) => {
     const res = await fetch('/api/chat', {
@@ -673,6 +738,7 @@ Session Title Status: "false"`;
       let modelName = 'gemini-3-flash-preview';
       let bytezModel = 'openai/gpt-4o';
       let groqModel = 'llama-3.1-8b-instant';
+      let cloudflareModel = '';
       
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
       let classification = 'simple';
@@ -712,16 +778,19 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         modelName = 'gemini-3.1-pro-preview';
         bytezModel = 'openai/gpt-4-turbo';
         groqModel = 'llama-3.3-70b-versatile';
+        cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
       } else if (mode === 'auto') {
         if (classification === 'code') {
           modelName = 'gemini-3.1-pro-preview';
           bytezModel = 'openai/gpt-4-turbo';
           groqModel = 'llama-3.3-70b-versatile';
+          cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
           dynamicSystemInstruction += `\n\n[CODE NORMALIZATION LAYER ACTIVE]\nYou are an expert software engineer. Provide clean, efficient, and well-documented code.\n- ALWAYS wrap code snippets in standard Markdown triple-backtick blocks with the correct language identifier.\n- Ensure proper indentation.\n- Do not use HTML tags for code.\n- Structure your response with clear headings and explanations.\n- Avoid incomplete code blocks.`;
         } else if (classification === 'complex') {
           modelName = 'gemini-3.1-pro-preview';
           bytezModel = 'openai/gpt-4-turbo';
           groqModel = 'llama-3.3-70b-versatile';
+          cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
           dynamicSystemInstruction += `\n\n[COMPLEXITY LAYER ACTIVE]\nProvide a thorough, well-structured, and deeply reasoned response. Break down complex topics into digestible parts.`;
         } else {
           modelName = 'gemini-3-flash-preview';
@@ -757,6 +826,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
 
       const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, bytezModel, openAIMessages, handleChunk);
       const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, groqModel, openAIMessages, handleChunk);
+      const runCloudflare = () => callCloudflareStream(cloudflareModel, openAIMessages, handleChunk);
 
       // Helper function to execute API call with retry logic and fallback model for 429/503 errors
       const executeWithRetry = async (fn: () => Promise<any>, maxRetries = 3) => {
@@ -800,8 +870,19 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
               await executeWithRetry(runGroq, 1);
               streamResponse = null;
             } catch (groqError: any) {
-              console.error("Groq failed as well.", groqError);
-              throw error; // Throw the original Gemini error so the user sees the actual network error if they are offline
+              console.error("Groq failed.", groqError);
+              if (cloudflareModel) {
+                console.warn("Falling back to Cloudflare...", groqError);
+                try {
+                  await executeWithRetry(runCloudflare, 1);
+                  streamResponse = null;
+                } catch (cfError: any) {
+                  console.error("Cloudflare failed as well.", cfError);
+                  throw error; // Throw original error
+                }
+              } else {
+                throw error; // Throw the original Gemini error
+              }
             }
           }
         }
@@ -1087,9 +1168,9 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}
-                  className="flex justify-start group w-full my-4"
+                  className="flex justify-start group w-full"
                 >
-                  <div className="w-full max-w-lg rounded-2xl overflow-hidden border border-border/50 shadow-md bg-surface/10 relative aspect-square">
+                  <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full" style={{ animation: 'shimmer-skeleton 2s infinite' }} />
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted">
                       <motion.div
