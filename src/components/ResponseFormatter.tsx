@@ -175,14 +175,44 @@ const ThinkingProcess = ({ content }: { content: string }) => {
 const ImageRenderer = ({ src, alt, ...props }: any) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleDownload = (e: React.MouseEvent) => {
+  const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const link = document.createElement('a');
-    link.href = src;
-    link.download = alt || 'generated-image.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = src;
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error("Could not get canvas context");
+      
+      ctx.drawImage(img, 0, 0);
+      
+      const pngUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = pngUrl;
+      link.download = (alt || 'generated-image').replace(/\.[^/.]+$/, "") + '.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Failed to convert image to PNG:", error);
+      // Fallback to direct download if conversion fails
+      const link = document.createElement('a');
+      link.href = src;
+      link.download = (alt || 'generated-image').replace(/\.[^/.]+$/, "") + '.png';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   };
 
   return (
