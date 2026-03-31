@@ -452,7 +452,7 @@ Conversation:
 
 Session Title Status: "false"`;
 
-      const generatedTitle = await callGroqChatNonStream('qwen/qwen3-32b', [{ role: 'user', content: prompt }]);
+      const generatedTitle = await callGroqChatNonStream('moonshotai/kimi-k2-instruct-0905', [{ role: 'user', content: prompt }], 'llama-3.3-70b-versatile');
       
       if (generatedTitle && !generatedTitle.includes("Title already generated")) {
         const cleanTitle = generatedTitle.replace(/^["']|["']$/g, '').trim();
@@ -514,7 +514,7 @@ Session Title Status: "false"`;
         setCurrentChatId(chatId);
         
         // Generate smart title asynchronously
-        generateSmartTitle(chatId, userMessage);
+        generateSmartTitle(chatId, userMessage || (currentImage ? "Image uploaded" : "New Chat"));
       } catch (error) {
         setIsLoading(false);
         try {
