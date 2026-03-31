@@ -193,7 +193,7 @@ const ImageRenderer = ({ src, alt, ...props }: any) => {
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt || 'Generated Image'} className="max-w-full h-auto block rounded-2xl" loading="lazy" {...props} />
-        <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+        <div className="absolute inset-0 rounded-2xl bg-black/0 group-hover:bg-transparent dark:group-hover:bg-black/10 transition-colors flex items-center justify-center">
           <div className="opacity-0 group-hover:opacity-100 bg-black/50 text-white p-2 rounded-full backdrop-blur-sm transition-opacity">
             <Maximize2 size={20} />
           </div>
