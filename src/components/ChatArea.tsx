@@ -1377,7 +1377,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   disabled={(!input.trim() && !selectedImage) || isLoading} 
                   className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors disabled:opacity-50 shrink-0"
                 >
-                  {input.trim() || selectedImage ? <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} /> : <AudioLines size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />}
+                  <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
                 </button>
               </div>
             </div>
