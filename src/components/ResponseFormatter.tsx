@@ -188,11 +188,11 @@ const ImageRenderer = ({ src, alt, ...props }: any) => {
   return (
     <>
       <div 
-        className="relative inline-block max-w-lg my-6 rounded-2xl overflow-hidden border border-border/50 shadow-md bg-surface/10 cursor-pointer group w-fit"
+        className="relative inline-flex max-w-full my-4 rounded-2xl overflow-hidden border border-border/50 shadow-md bg-surface/10 cursor-pointer group"
         onClick={() => setIsOpen(true)}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt || 'Generated Image'} className="w-full h-auto object-contain block" loading="lazy" {...props} />
+        <img src={src} alt={alt || 'Generated Image'} className="max-w-full h-auto block" loading="lazy" {...props} />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
           <div className="opacity-0 group-hover:opacity-100 bg-black/50 text-white p-2 rounded-full backdrop-blur-sm transition-opacity">
             <Maximize2 size={20} />

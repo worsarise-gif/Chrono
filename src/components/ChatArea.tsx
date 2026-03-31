@@ -515,9 +515,14 @@ Session Title Status: "false"`;
                 reject(new Error('Failed to get canvas context'));
                 return;
               }
+              
+              // Fill with white background to prevent transparent areas from turning black
+              ctx.fillStyle = '#FFFFFF';
+              ctx.fillRect(0, 0, width, height);
+              
               ctx.drawImage(img, 0, 0, width, height);
-              // Compress as JPEG with 0.7 quality
-              resolve(canvas.toDataURL('image/jpeg', 0.7));
+              // Compress as WEBP with 0.8 quality (smaller size, better quality)
+              resolve(canvas.toDataURL('image/webp', 0.8));
             };
             img.onerror = () => reject(new Error('Failed to load image for compression'));
             img.src = URL.createObjectURL(blob);

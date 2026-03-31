@@ -24,8 +24,9 @@ async function generateWithModel(model: string, prompt: string) {
   if (contentType.includes('application/json')) {
     const data = await response.json();
     if (data.result && data.result.image) {
-      // Convert base64 string to ArrayBuffer using Buffer
-      return Buffer.from(data.result.image, 'base64');
+      // Convert base64 string to Uint8Array
+      const buffer = Buffer.from(data.result.image, 'base64');
+      return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
     }
     throw new Error('Invalid JSON response format from Cloudflare');
   }
