@@ -216,24 +216,30 @@ const ImageRenderer = ({ src, alt, ...props }: any) => {
               className="relative max-w-5xl w-full max-h-full flex flex-col items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="absolute top-0 right-0 -mt-12 flex gap-3">
-                <button 
-                  onClick={handleDownload}
-                  className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors"
-                  title="Download Image"
-                >
-                  <Download size={20} />
-                </button>
-                <button 
-                  onClick={() => setIsOpen(false)}
-                  className="bg-white/10 hover:bg-white/20 text-white p-2 rounded-full backdrop-blur-md transition-colors"
-                  title="Close"
-                >
-                  <X size={20} />
-                </button>
+              <div className="relative w-fit h-fit">
+                <div className="absolute top-4 right-4 flex gap-3 z-10">
+                  <button 
+                    onClick={handleDownload}
+                    className="bg-black/50 hover:bg-black/70 text-white p-2.5 rounded-full backdrop-blur-md transition-all border border-white/10 shadow-lg"
+                    title="Download Image"
+                  >
+                    <Download size={20} />
+                  </button>
+                  <button 
+                    onClick={() => setIsOpen(false)}
+                    className="bg-black/50 hover:bg-black/70 text-white p-2.5 rounded-full backdrop-blur-md transition-all border border-white/10 shadow-lg"
+                    title="Close"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img 
+                  src={src} 
+                  alt={alt || 'Generated Image'} 
+                  className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/5" 
+                />
               </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={src} alt={alt || 'Generated Image'} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
             </motion.div>
           </motion.div>
         )}
