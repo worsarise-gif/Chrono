@@ -435,20 +435,21 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   };
 
-  const generateSmartTitle = async (chatId: string, initialMessage: string) => {
+  const generateSmartTitle = async (chatId: string, userMessage: string, aiResponse: string) => {
     if (!user) return;
     try {
       const prompt = `You are an intelligent assistant tasked with generating a **single, concise, and memorable chat title (5–8 words)** for this project.
 
 Rules:
-1. Generate the title **only once per session**. If a title has already been generated for this session, respond exactly: "Title already generated. Cannot create a new one."
+1. Generate the title **only once per session**.
 2. Focus on the **main topic, key ideas, or recurring themes** in the conversation.
 3. Avoid generic words like "chat", "discussion", or "conversation".
 4. If no clear topic is present, fallback to: "Chat on [Date]".
 5. Make the title **unique, context-aware, and easy to remember**.
 
 Conversation:
-"${initialMessage}"
+User: "${userMessage}"
+AI: "${aiResponse}"
 
 Session Title Status: "false"`;
 
@@ -502,8 +503,10 @@ Session Title Status: "false"`;
     }
 
     let chatId = currentChatId;
+    let isNewChat = false;
 
     if (!chatId) {
+      isNewChat = true;
       try {
         const chatRef = await addDoc(collection(db, 'users', user.uid, 'chats'), {
           title: userMessage.slice(0, 40) || 'New Chat',
@@ -512,9 +515,6 @@ Session Title Status: "false"`;
         });
         chatId = chatRef.id;
         setCurrentChatId(chatId);
-        
-        // Generate smart title asynchronously
-        generateSmartTitle(chatId, userMessage || (currentImage ? "Image uploaded" : "New Chat"));
       } catch (error) {
         setIsLoading(false);
         try {
@@ -997,6 +997,11 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
           updatedAt: serverTimestamp()
         });
+
+        // Generate smart title asynchronously for new chats using the AI response
+        if (isNewChat) {
+          generateSmartTitle(chatId, userMessage || (currentImage ? "Image uploaded" : "New Chat"), fullResponse);
+        }
       } catch (error) {
         try {
           handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
