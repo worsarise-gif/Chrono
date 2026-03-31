@@ -12,6 +12,7 @@ import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
+import { ProfileModal } from './ProfileModal';
 
 interface Chat {
   id: string;
@@ -78,6 +79,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [chatToDelete, setChatToDelete] = useState<{ id: string, title: string } | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -294,8 +296,15 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           {/* User Profile / Login */}
           <div className="w-[68px] flex-shrink-0 flex items-center justify-center">
             {user ? (
-              <div className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
-                {user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'}
+              <div 
+                onClick={() => setIsProfileModalOpen(true)}
+                className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
+              >
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                ) : (
+                  user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'
+                )}
               </div>
             ) : (
               <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
@@ -306,6 +315,12 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         </div>
         </div>
       </div>
+
+      {/* Profile Modal */}
+      <ProfileModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
