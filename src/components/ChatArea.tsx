@@ -1417,21 +1417,12 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
               
               {/* Action Buttons Overlay */}
               <div className="absolute top-4 right-4 flex items-center gap-2">
-                <a 
-                  href={previewImage}
-                  download="image.png"
-                  onClick={(e) => e.stopPropagation()}
-                  className="p-2.5 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white transition-all duration-200 border border-white/10"
-                  title="Download image"
-                >
-                  <Download size={20} />
-                </a>
                 <button 
                   onClick={() => setPreviewImage(null)}
-                  className="p-2.5 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white transition-all duration-200 border border-white/10"
+                  className="p-2 text-white/70 hover:text-white transition-all duration-200"
                   title="Close preview"
                 >
-                  <X size={20} />
+                  <X size={24} />
                 </button>
               </div>
             </motion.div>

@@ -246,28 +246,28 @@ const ImageRenderer = ({ src, alt, ...props }: any) => {
               className="relative max-w-5xl w-full max-h-full flex flex-col items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative w-fit h-fit">
+              <div className="relative w-fit h-fit group">
                 <div className="absolute top-4 right-4 flex gap-3 z-10">
                   <button 
                     onClick={handleDownload}
-                    className="bg-black/50 hover:bg-black/70 text-white p-2.5 rounded-full backdrop-blur-md transition-all border border-white/10 shadow-lg"
+                    className="text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                     title="Download Image"
                   >
-                    <Download size={20} />
+                    <Download size={24} />
                   </button>
                   <button 
                     onClick={() => setIsOpen(false)}
-                    className="bg-black/50 hover:bg-black/70 text-white p-2.5 rounded-full backdrop-blur-md transition-all border border-white/10 shadow-lg"
+                    className="text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                     title="Close"
                   >
-                    <X size={20} />
+                    <X size={24} />
                   </button>
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={src} 
                   alt={alt || 'Generated Image'} 
-                  className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/5" 
+                  className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/10" 
                 />
               </div>
             </motion.div>
