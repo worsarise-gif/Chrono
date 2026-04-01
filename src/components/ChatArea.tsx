@@ -23,6 +23,7 @@ interface Message {
   hasImage?: boolean;
   hasAudio?: boolean;
   createdAt?: any;
+  isStreaming?: boolean;
 }
 
 type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
@@ -241,6 +242,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [lastError, setLastError] = useState<{ message: string, retryParams?: any } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('Thinking...');
+  const [currentStreamingMessageId, setCurrentStreamingMessageId] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -532,6 +534,11 @@ Session Title Status: "false"`;
         content: userMessage,
         hasImage: !!currentImage,
         createdAt: serverTimestamp()
+      });
+      
+      // Update chat updatedAt immediately so sidebar syncs in real-time across devices
+      await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+        updatedAt: serverTimestamp()
       });
     } catch (error) {
       setIsLoading(false);
@@ -843,9 +850,29 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         { role: 'user', content: userMessage || (currentImage ? "[Image uploaded]" : " ") }
       ];
 
+      let aiMessageRef: any = null;
+      try {
+        const ref = await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), {
+          role: 'model',
+          content: '',
+          isStreaming: true,
+          createdAt: serverTimestamp()
+        });
+        aiMessageRef = ref;
+        setCurrentStreamingMessageId(ref.id);
+      } catch (e) {
+        console.error("Failed to create placeholder message", e);
+      }
+
+      let lastUpdateTime = Date.now();
       const handleChunk = (text: string) => {
         fullResponse += text;
         setStreamingMessage(fullResponse);
+        
+        if (aiMessageRef && Date.now() - lastUpdateTime > 1500) {
+          lastUpdateTime = Date.now();
+          updateDoc(aiMessageRef, { content: fullResponse }).catch(e => console.error("Failed to sync chunk", e));
+        }
       };
 
       const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, bytezModel, openAIMessages, handleChunk);
@@ -927,6 +954,11 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
               if (text) {
                 fullResponse += text;
                 setStreamingMessage(fullResponse);
+                
+                if (aiMessageRef && Date.now() - lastUpdateTime > 1500) {
+                  lastUpdateTime = Date.now();
+                  updateDoc(aiMessageRef, { content: fullResponse }).catch(e => console.error("Failed to sync chunk", e));
+                }
               }
             }
 
@@ -986,13 +1018,19 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
       }
 
       try {
-        const messageData: any = {
-          role: 'model',
-          content: fullResponse,
-          createdAt: serverTimestamp()
-        };
-
-        await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
+        if (aiMessageRef) {
+          await updateDoc(aiMessageRef, {
+            content: fullResponse,
+            isStreaming: false
+          });
+        } else {
+          const messageData: any = {
+            role: 'model',
+            content: fullResponse,
+            createdAt: serverTimestamp()
+          };
+          await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
+        }
 
         await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
           updatedAt: serverTimestamp()
@@ -1012,6 +1050,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         setIsLoading(false);
         setIsSearching(false);
         setStreamingMessage('');
+        setCurrentStreamingMessageId(null);
       }
     } catch (error: any) {
       setIsLoading(false);
@@ -1099,7 +1138,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         ) : (
           <div className="max-w-3xl mx-auto w-full px-4 pb-40 md:pb-32 space-y-6 md:space-y-8 flex-1">
             <AnimatePresence initial={false}>
-              {messages.map((msg) => (
+              {messages.filter(msg => msg.id !== currentStreamingMessageId).map((msg) => (
                 <motion.div 
                   key={msg.id} 
                   initial={{ opacity: 0, y: 10 }}
@@ -1118,42 +1157,46 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                             </div>
                           </div>
                         ) : (
-                          <ResponseFormatter content={msg.content} />
+                          <ResponseFormatter content={msg.content} isStreaming={msg.isStreaming} />
                         )}
                         
-                        {/* Action Row */}
-                        <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted">
-                          {[
-                            { icon: <RefreshCcw size={14} />, title: "Regenerate" },
-                            { icon: <Copy size={14} />, title: "Copy" },
-                            { icon: <ThumbsUp size={14} />, title: "Good response" },
-                            { icon: <ThumbsDown size={14} />, title: "Bad response" },
-                            { icon: <Volume2 size={14} />, title: "Read aloud" },
-                            { icon: <Share size={14} />, title: "Share" },
-                            { icon: <MoreHorizontal size={14} />, title: "More options" }
-                          ].map((btn: any, i) => (
-                            <button 
-                              key={i}
-                              onClick={btn.onClick}
-                              className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-foreground'}`} 
-                              title={btn.title}
-                            >
-                              {btn.icon}
-                            </button>
-                          ))}
-                        </div>
+                        {!msg.isStreaming && (
+                          <>
+                            {/* Action Row */}
+                            <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted">
+                              {[
+                                { icon: <RefreshCcw size={14} />, title: "Regenerate" },
+                                { icon: <Copy size={14} />, title: "Copy" },
+                                { icon: <ThumbsUp size={14} />, title: "Good response" },
+                                { icon: <ThumbsDown size={14} />, title: "Bad response" },
+                                { icon: <Volume2 size={14} />, title: "Read aloud" },
+                                { icon: <Share size={14} />, title: "Share" },
+                                { icon: <MoreHorizontal size={14} />, title: "More options" }
+                              ].map((btn: any, i) => (
+                                <button 
+                                  key={i}
+                                  onClick={btn.onClick}
+                                  className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-foreground'}`} 
+                                  title={btn.title}
+                                >
+                                  {btn.icon}
+                                </button>
+                              ))}
+                            </div>
 
-                        {/* Suggestions */}
-                        <div className="mt-5 space-y-3">
-                          <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
-                            <CornerDownRight size={16} className="text-muted" />
-                            Cebu Food Recommendations
-                          </button>
-                          <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
-                            <CornerDownRight size={16} className="text-muted" />
-                            Cebu Nightlife Spots
-                          </button>
-                        </div>
+                            {/* Suggestions */}
+                            <div className="mt-5 space-y-3">
+                              <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
+                                <CornerDownRight size={16} className="text-muted" />
+                                Cebu Food Recommendations
+                              </button>
+                              <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
+                                <CornerDownRight size={16} className="text-muted" />
+                                Cebu Nightlife Spots
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ) : (
                       <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.content}</p>
