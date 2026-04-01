@@ -7,8 +7,9 @@ import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
-import { db, loginWithGoogle } from '../firebase';
+import { db, storage, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
 import Loader from './Loader';
@@ -21,6 +22,7 @@ interface Message {
   role: 'user' | 'model';
   content: string;
   hasImage?: boolean;
+  imageUrl?: string;
   hasAudio?: boolean;
   createdAt?: any;
   isStreaming?: boolean;
@@ -542,13 +544,29 @@ Session Title Status: "false"`;
       }
     }
 
+    let uploadedImageUrl = '';
+    if (currentImage) {
+      try {
+        const imageRef = ref(storage, `users/${user.uid}/chats/${chatId}/images/${Date.now()}`);
+        await uploadString(imageRef, `data:${currentImage.mimeType};base64,${currentImage.data}`, 'data_url');
+        uploadedImageUrl = await getDownloadURL(imageRef);
+      } catch (error) {
+        console.error("Failed to upload image to storage", error);
+        // We can continue without the URL, it just won't display in the chat history
+      }
+    }
+
     try {
-      await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), {
+      const messageData: any = {
         role: 'user',
         content: userMessage,
         hasImage: !!currentImage,
         createdAt: serverTimestamp()
-      });
+      };
+      if (uploadedImageUrl) {
+        messageData.imageUrl = uploadedImageUrl;
+      }
+      await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
       
       // Update chat updatedAt immediately so sidebar syncs in real-time across devices
       await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
@@ -846,6 +864,10 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         modelName = 'gemini-3-flash-preview';
       }
 
+      if (currentImage) {
+        groqModel = 'meta-llama/llama-4-scout-17b-16e-instruct';
+      }
+
       config.systemInstruction = dynamicSystemInstruction;
 
       const requestParams: any = {
@@ -861,7 +883,13 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
           role: m.role === 'model' ? 'assistant' : 'user',
           content: m.content || (m.hasImage ? "[Image uploaded]" : " ")
         })),
-        { role: 'user', content: userMessage || (currentImage ? "[Image uploaded]" : " ") }
+        { 
+          role: 'user', 
+          content: currentImage ? [
+            { type: 'text', text: userMessage || "Describe this image." },
+            { type: 'image_url', image_url: { url: `data:${currentImage.mimeType};base64,${currentImage.data}` } }
+          ] : (userMessage || " ")
+        }
       ];
 
       let aiMessageRef: any = null;
@@ -936,6 +964,13 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
               streamResponse = null;
             } catch (groqError: any) {
               console.error("Groq failed.", groqError);
+              const isQuotaError = groqError?.message?.toLowerCase().includes('quota') || 
+                                   groqError?.message?.includes('429') || 
+                                   groqError?.status === 429 ||
+                                   groqError?.message?.includes('402');
+              if (currentImage && isQuotaError) {
+                throw new Error("The image recognition model has reached its quota. Please try again later.");
+              }
               if (cloudflareModel) {
                 console.warn("Falling back to Cloudflare...", groqError);
                 try {
@@ -1038,7 +1073,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         if (error.name === 'AbortError') {
           console.log('Generation aborted by user');
         } else {
-          handleError(error, "Failed to generate AI response");
+          handleError(error, error.message || "Failed to generate AI response");
           setLastError({ 
             message: error.message || "Something went wrong. Please try again.",
             retryParams: { text: userMessage, image: currentImage }
@@ -1229,7 +1264,17 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                         )}
                       </div>
                     ) : (
-                      <p className="whitespace-pre-wrap leading-relaxed break-words">{msg.content}</p>
+                      <div className="flex flex-col gap-2">
+                        {msg.imageUrl && (
+                          <img 
+                            src={msg.imageUrl} 
+                            alt="Uploaded" 
+                            className="max-w-[200px] md:max-w-[300px] rounded-xl object-contain"
+                            referrerPolicy="no-referrer"
+                          />
+                        )}
+                        <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
+                      </div>
                     )}
                   </div>
                 </motion.div>
