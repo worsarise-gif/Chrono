@@ -352,11 +352,35 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = (reader.result as string).split(',')[1];
-        setSelectedImage({
-          data: base64String,
-          mimeType: file.type
-        });
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1024;
+
+          if (width > height && width > maxDim) {
+            height *= maxDim / width;
+            width = maxDim;
+          } else if (height > maxDim) {
+            width *= maxDim / height;
+            height = maxDim;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            const base64String = dataUrl.split(',')[1];
+            setSelectedImage({
+              data: base64String,
+              mimeType: 'image/jpeg'
+            });
+          }
+        };
+        img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
     }
@@ -544,18 +568,7 @@ Session Title Status: "false"`;
       }
     }
 
-    let uploadedImageUrl = '';
-    if (currentImage) {
-      try {
-        const imageRef = ref(storage, `users/${user.uid}/chats/${chatId}/images/${Date.now()}`);
-        await uploadString(imageRef, `data:${currentImage.mimeType};base64,${currentImage.data}`, 'data_url');
-        uploadedImageUrl = await getDownloadURL(imageRef);
-      } catch (error) {
-        console.error("Failed to upload image to storage", error);
-        // We can continue without the URL, it just won't display in the chat history
-      }
-    }
-
+    let userMessageRef: any = null;
     try {
       const messageData: any = {
         role: 'user',
@@ -563,10 +576,11 @@ Session Title Status: "false"`;
         hasImage: !!currentImage,
         createdAt: serverTimestamp()
       };
-      if (uploadedImageUrl) {
-        messageData.imageUrl = uploadedImageUrl;
+      if (currentImage) {
+        // Temporarily use the base64 data URL so it shows up instantly
+        messageData.imageUrl = `data:${currentImage.mimeType};base64,${currentImage.data}`;
       }
-      await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
+      userMessageRef = await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
       
       // Update chat updatedAt immediately so sidebar syncs in real-time across devices
       await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
@@ -580,6 +594,23 @@ Session Title Status: "false"`;
         handleError(e, "Failed to send message");
       }
       return;
+    }
+
+    // Upload image to storage in the background
+    if (currentImage && userMessageRef) {
+      const imageToUpload = currentImage; // Capture in closure
+      const msgRef = userMessageRef;
+      const cid = chatId;
+      (async () => {
+        try {
+          const imageRef = ref(storage, `users/${user.uid}/chats/${cid}/images/${Date.now()}`);
+          await uploadString(imageRef, `data:${imageToUpload.mimeType};base64,${imageToUpload.data}`, 'data_url');
+          const uploadedImageUrl = await getDownloadURL(imageRef);
+          await updateDoc(msgRef, { imageUrl: uploadedImageUrl });
+        } catch (error) {
+          console.error("Failed to upload image to storage in background", error);
+        }
+      })();
     }
 
     const isImageRequest = /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(userMessage.trim());
