@@ -281,30 +281,26 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
+  };
+
+  useEffect(() => {
     if (textareaRef.current) {
       const textarea = textareaRef.current;
-      const scrollTop = textarea.scrollTop;
-      const isAtBottom = textarea.scrollTop + textarea.clientHeight >= textarea.scrollHeight - 10;
-      
-      textarea.style.height = '24px';
+      textarea.style.height = 'auto';
+      const scrollHeight = textarea.scrollHeight;
       const maxHeight = 200;
-      const newHeight = Math.min(textarea.scrollHeight, maxHeight);
+      const newHeight = Math.min(scrollHeight, maxHeight);
       textarea.style.height = `${newHeight}px`;
-      
-      if (newHeight === maxHeight) {
-        if (isAtBottom || textarea.selectionStart === textarea.value.length) {
-          textarea.scrollTop = textarea.scrollHeight;
-        } else {
-          textarea.scrollTop = scrollTop;
-        }
-      }
+      textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
     }
-  };
+  }, [input]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e as unknown as React.FormEvent);
+      if (input.trim() || selectedImage) {
+        handleSubmit(e as unknown as React.FormEvent);
+      }
     }
   };
 
@@ -1389,7 +1385,11 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
           </div>
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
-          <div className="relative bg-surface rounded-[24px] md:rounded-[28px] transition-all shadow-2xl border border-border/50 focus-within:border-border flex flex-col p-1.5 md:p-2">
+          <motion.div 
+            layout
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            className="relative bg-surface rounded-[24px] md:rounded-[28px] transition-all shadow-2xl border border-border/50 focus-within:border-border flex flex-col p-1.5 md:p-2"
+          >
             {lastError && (
               <div className="mb-4 p-4 bg-surface-hover border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-3">
@@ -1474,13 +1474,13 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
                 placeholder={isRecording ? "Listening..." : "Ask anything"}
-                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-normal resize-none overflow-y-auto leading-[24px] break-words"
+                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-normal resize-none leading-[24px] break-words"
                 rows={1}
                 disabled={isLoading || isRecording}
                 style={{ minHeight: '24px', maxHeight: '200px' }}
               />
 
-              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+              <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 h-10">
                 {/* Mode Selector */}
                 <div className="relative" ref={modeDropdownRef}>
                   <button 
@@ -1524,40 +1524,56 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   )}
                 </div>
 
-                <button 
-                  type="button" 
-                  onClick={() => isRecording ? stopRecording() : startRecording()}
-                  className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center transition-colors rounded-full shrink-0 ${isRecording ? 'text-red-500 bg-red-500/10 hover:bg-red-500/20' : 'text-muted hover:text-foreground hover:bg-surface-hover'}`}
-                  title={isRecording ? "Stop dictating" : "Click to dictate"}
-                >
-                  {isRecording ? (
-                    <Square size={16} className="md:w-4 md:h-4 fill-current animate-pulse" />
+                <AnimatePresence mode="wait">
+                  {isLoading ? (
+                    <motion.button 
+                      key="stop"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2 }}
+                      type="button" 
+                      onClick={handleStop}
+                      className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
+                      title="Stop responding"
+                    >
+                      <Square size={16} className="md:w-4 md:h-4 fill-current" />
+                    </motion.button>
+                  ) : (input.trim() || selectedImage) ? (
+                    <motion.button 
+                      key="send"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2 }}
+                      type="submit" 
+                      className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
+                    >
+                      <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
+                    </motion.button>
                   ) : (
-                    <Mic size={18} className="md:w-5 md:h-5" />
+                    <motion.button 
+                      key="mic"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ duration: 0.2 }}
+                      type="button" 
+                      onClick={() => isRecording ? stopRecording() : startRecording()}
+                      className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center transition-colors rounded-full shrink-0 ${isRecording ? 'text-red-500 bg-red-500/10 hover:bg-red-500/20' : 'text-muted hover:text-foreground hover:bg-surface-hover'}`}
+                      title={isRecording ? "Stop dictating" : "Click to dictate"}
+                    >
+                      {isRecording ? (
+                        <Square size={16} className="md:w-4 md:h-4 fill-current animate-pulse" />
+                      ) : (
+                        <Mic size={18} className="md:w-5 md:h-5" />
+                      )}
+                    </motion.button>
                   )}
-                </button>
-                
-                {isLoading ? (
-                  <button 
-                    type="button" 
-                    onClick={handleStop}
-                    className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
-                    title="Stop responding"
-                  >
-                    <Square size={16} className="md:w-4 md:h-4 fill-current" />
-                  </button>
-                ) : (
-                  <button 
-                    type="submit" 
-                    disabled={(!input.trim() && !selectedImage)} 
-                    className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors disabled:opacity-50 shrink-0"
-                  >
-                    <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
-                  </button>
-                )}
+                </AnimatePresence>
               </div>
             </div>
-          </div>
+          </motion.div>
         </form>
       </div>
     </div>
