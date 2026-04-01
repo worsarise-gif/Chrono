@@ -31,7 +31,7 @@ type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
 const BYTEZ_API_KEY = process.env.NEXT_PUBLIC_BYTEZ_API_KEY || '62f9e959f3fff48ee9ec96bd091ba1ec';
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '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';
 
-const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs: any[], onChunk: (text: string) => void) => {
+const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal) => {
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: {
@@ -43,7 +43,8 @@ const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs
       model,
       messages: msgs,
       stream: true
-    })
+    }),
+    signal
   });
 
   if (!response.ok) {
@@ -95,7 +96,7 @@ const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs
   }
 };
 
-const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void) => {
+const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal) => {
   const res = await fetch('/api/cloudflare-chat', {
     method: 'POST',
     headers: {
@@ -106,7 +107,8 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
       messages, 
       stream: true,
       temperature: 0.3
-    })
+    }),
+    signal
   });
 
   if (!res.ok) throw new Error(`Cloudflare Error: ${await res.text()}`);
@@ -160,7 +162,7 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
   }
 };
 
-const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string) => {
+const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal) => {
   const makeRequest = async (m: string) => {
     const res = await fetch('/api/chat', {
       method: 'POST',
@@ -174,7 +176,8 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
         messages, 
         stream: false,
         temperature: 0.3
-      })
+      }),
+      signal
     });
     if (!res.ok) throw new Error(`Groq Error: ${await res.text()}`);
     const data = await res.json();
@@ -232,6 +235,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [mode, setMode] = useState<ChatMode>('auto');
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string } | null>(null);
@@ -369,7 +373,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
       
       // Call Groq Whisper API
-      const transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3', 'whisper-large-v3-turbo');
+      const transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3-turbo', 'whisper-large-v3');
       
       if (transcription && currentVersion === transcriptionVersionRef.current) {
         // Append the new transcription to the initial input
@@ -468,6 +472,13 @@ Session Title Status: "false"`;
     }
   };
 
+  const handleStop = () => {
+    if (abortController) {
+      abortController.abort();
+      setAbortController(null);
+    }
+  };
+
   const handleSubmit = async (e?: React.FormEvent, text?: string, image?: { data: string, mimeType: string }) => {
     if (e) e.preventDefault();
     setLastError(null);
@@ -489,6 +500,9 @@ Session Title Status: "false"`;
     if (!image) setSelectedImage(null);
     setIsLoading(true);
     setStreamingMessage('');
+    
+    const controller = new AbortController();
+    setAbortController(controller);
     
     // Quick classification for loader text
     const lowerMsg = userMessage.toLowerCase();
@@ -875,9 +889,9 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         }
       };
 
-      const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, bytezModel, openAIMessages, handleChunk);
-      const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, groqModel, openAIMessages, handleChunk);
-      const runCloudflare = () => callCloudflareStream(cloudflareModel, openAIMessages, handleChunk);
+      const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, bytezModel, openAIMessages, handleChunk, controller.signal);
+      const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, groqModel, openAIMessages, handleChunk, controller.signal);
+      const runCloudflare = () => callCloudflareStream(cloudflareModel, openAIMessages, handleChunk, controller.signal);
 
       // Helper function to execute API call with retry logic and fallback model for 429/503 errors
       const executeWithRetry = async (fn: () => Promise<any>, maxRetries = 3) => {
@@ -943,6 +957,9 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
             let searchWebCallId: string | null = null;
 
             for await (const chunk of streamResponse) {
+              if (controller.signal.aborted) {
+                break;
+              }
               if (chunk.functionCalls && chunk.functionCalls.length > 0) {
                 const call = chunk.functionCalls[0];
                 if (call.name === 'search_web') {
@@ -962,7 +979,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
               }
             }
 
-            if (searchWebCallArgs) {
+            if (searchWebCallArgs && !controller.signal.aborted) {
               setIsSearching(true);
               setLoadingStatus('Searching...');
               
@@ -971,50 +988,63 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                 const searchRes = await fetch('/api/search', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ query: searchWebCallArgs.query })
+                  body: JSON.stringify({ query: searchWebCallArgs.query }),
+                  signal: controller.signal
                 });
                 if (searchRes.ok) {
                   const searchData = await searchRes.json();
                   searchResults = searchData.results;
                 }
-              } catch (err) {
-                console.error('Search API call failed:', err);
+              } catch (err: any) {
+                if (err.name !== 'AbortError') {
+                  console.error('Search API call failed:', err);
+                }
               }
               
-              let parsedResults: any[] = [];
-              try {
-                parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
-              } catch (e) {
-                // ignore
-              }
-
-              if (Array.isArray(parsedResults) && parsedResults.length > 0) {
-                const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
-                const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
-                
-                let formattedSearch = "";
+              if (!controller.signal.aborted) {
+                let parsedResults: any[] = [];
                 try {
-                  formattedSearch = await callGroqChatNonStream('qwen/qwen3-32b', [{ role: 'user', content: formatPrompt }]);
+                  parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
                 } catch (e) {
-                  console.error("Search formatting failed", e);
-                  formattedSearch = rawSearchText;
+                  // ignore
                 }
 
-                fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
-              } else {
-                fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
+                if (Array.isArray(parsedResults) && parsedResults.length > 0) {
+                  const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
+                  const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
+                  
+                  let formattedSearch = "";
+                  try {
+                    formattedSearch = await callGroqChatNonStream('qwen/qwen3-32b', [{ role: 'user', content: formatPrompt }], undefined, controller.signal);
+                  } catch (e: any) {
+                    if (e.name !== 'AbortError') {
+                      console.error("Search formatting failed", e);
+                    }
+                    formattedSearch = rawSearchText;
+                  }
+
+                  if (!controller.signal.aborted) {
+                    fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
+                  }
+                } else {
+                  fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
+                }
+                setIsSearching(false);
+                setStreamingMessage(fullResponse);
               }
-              setIsSearching(false);
-              setStreamingMessage(fullResponse);
             }
           }
       } catch (error: any) {
-        handleError(error, "Failed to generate AI response");
-        setLastError({ 
-          message: error.message || "Something went wrong. Please try again.",
-          retryParams: { text: userMessage, image: currentImage }
-        });
-        fullResponse = `Error: ${error.message || "I'm sorry, I encountered an error while processing your request. Please try again later."}`;
+        if (error.name === 'AbortError') {
+          console.log('Generation aborted by user');
+        } else {
+          handleError(error, "Failed to generate AI response");
+          setLastError({ 
+            message: error.message || "Something went wrong. Please try again.",
+            retryParams: { text: userMessage, image: currentImage }
+          });
+          fullResponse = `Error: ${error.message || "I'm sorry, I encountered an error while processing your request. Please try again later."}`;
+        }
       }
 
       try {
@@ -1420,13 +1450,24 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   )}
                 </button>
                 
-                <button 
-                  type="submit" 
-                  disabled={(!input.trim() && !selectedImage) || isLoading} 
-                  className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors disabled:opacity-50 shrink-0"
-                >
-                  <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
-                </button>
+                {isLoading ? (
+                  <button 
+                    type="button" 
+                    onClick={handleStop}
+                    className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
+                    title="Stop responding"
+                  >
+                    <Square size={16} className="md:w-4 md:h-4 fill-current" />
+                  </button>
+                ) : (
+                  <button 
+                    type="submit" 
+                    disabled={(!input.trim() && !selectedImage)} 
+                    className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors disabled:opacity-50 shrink-0"
+                  >
+                    <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
+                  </button>
+                )}
               </div>
             </div>
           </div>
