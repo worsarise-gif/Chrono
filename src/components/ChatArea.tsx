@@ -1477,10 +1477,10 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                       link.click();
                       document.body.removeChild(link);
                     }}
-                    className="p-2 text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
+                    className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                     title="Download"
                   >
-                    <Download size={24} />
+                    <Download size={20} />
                   </button>
                 )}
                 <button 
@@ -1488,10 +1488,10 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                     setPreviewImage(null);
                     setPreviewImageIndex(null);
                   }}
-                  className="p-2 text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
+                  className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                   title="Close preview"
                 >
-                  <X size={24} />
+                  <X size={20} />
                 </button>
               </div>
 
