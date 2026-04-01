@@ -343,7 +343,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   }, [input]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.nativeEvent.isComposing) return;
+
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+    
+    if (e.key === 'Enter' && !e.shiftKey && !isMobile) {
       e.preventDefault();
       if (input.trim() || selectedImage) {
         handleSubmit(e as unknown as React.FormEvent);
