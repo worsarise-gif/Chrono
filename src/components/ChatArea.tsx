@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square } from 'lucide-react';
+import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -1405,7 +1405,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-full max-h-full flex items-center justify-center"
+              className="relative max-w-full max-h-full flex items-center justify-center group"
               onClick={(e) => e.stopPropagation()}
             >
               <img 
@@ -1414,12 +1414,26 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                 className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
                 referrerPolicy="no-referrer"
               />
-              <button 
-                onClick={() => setPreviewImage(null)}
-                className="absolute -top-12 right-0 md:-right-12 p-2 text-white/70 hover:text-white transition-colors"
-              >
-                <X size={32} />
-              </button>
+              
+              {/* Action Buttons Overlay */}
+              <div className="absolute top-4 right-4 flex items-center gap-2">
+                <a 
+                  href={previewImage}
+                  download="image.png"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-2.5 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white transition-all duration-200 border border-white/10"
+                  title="Download image"
+                >
+                  <Download size={20} />
+                </a>
+                <button 
+                  onClick={() => setPreviewImage(null)}
+                  className="p-2.5 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-md text-white transition-all duration-200 border border-white/10"
+                  title="Close preview"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

@@ -59,7 +59,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
         <div 
           className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0"
           style={{ 
-            top: `${60 + index * 46 + 22}px`,
+            top: `${60 + index * 44.5 + 22}px`,
             transform: 'translateY(-50%)'
           }}
         >
@@ -222,12 +222,20 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                       >
                         {chat.title}
                       </button>
+                      
+                      {/* Chat Title Full Visibility on Hover */}
+                      <div className="absolute left-0 top-0 w-full h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-[50]">
+                        <div className="absolute left-0 top-0 min-w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] text-foreground shadow-xl whitespace-normal break-words z-[51]">
+                          {chat.title}
+                        </div>
+                      </div>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
                         }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface-hover text-muted hover:text-foreground transition-all"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface-hover text-muted hover:text-foreground transition-all z-[60]"
                         title="More options"
                       >
                         <MoreVertical size={14} />
@@ -266,11 +274,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         {/* Bottom Section */}
         <div className="mt-auto relative pb-4 pt-2">
           {/* Theme Toggle */}
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center mb-2 group relative">
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
               className={`flex items-center justify-center transition-all duration-300 hover:bg-surface rounded-lg ${isCollapsed ? 'w-10 h-10' : 'w-[calc(100%-16px)] h-10 px-3 gap-3 text-left'}`}
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             >
               <div className="w-5 flex items-center justify-center shrink-0">
                 {mounted && (theme === 'dark' ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-indigo-500" />)}
@@ -281,35 +288,71 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 </span>
               )}
             </button>
+            
+            {/* Theme Tooltip */}
+            {isCollapsed && (
+              <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[68px]">
+                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
+                {theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              </div>
+            )}
           </div>
 
           {/* Expand Toggle Button */}
-          <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
               onClick={() => setIsCollapsed(false)}
               className="text-muted hover:text-foreground transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
             >
               <ChevronsRight size={20} strokeWidth={1.5} />
             </button>
+            
+            {/* Expand Tooltip */}
+            {isCollapsed && (
+              <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[118px]">
+                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
+                Expand Sidebar
+              </div>
+            )}
           </div>
 
           {/* User Profile / Login */}
-          <div className="w-[68px] flex-shrink-0 flex items-center justify-center">
+          <div className="w-[68px] flex-shrink-0 flex items-center justify-center group relative">
             {user ? (
-              <div 
-                onClick={() => setIsProfileModalOpen(true)}
-                className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
-              >
-                {user.photoURL ? (
-                  <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
-                ) : (
-                  user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'
+              <>
+                <div 
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
+                >
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
+                  ) : (
+                    user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'
+                  )}
+                </div>
+                
+                {/* Profile Tooltip */}
+                {isCollapsed && (
+                  <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[22px]">
+                    <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
+                    Profile Settings
+                  </div>
                 )}
-              </div>
+              </>
             ) : (
-              <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
-                <LogIn size={16} />
-              </button>
+              <>
+                <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
+                  <LogIn size={16} />
+                </button>
+                
+                {/* Login Tooltip */}
+                {isCollapsed && (
+                  <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[22px]">
+                    <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
+                    Login with Google
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
