@@ -172,8 +172,16 @@ const ThinkingProcess = ({ content }: { content: string }) => {
   );
 };
 
-const ImageRenderer = ({ src, alt, ...props }: any) => {
+const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleImageClick = () => {
+    if (onImageClick) {
+      onImageClick(src);
+    } else {
+      setIsOpen(true);
+    }
+  };
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -219,7 +227,7 @@ const ImageRenderer = ({ src, alt, ...props }: any) => {
     <>
       <div 
         className="relative flex w-fit max-w-full rounded-2xl overflow-hidden cursor-pointer group"
-        onClick={() => setIsOpen(true)}
+        onClick={handleImageClick}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt={alt || 'Generated Image'} className="max-w-full h-auto block rounded-2xl" loading="lazy" {...props} />
@@ -247,7 +255,7 @@ const ImageRenderer = ({ src, alt, ...props }: any) => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative w-fit h-fit group">
-                <div className="absolute top-4 right-4 flex gap-3 z-10">
+                <div className="absolute top-5 right-5 flex gap-3 z-10">
                   <button 
                     onClick={handleDownload}
                     className="text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
@@ -267,7 +275,7 @@ const ImageRenderer = ({ src, alt, ...props }: any) => {
                 <img 
                   src={src} 
                   alt={alt || 'Generated Image'} 
-                  className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/10" 
+                  className="max-w-full max-h-[85vh] block rounded-2xl shadow-2xl border border-white/10" 
                 />
               </div>
             </motion.div>
@@ -382,8 +390,118 @@ const markdownComponents = {
   }
 };
 
-export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, isStreaming = false }) => {
+interface ResponseFormatterProps {
+  content: string;
+  isStreaming?: boolean;
+  onImageClick?: (src: string) => void;
+}
+
+export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, isStreaming = false, onImageClick }) => {
   const displayedContent = useSmoothTyping(content, isStreaming);
+
+  const markdownComponents = {
+    img({ node, src, alt, ...props }: any) {
+      return <ImageRenderer src={src} alt={alt} onImageClick={onImageClick} {...props} />;
+    },
+    a({ node, children, href, ...props }: any) {
+      const text = String(children);
+      // Check if it's a citation like [link] or [1]
+      if (text === 'link' || text.match(/^\[?\d+\]?$/)) {
+        return (
+          <a 
+            href={href} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-medium bg-blue-500/20 text-blue-500 rounded-full ml-1 hover:bg-blue-500/40 transition-colors no-underline align-super border border-blue-500/30"
+            title={href}
+            {...props}
+          >
+            {text === 'link' ? '🔗' : text.replace(/[\[\]]/g, '')}
+          </a>
+        );
+      }
+      return (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 underline decoration-blue-500/30 underline-offset-2 transition-colors font-medium" {...props}>
+          {children}
+        </a>
+      );
+    },
+    blockquote({ node, children, ...props }: any) {
+      return (
+        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-muted not-italic shadow-sm" {...props}>
+          {children}
+        </blockquote>
+      );
+    },
+    table({ node, children, ...props }: any) {
+      return (
+        <div className="overflow-x-auto my-6 rounded-2xl border border-border bg-transparent">
+          <table className="w-full text-sm text-left m-0" {...props}>
+            {children}
+          </table>
+        </div>
+      );
+    },
+    th({ node, children, ...props }: any) {
+      return <th className="bg-surface-hover px-4 py-3 font-medium text-foreground border-b border-border whitespace-nowrap" {...props}>{children}</th>;
+    },
+    td({ node, children, ...props }: any) {
+      return <td className="px-4 py-3 border-b border-border/50 text-muted" {...props}>{children}</td>;
+    },
+    pre({ node, children, ...props }: any) {
+      return <div className="not-prose m-0 p-0 bg-transparent">{children}</div>;
+    },
+    code({ node, inline, className, children, ...props }: any) {
+      const match = /language-([\w-]+)/.exec(className || '');
+      const language = match ? match[1] : '';
+      const isInline = !match && !String(children).includes('\n');
+
+      if (language === 'search-results') {
+        try {
+          const data = JSON.parse(String(children));
+          return (
+            <div className="my-6 flex flex-col gap-3 not-prose">
+              <div className="flex items-center gap-2 text-sm font-normal text-muted mb-2 px-1">
+                <Search size={16} className="text-blue-500" />
+                <span>Search results for <span className="text-foreground">"{data.query}"</span></span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {data.results.map((res: any, idx: number) => {
+                  let hostname = res.link;
+                  try { hostname = new URL(res.link).hostname; } catch (e) {}
+                  return (
+                    <a key={idx} href={res.link} target="_blank" rel="noopener noreferrer" className="flex flex-col gap-2 p-4 rounded-2xl border border-border bg-transparent hover:bg-surface-hover hover:border-border/80 transition-all no-underline group shadow-sm">
+                      <div className="font-medium text-blue-500 group-hover:text-blue-400 line-clamp-1 flex items-center justify-between text-sm">
+                        {res.title}
+                        <ExternalLink size={14} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
+                      </div>
+                      <div className="text-[11px] text-muted truncate flex items-center gap-1.5">
+                        <div className="w-3.5 h-3.5 rounded-full bg-surface-hover flex items-center justify-center text-[8px]">🌐</div>
+                        {hostname}
+                      </div>
+                      <div className="text-xs text-muted line-clamp-3 leading-relaxed mt-1">{res.snippet}</div>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        } catch (e) {
+          return null;
+        }
+      }
+
+      if (isInline) {
+        return (
+          <code className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50" {...props}>
+            {children}
+          </code>
+        );
+      }
+
+      return <CodeBlock language={language} value={String(children).replace(/\n$/, '')} />;
+    }
+  };
 
   // Robust Normalization Layer
   const normalizeContent = (text: string) => {

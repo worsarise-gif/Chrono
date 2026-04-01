@@ -250,6 +250,52 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [loadingStatus, setLoadingStatus] = useState('Thinking...');
   const [currentStreamingMessageId, setCurrentStreamingMessageId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
+
+  const getAllImages = () => {
+    const images: { src: string; alt?: string }[] = [];
+    messages.forEach(msg => {
+      if (msg.imageUrl) {
+        images.push({ src: msg.imageUrl, alt: 'User uploaded image' });
+      }
+      // Extract markdown images from content
+      const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+      let match;
+      while ((match = imgRegex.exec(msg.content)) !== null) {
+        images.push({ src: match[2], alt: match[1] });
+      }
+    });
+    return images;
+  };
+
+  const allImages = getAllImages();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (previewImageIndex === null) return;
+
+      if (e.key === 'Escape') {
+        setPreviewImageIndex(null);
+      } else if (e.key === 'ArrowRight') {
+        setPreviewImageIndex((prev) => (prev !== null && prev < allImages.length - 1 ? prev + 1 : prev));
+      } else if (e.key === 'ArrowLeft') {
+        setPreviewImageIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [previewImageIndex, allImages.length]);
+
+  const handleImageClick = (src: string) => {
+    const index = allImages.findIndex(img => img.src === src);
+    if (index !== -1) {
+      setPreviewImageIndex(index);
+    } else {
+      // Fallback for images not in history (e.g. just sent)
+      setPreviewImage(src);
+    }
+  };
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1246,7 +1292,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         className="mb-2 cursor-pointer group relative"
-                        onClick={() => setPreviewImage(msg.imageUrl || null)}
+                        onClick={() => handleImageClick(msg.imageUrl!)}
                       >
                         <img 
                           src={msg.imageUrl} 
@@ -1271,7 +1317,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                               </div>
                             </div>
                           ) : (
-                            <ResponseFormatter content={msg.content} isStreaming={msg.isStreaming} />
+                            <ResponseFormatter content={msg.content} isStreaming={msg.isStreaming} onImageClick={handleImageClick} />
                           )}
                           
                           {!msg.isStreaming && (
@@ -1331,7 +1377,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                 >
                   <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent text-foreground text-[16px] md:text-[15px] w-full">
                     <div className="w-full">
-                      <ResponseFormatter content={streamingMessage} isStreaming={true} />
+                      <ResponseFormatter content={streamingMessage} isStreaming={true} onImageClick={handleImageClick} />
                     </div>
                   </div>
                 </motion.div>
@@ -1393,38 +1439,89 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
 
       {/* Image Preview Modal */}
       <AnimatePresence>
-        {previewImage && (
+        {(previewImageIndex !== null || previewImage !== null) && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 md:p-10"
-            onClick={() => setPreviewImage(null)}
+            onClick={() => {
+              setPreviewImage(null);
+              setPreviewImageIndex(null);
+            }}
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-full max-h-full flex items-center justify-center group"
+              className="relative w-fit h-fit group flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
               <img 
-                src={previewImage} 
+                src={previewImageIndex !== null ? allImages[previewImageIndex].src : previewImage!} 
                 alt="Preview" 
-                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                className="max-w-full max-h-[90vh] block rounded-lg shadow-2xl border border-white/10" 
                 referrerPolicy="no-referrer"
               />
               
               {/* Action Buttons Overlay */}
-              <div className="absolute top-4 right-4 flex items-center gap-2">
+              <div className="absolute top-6 right-6 flex items-center gap-3">
+                {previewImageIndex !== null && (
+                  <button 
+                    onClick={() => {
+                      const img = allImages[previewImageIndex];
+                      const link = document.createElement('a');
+                      link.href = img.src;
+                      link.download = 'download.png';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                    className="p-2 text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
+                    title="Download"
+                  >
+                    <Download size={24} />
+                  </button>
+                )}
                 <button 
-                  onClick={() => setPreviewImage(null)}
-                  className="p-2 text-white/70 hover:text-white transition-all duration-200"
+                  onClick={() => {
+                    setPreviewImage(null);
+                    setPreviewImageIndex(null);
+                  }}
+                  className="p-2 text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                   title="Close preview"
                 >
                   <X size={24} />
                 </button>
               </div>
+
+              {/* Navigation Arrows */}
+              {previewImageIndex !== null && allImages.length > 1 && (
+                <>
+                  {previewImageIndex > 0 && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewImageIndex(previewImageIndex - 1);
+                      }}
+                      className="absolute left-4 p-3 rounded-full bg-black/20 hover:bg-black/40 text-white/70 hover:text-white transition-all backdrop-blur-sm border border-white/10"
+                    >
+                      <ChevronDown size={24} className="rotate-90" />
+                    </button>
+                  )}
+                  {previewImageIndex < allImages.length - 1 && (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewImageIndex(previewImageIndex + 1);
+                      }}
+                      className="absolute right-4 p-3 rounded-full bg-black/20 hover:bg-black/40 text-white/70 hover:text-white transition-all backdrop-blur-sm border border-white/10"
+                    >
+                      <ChevronDown size={24} className="-rotate-90" />
+                    </button>
+                  )}
+                </>
+              )}
             </motion.div>
           </motion.div>
         )}
