@@ -249,6 +249,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [isSearching, setIsSearching] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('Thinking...');
   const [currentStreamingMessageId, setCurrentStreamingMessageId] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -379,6 +380,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
+      e.target.value = ''; // Reset to allow re-selection of the same file
     }
   };
 
@@ -1238,71 +1240,84 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group w-full`}
                 >
-                  <div className={`${msg.role === 'user' ? 'max-w-[90%] md:max-w-[85%] bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-[15px] md:text-[15px]' : 'max-w-[95%] md:max-w-[80%] relative bg-transparent text-foreground text-[16px] md:text-[15px] w-full'}`}>
-                    {msg.role === 'model' ? (
-                      <div className="w-full">
-                        {msg.content.startsWith('Error:') ? (
-                          <div className="p-4 bg-surface-hover border border-border rounded-xl text-muted flex items-start gap-3 mb-2">
-                            <AlertCircle size={18} className="mt-0.5 shrink-0" />
-                            <div className="text-sm font-medium leading-relaxed">
-                              {msg.content.replace('Error:', '').trim()}
-                            </div>
-                          </div>
-                        ) : (
-                          <ResponseFormatter content={msg.content} isStreaming={msg.isStreaming} />
-                        )}
-                        
-                        {!msg.isStreaming && (
-                          <>
-                            {/* Action Row */}
-                            <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted">
-                              {[
-                                { icon: <RefreshCcw size={14} />, title: "Regenerate" },
-                                { icon: <Copy size={14} />, title: "Copy" },
-                                { icon: <ThumbsUp size={14} />, title: "Good response" },
-                                { icon: <ThumbsDown size={14} />, title: "Bad response" },
-                                { icon: <Volume2 size={14} />, title: "Read aloud" },
-                                { icon: <Share size={14} />, title: "Share" },
-                                { icon: <MoreHorizontal size={14} />, title: "More options" }
-                              ].map((btn: any, i) => (
-                                <button 
-                                  key={i}
-                                  onClick={btn.onClick}
-                                  className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-foreground'}`} 
-                                  title={btn.title}
-                                >
-                                  {btn.icon}
-                                </button>
-                              ))}
-                            </div>
-
-                            {/* Suggestions */}
-                            <div className="mt-5 space-y-3">
-                              <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
-                                <CornerDownRight size={16} className="text-muted" />
-                                Cebu Food Recommendations
-                              </button>
-                              <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
-                                <CornerDownRight size={16} className="text-muted" />
-                                Cebu Nightlife Spots
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-2">
-                        {msg.imageUrl && (
-                          <img 
-                            src={msg.imageUrl} 
-                            alt="Uploaded" 
-                            className="max-w-[200px] md:max-w-[300px] rounded-xl object-contain"
-                            referrerPolicy="no-referrer"
-                          />
-                        )}
-                        <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
-                      </div>
+                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[95%] md:max-w-[85%] relative`}>
+                    {msg.role === 'user' && msg.imageUrl && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="mb-2 cursor-pointer group relative"
+                        onClick={() => setPreviewImage(msg.imageUrl || null)}
+                      >
+                        <img 
+                          src={msg.imageUrl} 
+                          alt="Uploaded" 
+                          className="max-w-[200px] md:max-w-[300px] rounded-2xl object-contain shadow-md border border-border/50"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-2xl flex items-center justify-center">
+                          <Search className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
+                        </div>
+                      </motion.div>
                     )}
+
+                    <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-foreground text-[16px] md:text-[15px] w-full'}`}>
+                      {msg.role === 'model' ? (
+                        <div className="w-full">
+                          {msg.content.startsWith('Error:') ? (
+                            <div className="p-4 bg-surface-hover border border-border rounded-xl text-muted flex items-start gap-3 mb-2">
+                              <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                              <div className="text-sm font-medium leading-relaxed">
+                                {msg.content.replace('Error:', '').trim()}
+                              </div>
+                            </div>
+                          ) : (
+                            <ResponseFormatter content={msg.content} isStreaming={msg.isStreaming} />
+                          )}
+                          
+                          {!msg.isStreaming && (
+                            <>
+                              {/* Action Row */}
+                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted">
+                                {[
+                                  { icon: <RefreshCcw size={14} />, title: "Regenerate" },
+                                  { icon: <Copy size={14} />, title: "Copy" },
+                                  { icon: <ThumbsUp size={14} />, title: "Good response" },
+                                  { icon: <ThumbsDown size={14} />, title: "Bad response" },
+                                  { icon: <Volume2 size={14} />, title: "Read aloud" },
+                                  { icon: <Share size={14} />, title: "Share" },
+                                  { icon: <MoreHorizontal size={14} />, title: "More options" }
+                                ].map((btn: any, i) => (
+                                  <button 
+                                    key={i}
+                                    onClick={btn.onClick}
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-foreground'}`} 
+                                    title={btn.title}
+                                  >
+                                    {btn.icon}
+                                  </button>
+                                ))}
+                              </div>
+
+                              {/* Suggestions */}
+                              <div className="mt-5 space-y-3">
+                                <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
+                                  <CornerDownRight size={16} className="text-muted" />
+                                  Cebu Food Recommendations
+                                </button>
+                                <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
+                                  <CornerDownRight size={16} className="text-muted" />
+                                  Cebu Nightlife Spots
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-2">
+                          <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -1376,6 +1391,40 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         )}
       </div>
 
+      {/* Image Preview Modal */}
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 md:p-10"
+            onClick={() => setPreviewImage(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative max-w-full max-h-full flex items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={previewImage} 
+                alt="Preview" 
+                className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                referrerPolicy="no-referrer"
+              />
+              <button 
+                onClick={() => setPreviewImage(null)}
+                className="absolute -top-12 right-0 md:-right-12 p-2 text-white/70 hover:text-white transition-colors"
+              >
+                <X size={32} />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Input Area */}
       <div className={`absolute left-0 right-0 p-3 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0 pb-safe'}`}>
         {!isChatStarted && (
@@ -1419,36 +1468,44 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
               </div>
             )}
 
-            {selectedImage && (
-              <div className="px-3 pt-3 pb-2 flex overflow-hidden">
-                <div className="relative group">
-                  <img 
-                    src={`data:${selectedImage.mimeType};base64,${selectedImage.data}`} 
-                    className="w-24 h-24 object-cover rounded-xl border border-border shadow-sm" 
-                    alt="Selected"
-                    referrerPolicy="no-referrer"
-                  />
-                  <div className="absolute top-1 right-1 flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            <AnimatePresence>
+              {selectedImage && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                  exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="px-3 pt-3 pb-2 flex overflow-hidden"
+                >
+                  <div className="relative group">
+                    <img 
+                      src={`data:${selectedImage.mimeType};base64,${selectedImage.data}`} 
+                      className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl border border-border shadow-sm" 
+                      alt="Selected"
+                      referrerPolicy="no-referrer"
+                    />
+                    <div className="absolute -top-2 -right-2 flex gap-1 z-10">
+                      <button 
+                        type="button"
+                        onClick={() => setSelectedImage(null)} 
+                        className="bg-foreground text-background rounded-full p-1 shadow-lg hover:scale-110 transition-transform"
+                        title="Remove image"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
                     <button 
                       type="button"
                       onClick={() => fileInputRef.current?.click()} 
-                      className="bg-background/80 backdrop-blur-sm border border-border rounded-full p-1.5 text-foreground hover:bg-surface shadow-sm transition-colors"
+                      className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-white"
                       title="Replace image"
                     >
-                      <RefreshCw size={14} />
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setSelectedImage(null)} 
-                      className="bg-background/80 backdrop-blur-sm border border-border rounded-full p-1.5 text-foreground hover:bg-destructive hover:text-destructive-foreground shadow-sm transition-colors"
-                      title="Remove image"
-                    >
-                      <X size={14} />
+                      <RefreshCw size={18} />
                     </button>
                   </div>
-                </div>
-              </div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             <div className="flex items-end gap-1">
               <input 
