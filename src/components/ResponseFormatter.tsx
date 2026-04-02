@@ -405,26 +405,29 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
 
   const markdownComponents = {
     h1({ node, children, ...props }: any) {
-      return <h1 className="text-xl font-bold text-foreground mt-2 mb-4" {...props}>{children}</h1>;
+      return <h1 className="text-xl font-bold text-black dark:text-foreground mt-2 mb-4" {...props}>{children}</h1>;
     },
     h2({ node, children, ...props }: any) {
-      return <h2 className="text-lg font-bold text-foreground mt-2 mb-3" {...props}>{children}</h2>;
+      return <h2 className="text-lg font-bold text-black dark:text-foreground mt-2 mb-3" {...props}>{children}</h2>;
     },
     h3({ node, children, ...props }: any) {
       const text = String(children).toLowerCase();
       const isFinal = text.includes('final') || text.includes('conclusion');
       return (
-        <h3 className={`text-base font-bold mt-1 mb-3 flex items-center gap-2 ${isFinal ? 'text-blue-500' : 'text-foreground'}`} {...props}>
+        <h3 className={`text-base font-bold mt-1 mb-3 flex items-center gap-2 ${isFinal ? 'text-blue-500' : 'text-black dark:text-foreground'}`} {...props}>
           {isFinal && <span className="w-1.5 h-5 bg-blue-500 rounded-full inline-block"></span>}
           {children}
         </h3>
       );
     },
     p({ node, children, ...props }: any) {
-      return <p className="text-muted/90 font-light leading-relaxed mb-3 last:mb-0" {...props}>{children}</p>;
+      return <p className="text-black dark:text-muted/90 font-light leading-relaxed mb-3 last:mb-0" {...props}>{children}</p>;
     },
     strong({ node, children, ...props }: any) {
-      return <strong className="font-medium text-foreground" {...props}>{children}</strong>;
+      return <strong className="font-medium text-black dark:text-foreground" {...props}>{children}</strong>;
+    },
+    li({ node, children, ...props }: any) {
+      return <li className="text-black dark:text-muted/90 font-light" {...props}>{children}</li>;
     },
     img({ node, src, alt, ...props }: any) {
       return <ImageRenderer src={src} alt={alt} onImageClick={onImageClick} {...props} />;
@@ -454,7 +457,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
     },
     blockquote({ node, children, ...props }: any) {
       return (
-        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-muted not-italic shadow-sm" {...props}>
+        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-black dark:text-muted not-italic shadow-sm" {...props}>
           {children}
         </blockquote>
       );
@@ -469,10 +472,10 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
       );
     },
     th({ node, children, ...props }: any) {
-      return <th className="bg-surface-hover px-4 py-3 font-medium text-foreground border-b border-border whitespace-nowrap" {...props}>{children}</th>;
+      return <th className="bg-surface-hover px-4 py-3 font-medium text-black dark:text-foreground border-b border-border whitespace-nowrap" {...props}>{children}</th>;
     },
     td({ node, children, ...props }: any) {
-      return <td className="px-4 py-3 border-b border-border/50 text-muted" {...props}>{children}</td>;
+      return <td className="px-4 py-3 border-b border-border/50 text-black dark:text-muted" {...props}>{children}</td>;
     },
     pre({ node, children, ...props }: any) {
       return <div className="not-prose m-0 p-0 bg-transparent">{children}</div>;
@@ -553,7 +556,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-muted max-w-none font-normal break-words text-foreground prose-headings:text-foreground prose-strong:font-normal prose-strong:text-foreground prose-code:text-foreground text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-black dark:prose-li:marker:text-muted max-w-none font-normal break-words text-black dark:text-foreground prose-headings:text-black dark:prose-headings:text-foreground prose-strong:font-normal prose-strong:text-black dark:prose-strong:text-foreground prose-code:text-black dark:prose-code:text-foreground text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();

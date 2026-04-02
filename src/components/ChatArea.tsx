@@ -1420,7 +1420,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                       </motion.div>
                     )}
 
-                    <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-foreground text-[16px] md:text-[15px] w-full'}`}>
+                    <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-black dark:text-foreground shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-black dark:text-foreground text-[16px] md:text-[15px] w-full'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full">
                           {msg.content.startsWith('Error:') ? (
