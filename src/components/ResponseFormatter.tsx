@@ -556,7 +556,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-black dark:prose-li:marker:text-muted max-w-none font-normal break-words text-black dark:text-foreground prose-headings:text-black dark:prose-headings:text-foreground prose-strong:font-normal prose-strong:text-black dark:prose-strong:text-foreground prose-code:text-black dark:prose-code:text-foreground text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-black dark:prose-li:marker:text-muted max-w-none font-normal break-words text-black dark:text-foreground prose-p:text-black dark:prose-p:text-muted/90 prose-li:text-black dark:prose-li:text-muted/90 prose-headings:text-black dark:prose-headings:text-foreground prose-strong:font-normal prose-strong:text-black dark:prose-strong:text-foreground prose-code:text-black dark:prose-code:text-foreground text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();

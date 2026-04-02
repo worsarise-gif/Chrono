@@ -275,6 +275,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
 
   const getAllImages = () => {
     const images: { src: string; alt?: string }[] = [];
@@ -483,6 +484,12 @@ Session Title Status: "false"`;
       console.error("Failed to generate smart title:", error);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
 
   const handleCopyMessage = (id: string, content: string) => {
     navigator.clipboard.writeText(content);
@@ -1339,10 +1346,23 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                                   { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
                                   { icon: <ThumbsUp size={14} />, title: "Good response", onClick: () => {} },
                                   { icon: <ThumbsDown size={14} />, title: "Bad response", onClick: () => {} },
-                                  { icon: <Volume2 size={14} />, title: "Read aloud", onClick: () => {
-                                    const utterance = new SpeechSynthesisUtterance(msg.content);
-                                    window.speechSynthesis.speak(utterance);
-                                  } },
+                                  { 
+                                    icon: speakingMessageId === msg.id ? <Square size={14} className="fill-current" /> : <Volume2 size={14} />, 
+                                    title: speakingMessageId === msg.id ? "Stop reading" : "Read aloud", 
+                                    onClick: () => {
+                                      if (speakingMessageId === msg.id) {
+                                        window.speechSynthesis.cancel();
+                                        setSpeakingMessageId(null);
+                                      } else {
+                                        window.speechSynthesis.cancel();
+                                        const utterance = new SpeechSynthesisUtterance(msg.content);
+                                        utterance.onstart = () => setSpeakingMessageId(msg.id);
+                                        utterance.onend = () => setSpeakingMessageId(null);
+                                        utterance.onerror = () => setSpeakingMessageId(null);
+                                        window.speechSynthesis.speak(utterance);
+                                      }
+                                    } 
+                                  },
                                   { icon: <Share size={14} />, title: "Share", onClick: () => {} },
                                   { icon: <MoreHorizontal size={14} />, title: "More options", onClick: () => {} }
                                 ].map((btn: any, i) => (
