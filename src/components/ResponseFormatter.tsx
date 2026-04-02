@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Search, ExternalLink, ChevronDown, Maximize2, Download, X } from 'lucide-react';
@@ -155,7 +158,8 @@ const ThinkingProcess = ({ content }: { content: string }) => {
             <div className="px-5 pb-5 pt-1 text-[13px] text-muted/80 leading-relaxed border-t border-border/30 bg-transparent">
               <div className="prose prose-sm prose-invert max-w-none italic">
                 <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
                   urlTransform={(url) => {
                     if (url.startsWith('data:image/')) return url;
                     return defaultUrlTransform(url);
@@ -541,7 +545,8 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
         return (
           <ReactMarkdown 
             key={index}
-            remarkPlugins={[remarkGfm]}
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex]}
             components={markdownComponents}
             urlTransform={(url) => {
               if (url.startsWith('data:image/')) return url;
