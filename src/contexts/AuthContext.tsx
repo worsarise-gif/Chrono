@@ -47,8 +47,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               email: currentUser.email || '',
               createdAt: serverTimestamp()
             };
-            if (currentUser.displayName) userData.displayName = currentUser.displayName;
-            if (currentUser.photoURL) userData.photoURL = currentUser.photoURL;
+            
+            // Use Google profile picture as default for new users
+            const photoURL = currentUser.photoURL || currentUser.providerData[0]?.photoURL;
+            const displayName = currentUser.displayName || currentUser.providerData[0]?.displayName;
+
+            if (displayName) userData.displayName = displayName;
+            if (photoURL) userData.photoURL = photoURL;
             
             await setDoc(userRef, userData);
           }

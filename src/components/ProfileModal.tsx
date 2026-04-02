@@ -47,8 +47,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        setError("Image size must be less than 2MB");
+      if (file.size > 6 * 1024 * 1024) {
+        setError("Image size must be less than 6MB");
         return;
       }
       const reader = new FileReader();
@@ -142,8 +142,11 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         className="w-24 h-24 rounded-full object-cover border-2 border-background shadow-xl"
                       />
                     ) : (
-                      <div className="w-24 h-24 rounded-full bg-surface-hover flex items-center justify-center border-2 border-background shadow-xl">
-                        <UserIcon size={40} className="text-muted" />
+                      <div 
+                        className="w-24 h-24 rounded-full flex items-center justify-center border-2 border-background shadow-xl text-white font-bold text-3xl"
+                        style={{ backgroundColor: `hsl(${(user.email?.length || 0) * 137.5 % 360}, 60%, 50%)` }}
+                      >
+                        {user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'}
                       </div>
                     )}
                     <button 

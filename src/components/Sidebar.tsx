@@ -297,7 +297,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               <>
                 <div 
                   onClick={() => setIsProfileModalOpen(true)}
-                  className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
+                  style={{ 
+                    backgroundColor: user.photoURL ? 'transparent' : `hsl(${(user.email?.length || 0) * 137.5 % 360}, 60%, 50%)` 
+                  }}
                 >
                   {user.photoURL ? (
                     <img src={user.photoURL} alt={user.displayName || 'User'} className="w-full h-full object-cover" />
