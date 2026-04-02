@@ -1340,7 +1340,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                           {!msg.isStreaming && (
                             <>
                               {/* Action Row */}
-                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted">
+                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-black/60 dark:text-muted">
                                 {[
                                   { icon: <RefreshCcw size={14} />, title: "Regenerate", onClick: () => handleRegenerate(index) },
                                   { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
@@ -1744,34 +1744,39 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                 </div>
 
                 <AnimatePresence mode="wait">
-                  {isLoading ? (
-                    <motion.button 
-                      key="stop"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.2 }}
-                      type="button" 
-                      onClick={handleStop}
-                      className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
-                      title="Stop responding"
-                    >
-                      <Square size={16} className="md:w-4 md:h-4 fill-current" />
-                    </motion.button>
-                  ) : (input.trim() || selectedImage) ? (
-                    <motion.button 
-                      key="send"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.2 }}
-                      type="submit" 
-                      className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
-                    >
-                      <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
-                    </motion.button>
-                  ) : null}
-                </AnimatePresence>
+                                  {isLoading ? (
+                                    <motion.button 
+                                      key="stop"
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0.8 }}
+                                      transition={{ duration: 0.2 }}
+                                      type="button" 
+                                      onClick={handleStop}
+                                      className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
+                                      title="Stop responding"
+                                    >
+                                      <Square size={16} className="md:w-4 md:h-4 fill-current" />
+                                    </motion.button>
+                                  ) : (
+                                    <motion.button 
+                                      key="send"
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0.8 }}
+                                      transition={{ duration: 0.2 }}
+                                      type="submit" 
+                                      disabled={!input.trim() && !selectedImage}
+                                      className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center rounded-full transition-all shrink-0 ${
+                                        (!input.trim() && !selectedImage) 
+                                          ? 'bg-muted/20 text-muted cursor-not-allowed' 
+                                          : 'bg-foreground text-background hover:opacity-90'
+                                      }`}
+                                    >
+                                      <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
+                                    </motion.button>
+                                  )}
+                                </AnimatePresence>
               </div>
             </div>
           </motion.div>

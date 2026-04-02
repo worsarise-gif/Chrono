@@ -131,20 +131,20 @@ const ThinkingProcess = ({ content }: { content: string }) => {
     <div className="my-4 border border-border/50 rounded-2xl overflow-hidden bg-transparent transition-all duration-300">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-muted group"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-black/60 dark:text-muted group"
       >
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center">
             <div className={`absolute inset-0 rounded-full blur-sm transition-opacity duration-500 ${isOpen ? 'bg-blue-500/20 opacity-100' : 'bg-transparent opacity-0'}`} />
-            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 relative z-10 ${isOpen ? 'bg-blue-500 scale-125' : 'bg-muted/40'}`} />
+            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 relative z-10 ${isOpen ? 'bg-blue-500 scale-125' : 'bg-black/20 dark:bg-muted/40'}`} />
           </div>
-          <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 ${isOpen ? 'text-foreground' : 'text-muted'}`}>
+          <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 ${isOpen ? 'text-black dark:text-foreground' : 'text-black/60 dark:text-muted'}`}>
             Thinking Process
           </span>
         </div>
         <ChevronDown 
           size={14} 
-          className={`transition-transform duration-500 ease-in-out ${isOpen ? 'rotate-180 text-foreground' : 'text-muted/60 group-hover:text-muted'}`} 
+          className={`transition-transform duration-500 ease-in-out ${isOpen ? 'rotate-180 text-black dark:text-foreground' : 'text-black/40 dark:text-muted/60 group-hover:text-black/60 dark:group-hover:text-muted'}`} 
         />
       </button>
       <AnimatePresence initial={false}>
@@ -155,8 +155,8 @@ const ThinkingProcess = ({ content }: { content: string }) => {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
           >
-            <div className="px-5 pb-5 pt-1 text-[13px] text-muted/80 leading-relaxed border-t border-border/30 bg-transparent">
-              <div className="prose prose-sm prose-invert max-w-none italic">
+            <div className="px-5 pb-5 pt-1 text-[13px] text-black/70 dark:text-muted/80 leading-relaxed border-t border-border/30 bg-transparent">
+              <div className="prose prose-sm dark:prose-invert max-w-none italic">
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeKatex]}
@@ -319,7 +319,7 @@ const markdownComponents = {
   },
   blockquote({ node, children, ...props }: any) {
     return (
-      <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-muted not-italic shadow-sm" {...props}>
+      <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-black dark:text-muted not-italic shadow-sm" {...props}>
         {children}
       </blockquote>
     );
@@ -334,10 +334,10 @@ const markdownComponents = {
     );
   },
   th({ node, children, ...props }: any) {
-    return <th className="bg-surface-hover px-4 py-3 font-medium text-foreground border-b border-border whitespace-nowrap" {...props}>{children}</th>;
+    return <th className="bg-surface-hover px-4 py-3 font-medium text-black dark:text-foreground border-b border-border whitespace-nowrap" {...props}>{children}</th>;
   },
   td({ node, children, ...props }: any) {
-    return <td className="px-4 py-3 border-b border-border/50 text-muted" {...props}>{children}</td>;
+    return <td className="px-4 py-3 border-b border-border/50 text-black dark:text-muted" {...props}>{children}</td>;
   },
   pre({ node, children, ...props }: any) {
     return <div className="not-prose m-0 p-0 bg-transparent">{children}</div>;
@@ -352,9 +352,9 @@ const markdownComponents = {
         const data = JSON.parse(String(children));
         return (
           <div className="my-6 flex flex-col gap-3 not-prose">
-            <div className="flex items-center gap-2 text-sm font-normal text-muted mb-2 px-1">
+            <div className="flex items-center gap-2 text-sm font-normal text-black/60 dark:text-muted mb-2 px-1">
               <Search size={16} className="text-blue-500" />
-              <span>Search results for <span className="text-foreground">"{data.query}"</span></span>
+              <span>Search results for <span className="text-black dark:text-foreground">"{data.query}"</span></span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {data.results.map((res: any, idx: number) => {
@@ -366,11 +366,11 @@ const markdownComponents = {
                       {res.title}
                       <ExternalLink size={14} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
                     </div>
-                    <div className="text-[11px] text-muted truncate flex items-center gap-1.5">
+                    <div className="text-[11px] text-black/50 dark:text-muted truncate flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 rounded-full bg-surface-hover flex items-center justify-center text-[8px]">🌐</div>
                       {hostname}
                     </div>
-                    <div className="text-xs text-muted line-clamp-3 leading-relaxed mt-1">{res.snippet}</div>
+                    <div className="text-xs text-black/70 dark:text-muted line-clamp-3 leading-relaxed mt-1">{res.snippet}</div>
                   </a>
                 );
               })}
