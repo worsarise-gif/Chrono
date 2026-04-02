@@ -13,6 +13,7 @@ service cloud.firestore {
     //   - displayName: string (optional) - User display name
     //   - photoURL: string (optional) - User profile photo URL
     //   - createdAt: timestamp (required, immutable) - Account creation time
+    //   - updatedAt: timestamp (optional) - Last profile update time
     //
     // Collection: users/{userId}/chats
     // Document ID: {chatId}
@@ -85,7 +86,8 @@ service cloud.firestore {
              request.resource.data.email is string && isValidEmail(request.resource.data.email) &&
              request.resource.data.createdAt is timestamp &&
              isValidOptionalString('displayName', 0, 100) &&
-             isValidOptionalString('photoURL', 0, 2048);
+             isValidOptionalString('photoURL', 0, 2048) &&
+             (!( 'updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
     }
 
     function isValidChat() {

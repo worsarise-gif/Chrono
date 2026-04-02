@@ -1,15 +1,24 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
 
+interface UserProfile {
+  uid: string;
+  email: string;
+  displayName?: string;
+  photoURL?: string;
+  createdAt: any;
+  updatedAt?: any;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: (User & { profile?: UserProfile }) | null;
   loading: boolean;
 }
 
@@ -30,45 +39,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }, 10000);
 
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       console.log("AuthProvider: Auth state changed:", currentUser?.uid || "No user");
       clearTimeout(timeoutId);
-      setUser(currentUser);
       
       if (currentUser) {
-        // Ensure user document exists
+        // Listen to user document
         const userRef = doc(db, 'users', currentUser.uid);
-        try {
-          const userSnap = await getDoc(userRef);
-          if (!userSnap.exists()) {
-            console.log("AuthProvider: Creating new user document...");
-            const userData: any = {
-              uid: currentUser.uid,
-              email: currentUser.email || '',
-              createdAt: serverTimestamp()
-            };
-            
-            // Use Google profile picture as default for new users
-            const photoURL = currentUser.photoURL || currentUser.providerData[0]?.photoURL;
-            const displayName = currentUser.displayName || currentUser.providerData[0]?.displayName;
+        
+        const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const profile = docSnap.data() as UserProfile;
+            setUser({ ...currentUser, profile } as any);
+          } else {
+            // Document doesn't exist yet, handle creation
+            setUser(currentUser as any);
+            initializeUserDocument(currentUser);
+          }
+          setLoading(false);
+        }, (error) => {
+          console.error("AuthProvider: Profile snapshot error:", error);
+          setUser(currentUser as any);
+          setLoading(false);
+        });
 
-            if (displayName) userData.displayName = displayName;
-            if (photoURL) userData.photoURL = photoURL;
-            
-            await setDoc(userRef, userData);
-          }
-        } catch (error) {
-          console.error("AuthProvider: Error checking/creating user document:", error);
-          try {
-            handleFirestoreError(error, OperationType.WRITE, `users/${currentUser.uid}`);
-          } catch (e) {
-            handleError(e, "Failed to initialize user profile");
-          }
+        return () => {
+          unsubscribeProfile();
+        };
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
+
+    const initializeUserDocument = async (currentUser: User) => {
+      const userRef = doc(db, 'users', currentUser.uid);
+      try {
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+          console.log("AuthProvider: Creating new user document...");
+          const userData: any = {
+            uid: currentUser.uid,
+            email: currentUser.email || '',
+            createdAt: serverTimestamp()
+          };
+          
+          // Use Google profile picture as default for new users
+          const photoURL = currentUser.photoURL || currentUser.providerData[0]?.photoURL;
+          const displayName = currentUser.displayName || currentUser.providerData[0]?.displayName;
+
+          if (displayName) userData.displayName = displayName;
+          if (photoURL) userData.photoURL = photoURL;
+          
+          await setDoc(userRef, userData);
+        }
+      } catch (error) {
+        console.error("AuthProvider: Error checking/creating user document:", error);
+        try {
+          handleFirestoreError(error, OperationType.WRITE, `users/${currentUser.uid}`);
+        } catch (e) {
+          handleError(e, "Failed to initialize user profile");
         }
       }
-      
-      setLoading(false);
-    });
+    };
 
     return () => {
       unsubscribe();

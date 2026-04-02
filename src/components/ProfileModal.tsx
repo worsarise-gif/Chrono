@@ -3,10 +3,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, LogOut, Mail, Calendar, Shield, User as UserIcon, Camera, Save, Loader2, Sun, Moon, Check } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { logout, auth, storage } from '../firebase';
+import { logout, auth, storage, db } from '../firebase';
 import { updateProfile } from 'firebase/auth';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useTheme } from 'next-themes';
+import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
+import { handleError } from '../utils/errorHandler';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -18,7 +21,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
+  const [displayName, setDisplayName] = useState(user?.profile?.displayName || user?.displayName || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +32,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   useEffect(() => {
     setMounted(true);
     if (user) {
-      setDisplayName(user.displayName || '');
+      setDisplayName(user.profile?.displayName || user.displayName || '');
     }
   }, [user]);
 
@@ -84,13 +87,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         photoURL: photoURL
       });
 
+      // Update Firestore document
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, {
+        displayName: displayName.trim(),
+        photoURL: photoURL,
+        updatedAt: serverTimestamp()
+      });
+
       setSuccess(true);
       setIsEditing(false);
       setPreviewUrl(null);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
       console.error("Update profile failed:", err);
-      setError(err.message || "Failed to update profile");
+      try {
+        if (err.code?.startsWith('firestore/')) {
+          handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser?.uid}`);
+        } else {
+          setError(err.message || "Failed to update profile");
+        }
+      } catch (e: any) {
+        setError(e.message || "Failed to update profile");
+      }
     } finally {
       setIsSaving(false);
     }
@@ -135,10 +154,10 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 <div className="relative group mb-6">
                   <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
                   <div className="relative">
-                    {previewUrl || user.photoURL ? (
+                    {previewUrl || user.profile?.photoURL || user.photoURL ? (
                       <img
-                        src={previewUrl || user.photoURL || ''}
-                        alt={user.displayName || "User"}
+                        src={previewUrl || user.profile?.photoURL || user.photoURL || ''}
+                        alt={user.profile?.displayName || user.displayName || "User"}
                         className="w-24 h-24 rounded-full object-cover border-2 border-background shadow-xl"
                       />
                     ) : (
@@ -146,7 +165,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         className="w-24 h-24 rounded-full flex items-center justify-center border-2 border-background shadow-xl text-white font-bold text-3xl"
                         style={{ backgroundColor: `hsl(${(user.email?.length || 0) * 137.5 % 360}, 60%, 50%)` }}
                       >
-                        {user.displayName?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'}
+                        {(user.profile?.displayName || user.displayName)?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'}
                       </div>
                     )}
                     <button 
@@ -184,7 +203,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         className="text-2xl font-bold tracking-tight text-foreground cursor-pointer hover:text-blue-500 transition-colors"
                         onClick={() => setIsEditing(true)}
                       >
-                        {user.displayName || "Anonymous User"}
+                        {user.profile?.displayName || user.displayName || "Anonymous User"}
                       </h2>
                     )}
                     <div className="flex items-center justify-center gap-2 text-muted">
