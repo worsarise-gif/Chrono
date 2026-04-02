@@ -1597,9 +1597,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
           <motion.div 
-            layout
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="relative bg-surface rounded-[24px] md:rounded-[28px] transition-all shadow-2xl border border-border/50 focus-within:border-border flex flex-col p-1.5 md:p-2"
+            className="relative bg-surface rounded-[24px] md:rounded-[28px] shadow-2xl border border-border/50 focus-within:border-border flex flex-col p-1.5 md:p-2"
           >
             {lastError && (
               <div className="mb-4 p-4 bg-surface-hover border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
