@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download, Edit2 } from 'lucide-react';
+import { Paperclip, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download, Edit2 } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -263,7 +263,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [mode, setMode] = useState<ChatMode>('auto');
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string } | null>(null);
-  const [isRecording, setIsRecording] = useState(false);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -325,11 +324,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const isTranscribingRef = useRef(false);
-  const transcriptionVersionRef = useRef(0);
-  const initialInputRef = useRef("");
   const modeDropdownRef = useRef<HTMLDivElement>(null);
 
   const retryLastMessage = async () => {
@@ -456,104 +450,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       };
       reader.readAsDataURL(file);
       e.target.value = ''; // Reset to allow re-selection of the same file
-    }
-  };
-
-  const transcribeCurrentBuffer = async (isFinal = false) => {
-    if (isTranscribingRef.current && !isFinal) return; // Prevent overlapping requests
-    if (audioChunksRef.current.length === 0) return;
-
-    isTranscribingRef.current = true;
-    const currentVersion = ++transcriptionVersionRef.current;
-    
-    try {
-      // Create a Blob from all chunks collected so far
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/wav';
-      const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-      
-      // Call Groq Whisper API
-      let transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3-turbo', 'whisper-large-v3');
-      
-      if (transcription) {
-        const tLower = transcription.trim().toLowerCase();
-        const hallucinations = [
-          "thank you", "you", "thanks", "thank you.", "you.", "thanks.", 
-          "thank you for watching", "thanks for watching", "thank you for watching.", "thanks for watching.",
-          "amen", "amen.", "bye", "bye.", "goodbye", "goodbye.", "ok", "ok.", "okay", "okay.",
-          "thank you.", "thank you...", "you...", "thanks..."
-        ];
-        if (hallucinations.includes(tLower) || tLower.length <= 1) {
-          transcription = "";
-        }
-      }
-
-      if (transcription && currentVersion === transcriptionVersionRef.current) {
-        // Append the new transcription to the initial input
-        const base = initialInputRef.current;
-        setInput(base ? `${base} ${transcription.trim()}` : transcription.trim());
-      }
-    } catch (error) {
-      console.error("Real-time transcription error:", error);
-      // We don't throw here to allow the next chunk to try again seamlessly
-    } finally {
-      if (currentVersion === transcriptionVersionRef.current) {
-        isTranscribingRef.current = false;
-      }
-    }
-  };
-
-  const startRecording = async () => {
-    try {
-      // Advanced audio preprocessing for clarity
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        } 
-      });
-      
-      const options = MediaRecorder.isTypeSupported('audio/webm') ? { mimeType: 'audio/webm' } : undefined;
-      const mediaRecorder = new MediaRecorder(stream, options);
-      
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
-      transcriptionVersionRef.current = 0;
-      initialInputRef.current = input; // Store current input to append to
-
-      mediaRecorder.ondataavailable = async (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
-          // Trigger real-time transcription on every chunk
-          await transcribeCurrentBuffer();
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        setIsLoading(true);
-        try {
-          // Final transcription pass to catch the last bit of audio
-          await transcribeCurrentBuffer(true);
-        } finally {
-          stream.getTracks().forEach(track => track.stop());
-          setIsLoading(false);
-          setIsRecording(false);
-          isTranscribingRef.current = false;
-        }
-      };
-
-      // Start recording and emit data every 1000ms (1 second) for near-instant processing
-      mediaRecorder.start(1000);
-      setIsRecording(true);
-    } catch (err) {
-      handleError(err, "Error accessing microphone");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      // setIsRecording(false) is handled in onstop
     }
   };
 
@@ -1776,10 +1672,10 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                 value={input}
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
-                placeholder={isRecording ? "Listening..." : "Ask anything"}
+                placeholder="Ask anything"
                 className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-normal resize-none leading-[24px] break-words"
                 rows={1}
-                disabled={isLoading || isRecording}
+                disabled={isLoading}
                 style={{ minHeight: '24px', maxHeight: '200px' }}
               />
 
@@ -1854,25 +1750,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                     >
                       <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
                     </motion.button>
-                  ) : (
-                    <motion.button 
-                      key="mic"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ duration: 0.2 }}
-                      type="button" 
-                      onClick={() => isRecording ? stopRecording() : startRecording()}
-                      className={`w-9 h-9 md:w-10 md:h-10 flex items-center justify-center transition-colors rounded-full shrink-0 ${isRecording ? 'text-red-500 bg-red-500/10 hover:bg-red-500/20' : 'text-muted hover:text-foreground hover:bg-surface-hover'}`}
-                      title={isRecording ? "Stop dictating" : "Click to dictate"}
-                    >
-                      {isRecording ? (
-                        <Square size={16} className="md:w-4 md:h-4 fill-current animate-pulse" />
-                      ) : (
-                        <Mic size={18} className="md:w-5 md:h-5" />
-                      )}
-                    </motion.button>
-                  )}
+                  ) : null}
                 </AnimatePresence>
               </div>
             </div>
