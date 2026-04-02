@@ -273,31 +273,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
 
         {/* Bottom Section */}
         <div className="mt-auto relative pb-4 pt-2">
-          {/* Theme Toggle */}
-          <div className="flex justify-center mb-2 group relative">
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className={`flex items-center justify-center transition-all duration-300 hover:bg-surface rounded-lg ${isCollapsed ? 'w-10 h-10' : 'w-[calc(100%-16px)] h-10 px-3 gap-3 text-left'}`}
-            >
-              <div className="w-5 flex items-center justify-center shrink-0">
-                {mounted && (theme === 'dark' ? <Sun size={18} className="text-yellow-500" /> : <Moon size={18} className="text-indigo-500" />)}
-              </div>
-              {!isCollapsed && (
-                <span className="text-[13px] font-medium text-muted hover:text-foreground transition-colors">
-                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                </span>
-              )}
-            </button>
-            
-            {/* Theme Tooltip */}
-            {isCollapsed && (
-              <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[68px]">
-                <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
-                {theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-              </div>
-            )}
-          </div>
-
           {/* Expand Toggle Button */}
           <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
