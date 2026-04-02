@@ -50,7 +50,13 @@ const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs
   });
 
   if (!response.ok) {
-    throw new Error(`API Error ${response.status}: ${await response.text()}`);
+    const errorText = await response.text();
+    try {
+      const errorJson = JSON.parse(errorText);
+      throw new Error(errorJson.error || errorJson.message || `API Error ${response.status}: ${errorText}`);
+    } catch {
+      throw new Error(`API Error ${response.status}: ${errorText}`);
+    }
   }
 
   const reader = response.body?.getReader();
@@ -113,7 +119,15 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
     signal
   });
 
-  if (!res.ok) throw new Error(`Cloudflare Error: ${await res.text()}`);
+  if (!res.ok) {
+    const errorText = await res.text();
+    try {
+      const errorJson = JSON.parse(errorText);
+      throw new Error(errorJson.error || errorJson.message || `Cloudflare Error ${res.status}: ${errorText}`);
+    } catch {
+      throw new Error(`Cloudflare Error ${res.status}: ${errorText}`);
+    }
+  }
 
   const reader = res.body?.getReader();
   if (!reader) throw new Error('No reader available');
@@ -181,7 +195,15 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
       }),
       signal
     });
-    if (!res.ok) throw new Error(`Groq Error: ${await res.text()}`);
+    if (!res.ok) {
+      const errorText = await res.text();
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.error || errorJson.message || `Groq Error ${res.status}: ${errorText}`);
+      } catch {
+        throw new Error(`Groq Error ${res.status}: ${errorText}`);
+      }
+    }
     const data = await res.json();
     return data.choices[0].message.content;
   };
@@ -1240,12 +1262,12 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         if (error.name === 'AbortError') {
           console.log('Generation aborted by user');
         } else {
-          handleError(error, error.message || "Failed to generate AI response");
+          const { message: friendlyMessage } = handleError(error, "Failed to generate AI response");
           setLastError({ 
-            message: error.message || "Something went wrong. Please try again.",
+            message: friendlyMessage,
             retryParams: { text: userMessage, image: currentImage }
           });
-          fullResponse = `Error: ${error.message || "I'm sorry, I encountered an error while processing your request. Please try again later."}`;
+          fullResponse = `Error: ${friendlyMessage}`;
         }
       }
 
