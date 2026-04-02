@@ -99,6 +99,31 @@ textarea {
   cursor: text;
 }
 
+/* KaTeX Responsive Styling */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 1rem 0;
+  margin: 0.5rem 0 !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.katex-display > .katex {
+  white-space: normal;
+  text-align: center;
+}
+
+.katex {
+  font-size: 1.05em;
+}
+
+/* Ensure math blocks don't break layout on mobile */
+.math-display {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .pb-safe {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom));

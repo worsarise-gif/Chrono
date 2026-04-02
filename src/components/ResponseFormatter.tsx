@@ -404,6 +404,28 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
   const displayedContent = useSmoothTyping(content, isStreaming);
 
   const markdownComponents = {
+    h1({ node, children, ...props }: any) {
+      return <h1 className="text-xl font-bold text-foreground mt-2 mb-4" {...props}>{children}</h1>;
+    },
+    h2({ node, children, ...props }: any) {
+      return <h2 className="text-lg font-bold text-foreground mt-2 mb-3" {...props}>{children}</h2>;
+    },
+    h3({ node, children, ...props }: any) {
+      const text = String(children).toLowerCase();
+      const isFinal = text.includes('final') || text.includes('conclusion');
+      return (
+        <h3 className={`text-base font-bold mt-1 mb-3 flex items-center gap-2 ${isFinal ? 'text-blue-500' : 'text-foreground'}`} {...props}>
+          {isFinal && <span className="w-1.5 h-5 bg-blue-500 rounded-full inline-block"></span>}
+          {children}
+        </h3>
+      );
+    },
+    p({ node, children, ...props }: any) {
+      return <p className="text-muted/90 font-light leading-relaxed mb-3 last:mb-0" {...props}>{children}</p>;
+    },
+    strong({ node, children, ...props }: any) {
+      return <strong className="font-medium text-foreground" {...props}>{children}</strong>;
+    },
     img({ node, src, alt, ...props }: any) {
       return <ImageRenderer src={src} alt={alt} onImageClick={onImageClick} {...props} />;
     },
@@ -542,19 +564,41 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
         const normalizedContent = normalizeContent(part);
         if (!normalizedContent) return null;
 
+        // Split by headings (h1, h2, h3) or bold Step markers to create step containers
+        const sections = normalizedContent.split(/(?=^#{1,3} |^\*\*Step \d+:?\*\*)/m);
+
         return (
-          <ReactMarkdown 
-            key={index}
-            remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
-            components={markdownComponents}
-            urlTransform={(url) => {
-              if (url.startsWith('data:image/')) return url;
-              return defaultUrlTransform(url);
-            }}
-          >
-            {normalizedContent}
-          </ReactMarkdown>
+          <div key={index} className="flex flex-col gap-4 w-full">
+            {sections.map((section, sIdx) => {
+              if (!section.trim()) return null;
+              
+              const isFinal = section.match(/^#{1,3} .*(final|conclusion)/i) || section.match(/^\*\*(final|conclusion)/i);
+              const isStep = section.match(/^#{1,3} /) || section.match(/^\*\*Step \d+:?\*\*/i);
+              
+              let containerClass = "flex flex-col w-full";
+              if (isFinal) {
+                containerClass = "flex flex-col w-full p-5 rounded-2xl bg-blue-500/5 border border-blue-500/20 mt-2 shadow-sm";
+              } else if (isStep) {
+                containerClass = "flex flex-col w-full p-4 md:p-5 rounded-2xl bg-surface/40 border border-border/60 shadow-sm";
+              }
+
+              return (
+                <div key={sIdx} className={containerClass}>
+                  <ReactMarkdown 
+                    remarkPlugins={[remarkGfm, remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                    components={markdownComponents}
+                    urlTransform={(url) => {
+                      if (url.startsWith('data:image/')) return url;
+                      return defaultUrlTransform(url);
+                    }}
+                  >
+                    {section}
+                  </ReactMarkdown>
+                </div>
+              );
+            })}
+          </div>
         );
   })}
 </div>
