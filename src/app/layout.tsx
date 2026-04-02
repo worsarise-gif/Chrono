@@ -50,7 +50,7 @@ export default function RootLayout({
             <AuthProvider>
               <ChatProvider>
                 {/* Mobile Top Scrim */}
-                <div className="fixed top-0 left-0 right-0 h-[calc(6rem+env(safe-area-inset-top))] bg-gradient-to-b from-white/60 to-transparent dark:from-black/60 dark:to-transparent z-[39] pointer-events-none md:hidden" />
+                <div className="fixed top-0 left-0 right-0 h-[calc(6rem+env(safe-area-inset-top))] bg-gradient-to-b from-white via-white/80 to-transparent dark:from-black dark:via-black/80 dark:to-transparent z-[39] pointer-events-none md:hidden" />
                 {children}
               </ChatProvider>
             </AuthProvider>
