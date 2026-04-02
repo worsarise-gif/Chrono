@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download } from 'lucide-react';
+import { Paperclip, Mic, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download, Edit2 } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -251,6 +251,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [currentStreamingMessageId, setCurrentStreamingMessageId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
   const getAllImages = () => {
     const images: { src: string; alt?: string }[] = [];
@@ -447,8 +450,21 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
       
       // Call Groq Whisper API
-      const transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3-turbo', 'whisper-large-v3');
+      let transcription = await callGroqTranscription(audioBlob, 'whisper-large-v3-turbo', 'whisper-large-v3');
       
+      if (transcription) {
+        const tLower = transcription.trim().toLowerCase();
+        const hallucinations = [
+          "thank you", "you", "thanks", "thank you.", "you.", "thanks.", 
+          "thank you for watching", "thanks for watching", "thank you for watching.", "thanks for watching.",
+          "amen", "amen.", "bye", "bye.", "goodbye", "goodbye.", "ok", "ok.", "okay", "okay.",
+          "thank you.", "thank you...", "you...", "thanks..."
+        ];
+        if (hallucinations.includes(tLower) || tLower.length <= 1) {
+          transcription = "";
+        }
+      }
+
       if (transcription && currentVersion === transcriptionVersionRef.current) {
         // Append the new transcription to the initial input
         const base = initialInputRef.current;
@@ -493,11 +509,15 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
       mediaRecorder.onstop = async () => {
         setIsLoading(true);
-        // Final transcription pass to catch the last bit of audio
-        await transcribeCurrentBuffer(true);
-        stream.getTracks().forEach(track => track.stop());
-        setIsLoading(false);
-        setIsRecording(false);
+        try {
+          // Final transcription pass to catch the last bit of audio
+          await transcribeCurrentBuffer(true);
+        } finally {
+          stream.getTracks().forEach(track => track.stop());
+          setIsLoading(false);
+          setIsRecording(false);
+          isTranscribingRef.current = false;
+        }
       };
 
       // Start recording and emit data every 1000ms (1 second) for near-instant processing
@@ -543,6 +563,58 @@ Session Title Status: "false"`;
       }
     } catch (error) {
       console.error("Failed to generate smart title:", error);
+    }
+  };
+
+  const handleCopyMessage = (id: string, content: string) => {
+    navigator.clipboard.writeText(content);
+    setCopiedMessageId(id);
+    setTimeout(() => setCopiedMessageId(null), 2000);
+  };
+
+  const handleEditMessage = (id: string, content: string) => {
+    setEditingMessageId(id);
+    setEditContent(content);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditContent('');
+  };
+
+  const handleSaveEdit = async (id: string, resubmit: boolean = false) => {
+    if (!editContent.trim() || !user || !currentChatId) return;
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'chats', currentChatId, 'messages', id), {
+        content: editContent.trim()
+      });
+      const newContent = editContent.trim();
+      setEditingMessageId(null);
+      setEditContent('');
+      if (resubmit) {
+        handleSubmit(undefined, newContent);
+      }
+    } catch (e) {
+      console.error("Failed to edit message", e);
+    }
+  };
+
+  const handleRegenerate = async (msgIndex: number) => {
+    let lastUserMsg = '';
+    let lastUserImage = null;
+    for (let i = msgIndex - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        lastUserMsg = messages[i].content;
+        if (messages[i].imageUrl) {
+          // We don't have the raw data/mimeType easily available here, 
+          // but we can pass the text. For full regenerate with image, 
+          // we might need to fetch the image blob, but let's just resubmit text for now.
+        }
+        break;
+      }
+    }
+    if (lastUserMsg) {
+      handleSubmit(undefined, lastUserMsg);
     }
   };
 
@@ -1082,9 +1154,13 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
           let searchWebCallArgs: any = null;
             let searchWebCallId: string | null = null;
 
+            if (controller.signal.aborted) {
+              throw new DOMException('Aborted', 'AbortError');
+            }
+
             for await (const chunk of streamResponse) {
               if (controller.signal.aborted) {
-                break;
+                throw new DOMException('Aborted', 'AbortError');
               }
               if (chunk.functionCalls && chunk.functionCalls.length > 0) {
                 const call = chunk.functionCalls[0];
@@ -1294,7 +1370,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         ) : (
           <div className="max-w-3xl mx-auto w-full px-4 pb-40 md:pb-32 space-y-6 md:space-y-8 flex-1">
             <AnimatePresence initial={false}>
-              {messages.filter(msg => msg.id !== currentStreamingMessageId).map((msg) => (
+              {messages.filter(msg => msg.id !== currentStreamingMessageId).map((msg, index) => (
                 <motion.div 
                   key={msg.id} 
                   initial={{ opacity: 0, y: 10 }}
@@ -1341,13 +1417,16 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                               {/* Action Row */}
                               <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-muted">
                                 {[
-                                  { icon: <RefreshCcw size={14} />, title: "Regenerate" },
-                                  { icon: <Copy size={14} />, title: "Copy" },
-                                  { icon: <ThumbsUp size={14} />, title: "Good response" },
-                                  { icon: <ThumbsDown size={14} />, title: "Bad response" },
-                                  { icon: <Volume2 size={14} />, title: "Read aloud" },
-                                  { icon: <Share size={14} />, title: "Share" },
-                                  { icon: <MoreHorizontal size={14} />, title: "More options" }
+                                  { icon: <RefreshCcw size={14} />, title: "Regenerate", onClick: () => handleRegenerate(index) },
+                                  { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
+                                  { icon: <ThumbsUp size={14} />, title: "Good response", onClick: () => {} },
+                                  { icon: <ThumbsDown size={14} />, title: "Bad response", onClick: () => {} },
+                                  { icon: <Volume2 size={14} />, title: "Read aloud", onClick: () => {
+                                    const utterance = new SpeechSynthesisUtterance(msg.content);
+                                    window.speechSynthesis.speak(utterance);
+                                  } },
+                                  { icon: <Share size={14} />, title: "Share", onClick: () => {} },
+                                  { icon: <MoreHorizontal size={14} />, title: "More options", onClick: () => {} }
                                 ].map((btn: any, i) => (
                                   <button 
                                     key={i}
@@ -1375,8 +1454,35 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                           )}
                         </div>
                       ) : (
-                        <div className="flex flex-col gap-2">
-                          <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
+                        <div className="flex flex-col gap-2 group/user relative w-full">
+                          {editingMessageId === msg.id ? (
+                            <div className="flex flex-col gap-2 w-full min-w-[250px]">
+                              <textarea
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                className="w-full bg-background/50 text-foreground rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
+                                rows={3}
+                                autoFocus
+                              />
+                              <div className="flex items-center justify-end gap-2 mt-1">
+                                <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium text-muted hover:text-foreground transition-colors rounded-lg hover:bg-surface-hover">Cancel</button>
+                                <button onClick={() => handleSaveEdit(msg.id, false)} className="px-3 py-1.5 text-xs font-medium text-foreground bg-surface-hover hover:bg-surface transition-colors rounded-lg border border-border/50">Save</button>
+                                <button onClick={() => handleSaveEdit(msg.id, true)} className="px-3 py-1.5 text-xs font-medium text-background bg-foreground hover:opacity-90 transition-colors rounded-lg">Save & Submit</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
+                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 opacity-0 group-hover/user:opacity-100 transition-opacity">
+                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-muted hover:text-foreground" title="Edit">
+                                  <Edit2 size={14} />
+                                </button>
+                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-muted hover:text-foreground" title="Copy">
+                                  {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>
