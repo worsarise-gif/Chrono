@@ -958,22 +958,42 @@ Return ONLY the JSON array.`;
 
       if (mode === 'auto') {
         try {
-          const classifierPrompt = `Analyze the following user request and classify its intent and complexity.
-Categories:
-- 'simple': General questions, quick facts, casual conversation.
-- 'complex': Analytical tasks, creative writing, deep reasoning, complex logic.
-- 'code': Programming, debugging, software architecture, scripting.
+          // Hybrid Approach: Rule-based intent classification combined with lightweight contextual parsing
+          const text = lastMessage.toLowerCase();
+          
+          // 1. Rule-based classification for explicit commands and cues
+          const isCodeRule = /\b(function|class|def|const|let|var|import|export|npm|pip|code|debug|error|exception|api|endpoint|script|query)\b/i.test(text) || 
+                             /(?:=>|\{|\}|\[|\]|<html>|<script>)/.test(text);
+                             
+          const isComplexRule = text.length > 400 || 
+                                /\b(analyze|explain|compare|summarize|evaluate|synthesize|architecture|design|strategy|plan|generate|create|write|translate|format|tone|style)\b/i.test(text);
+                                
+          const isImageRule = /\b(image|picture|photo|draw|render|visualize)\b/i.test(text);
+          const isStructuredRule = /\b(json|xml|csv|table|format|list|array|object|schema)\b/i.test(text);
 
-User Request: "${lastMessage}"
+          let ruleBasedCategory = null;
+          if (isCodeRule) ruleBasedCategory = 'code';
+          else if (isComplexRule || isStructuredRule || isImageRule) ruleBasedCategory = 'complex';
 
-Return ONLY the category name (simple, complex, or code) in lowercase, with no other text.`;
+          // 2. Lightweight contextual parsing to confirm or refine
+          const classifierPrompt = `Analyze the user request to infer actual intent, task type, and parameters (format, tone).
+Classify into ONE category:
+- 'simple': General questions, facts, casual chat.
+- 'complex': Analysis, creative writing, reasoning, structured output (JSON/tables), image generation.
+- 'code': Programming, debugging, architecture.
+
+User Request: "${lastMessage.substring(0, 500)}"
+
+Return ONLY the category name (simple, complex, or code) in lowercase.`;
           
           const result = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: classifierPrompt }], 'llama-3.3-70b-versatile');
           const cleanResult = result.toLowerCase().trim();
-          if (cleanResult.includes('code')) {
+          
+          // Combine rule-based and LLM parsing for consistent and predictable performance
+          if (cleanResult.includes('code') || ruleBasedCategory === 'code') {
             classification = 'code';
             setLoadingStatus('Crafting Code...');
-          } else if (cleanResult.includes('complex')) {
+          } else if (cleanResult.includes('complex') || ruleBasedCategory === 'complex') {
             classification = 'complex';
             setLoadingStatus('Analyzing...');
           } else {
@@ -981,10 +1001,11 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
             setLoadingStatus('Thinking...');
           }
           
-          console.log(`Auto Mode Classification: ${classification}`);
+          console.log(`Auto Mode Classification: ${classification} (Rule: ${ruleBasedCategory}, LLM: ${cleanResult})`);
         } catch (e) {
-          console.error("Classification failed, defaulting to simple", e);
-          classification = lastMessage.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(lastMessage) ? 'complex' : 'simple';
+          console.error("Classification failed, defaulting to rule-based", e);
+          const text = lastMessage.toLowerCase();
+          classification = text.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(text) ? 'complex' : 'simple';
         }
       }
 
