@@ -564,14 +564,15 @@ Session Title Status: "false"`;
     }
   };
 
-  const generateRecommendations = async (messageId: string, aiResponse: string, chatId: string | null) => {
+  const generateRecommendations = async (messageId: string, userMessage: string, chatId: string | null) => {
     try {
-      const prompt = `Based on the following AI response, suggest exactly 2 follow-up questions or prompts the user could ask next.
+      const prompt = `Based ONLY on the user's latest input, suggest exactly 2 follow-up questions or prompts the user could ask next to improve, extend, or deepen their request.
+Do not repeat the same idea. Do not generate generic suggestions. Do not include explanations or extra text.
 Format your response strictly as a JSON array of objects, with each object having a "title" (maximum 5 words) and a "prompt" (the full follow-up question).
-Example: [{"title": "Tell me more", "prompt": "Can you elaborate on that point?"}]
+Example: [{"title": "Explain the underlying mechanism", "prompt": "Can you explain the underlying mechanism in more detail?"}]
 
-AI Response:
-${aiResponse.substring(0, 1000)}
+User Input:
+"${userMessage.substring(0, 1000)}"
 
 Return ONLY the JSON array.`;
       
@@ -791,7 +792,8 @@ Return ONLY the JSON array.`;
             img.src = URL.createObjectURL(blob);
           });
           
-          finalImageResponse = `Here is your generated image:\n\n![${userMessage}](${compressedBase64})`;
+          const safeAltText = userMessage.replace(/[\r\n\[\]]/g, ' ').substring(0, 150).trim() || 'Generated Image';
+          finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${compressedBase64})`;
         }
       } catch (err) {
         console.error("Image generation error:", err);
@@ -1282,7 +1284,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
 
         // Generate prompt recommendations
         if (finalMessageId && !fullResponse.startsWith('Error:')) {
-          generateRecommendations(finalMessageId, fullResponse, chatId);
+          generateRecommendations(finalMessageId, userMessage || (currentImage ? "Image uploaded" : ""), chatId);
         }
       } catch (error) {
         try {
@@ -1359,8 +1361,9 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
           {!user ? (
             <div className="flex items-center gap-2 pointer-events-auto">
-              <PlanetLogo className="text-foreground w-6 h-6" />
-              <span className="font-semibold text-lg tracking-tight">Q1</span>
+              <Link href="/">
+                <PlanetLogo className="text-foreground w-6 h-6 hover:opacity-80 transition-opacity" />
+              </Link>
             </div>
           ) : (
             <button 
@@ -1764,8 +1767,16 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
       <div className={`absolute left-0 right-0 p-3 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0 pb-safe'}`}>
         {!isChatStarted && (
           <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
-            <PlanetLogo className="text-foreground w-10 h-10 md:w-12 md:h-12" />
-            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">Q1</h1>
+            {!user ? (
+              <Link href="/">
+                <PlanetLogo className="text-foreground w-10 h-10 md:w-12 md:h-12 hover:opacity-80 transition-opacity" />
+              </Link>
+            ) : (
+              <>
+                <PlanetLogo className="text-foreground w-10 h-10 md:w-12 md:h-12" />
+                <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">Q1</h1>
+              </>
+            )}
           </div>
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
@@ -1872,47 +1883,49 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
 
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 h-10">
                 {/* Mode Selector */}
-                <div className="relative" ref={modeDropdownRef}>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowModeDropdown(!showModeDropdown)}
-                    className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-foreground text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
-                  >
-                    <span className="hidden sm:inline">{modeLabels[mode]}</span>
-                    <span className="sm:hidden">{modeIcons[mode]}</span>
-                    <ChevronDown size={14} className="text-muted" />
-                  </button>
-                  
-                  {showModeDropdown && (
-                    <div className="absolute bottom-full mb-2 right-0 md:left-0 w-[240px] md:w-64 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
-                      {(Object.keys(modeLabels) as ChatMode[]).filter(m => m !== 'flash').map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          onClick={() => { setMode(m); setShowModeDropdown(false); }}
-                          className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors relative ${mode === m ? 'bg-surface-hover/50' : ''}`}
-                        >
-                          <div className={`mt-0.5 ${mode === m ? 'text-foreground' : 'text-muted'}`}>
-                            {modeIcons[m]}
-                          </div>
-                          <div className="flex-1">
-                            <div className={`text-sm font-medium ${mode === m ? 'text-foreground' : 'text-muted'}`}>
-                              {modeLabels[m]}
+                {user && (
+                  <div className="relative" ref={modeDropdownRef}>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowModeDropdown(!showModeDropdown)}
+                      className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-foreground text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
+                    >
+                      <span className="hidden sm:inline">{modeLabels[mode]}</span>
+                      <span className="sm:hidden">{modeIcons[mode]}</span>
+                      <ChevronDown size={14} className="text-muted" />
+                    </button>
+                    
+                    {showModeDropdown && (
+                      <div className="absolute bottom-full mb-2 right-0 md:left-0 w-[240px] md:w-64 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
+                        {(Object.keys(modeLabels) as ChatMode[]).filter(m => m !== 'flash').map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => { setMode(m); setShowModeDropdown(false); }}
+                            className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors relative ${mode === m ? 'bg-surface-hover/50' : ''}`}
+                          >
+                            <div className={`mt-0.5 ${mode === m ? 'text-foreground' : 'text-muted'}`}>
+                              {modeIcons[m]}
                             </div>
-                            <div className="text-[11px] text-muted leading-tight mt-0.5">
-                              {modeDescriptions[m]}
+                            <div className="flex-1">
+                              <div className={`text-sm font-medium ${mode === m ? 'text-foreground' : 'text-muted'}`}>
+                                {modeLabels[m]}
+                              </div>
+                              <div className="text-[11px] text-muted leading-tight mt-0.5">
+                                {modeDescriptions[m]}
+                              </div>
                             </div>
-                          </div>
-                          {mode === m && (
-                            <div className="text-blue-500 mt-0.5">
-                              <Check size={14} />
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                            {mode === m && (
+                              <div className="text-blue-500 mt-0.5">
+                                <Check size={14} />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <AnimatePresence mode="wait">
                                   {isLoading ? (
