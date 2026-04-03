@@ -172,7 +172,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           onClick={() => setIsMobileOpen?.(false)}
         />
       )}
-      <div className={`h-[100dvh] bg-background text-foreground border-r border-border z-50 font-sans transition-all duration-300 ease-in-out fixed md:relative ${isCollapsed ? 'w-[68px] overflow-visible' : 'w-[250px] overflow-x-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-50 font-sans transition-all duration-300 ease-in-out fixed md:relative ${isCollapsed ? 'w-[68px] overflow-visible' : 'w-[250px] overflow-x-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-full h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative">

@@ -1376,7 +1376,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase.`;
   }, [showModeDropdown]);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-background relative overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden font-sans">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto scroll-smooth relative flex flex-col">
         {/* Sticky Floating Actions */}
@@ -1536,7 +1536,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase.`;
                               <textarea
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
-                                className="w-full bg-background/50 text-foreground rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
+                                className="w-full bg-chat-bg/50 text-foreground rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
                                 rows={3}
                                 autoFocus
                               />

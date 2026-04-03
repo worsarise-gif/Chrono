@@ -6,7 +6,7 @@ export default function StarryBackground() {
     <div
       className="fixed inset-0 pointer-events-none z-0"
       style={{
-        backgroundColor: 'var(--color-background)',
+        backgroundColor: 'var(--color-chat-bg)',
         backgroundImage: 'radial-gradient(var(--color-stars) 1px, transparent 1px)',
         backgroundSize: '24px 24px'
       }}
