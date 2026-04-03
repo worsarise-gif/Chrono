@@ -1476,7 +1476,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase.`;
                                   { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
                                   { icon: <ThumbsUp size={14} />, title: "Good response", onClick: () => {} },
                                   { icon: <ThumbsDown size={14} />, title: "Bad response", onClick: () => {} },
-                                  { 
+                                  (!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) ? { 
                                     icon: speakingMessageId === msg.id ? <Square size={14} className="fill-current" /> : <Volume2 size={14} />, 
                                     title: speakingMessageId === msg.id ? "Stop reading" : "Read aloud", 
                                     onClick: () => {
@@ -1492,10 +1492,10 @@ Return ONLY the category name (simple, complex, or code) in lowercase.`;
                                         window.speechSynthesis.speak(utterance);
                                       }
                                     } 
-                                  },
+                                  } : null,
                                   { icon: <Share size={14} />, title: "Share", onClick: () => {} },
                                   { icon: <MoreHorizontal size={14} />, title: "More options", onClick: () => {} }
-                                ].map((btn: any, i) => (
+                                ].filter(Boolean).map((btn: any, i) => (
                                   <button 
                                     key={i}
                                     onClick={btn.onClick}
