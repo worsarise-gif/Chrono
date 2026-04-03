@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
+import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { loginWithGoogle, db } from '../firebase';
