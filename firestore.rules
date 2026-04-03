@@ -46,6 +46,12 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "johnkerveelayese@gmail.com" && request.auth.token.email_verified == true)); // Default admin
+    }
+
     function uidUnchanged() {
       return !('uid' in request.resource.data) || request.resource.data.uid == request.auth.uid;
     }
@@ -87,6 +93,7 @@ service cloud.firestore {
              request.resource.data.createdAt is timestamp &&
              isValidOptionalString('displayName', 0, 100) &&
              isValidOptionalString('photoURL', 0, 2048) &&
+             isValidOptionalString('role', 0, 20) &&
              (!( 'updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
     }
 
@@ -110,10 +117,10 @@ service cloud.firestore {
     // Rules
     // ===============================================================
     match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidUser() && uidUnchanged();
-      allow update: if isOwner(userId) && isValidUser() && uidNotModified() && areImmutableFieldsUnchanged(['uid', 'email', 'createdAt']);
-      allow delete: if isOwner(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser() && uidUnchanged() && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == 'user')) || isAdmin());
+      allow update: if isAuthenticated() && isValidUser() && uidNotModified() && areImmutableFieldsUnchanged(['uid', 'email', 'createdAt']) && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)) || isAdmin());
+      allow delete: if isOwner(userId) || isAdmin();
 
       match /chats/{chatId} {
         allow read: if isOwner(userId);

@@ -26,6 +26,7 @@ interface Message {
   hasAudio?: boolean;
   createdAt?: any;
   isStreaming?: boolean;
+  recommendations?: {title: string, prompt: string}[];
 }
 
 type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
@@ -276,6 +277,15 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [editContent, setEditContent] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [guestRequestCount, setGuestRequestCount] = useState<number>(0);
+  const [showSignInModal, setShowSignInModal] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      const count = parseInt(localStorage.getItem('guestRequestCount') || '0', 10);
+      setGuestRequestCount(count);
+    }
+  }, [user]);
 
   const getAllImages = () => {
     const images: { src: string; alt?: string }[] = [];
@@ -383,7 +393,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   }, [input]);
 
   useEffect(() => {
-    if (!user || !currentChatId) {
+    if (!user) {
+      setIsLoadingMessages(false);
+      return;
+    }
+    if (!currentChatId) {
       setMessages([]);
       setIsLoadingMessages(false);
       return;
@@ -550,22 +564,67 @@ Session Title Status: "false"`;
     }
   };
 
+  const generateRecommendations = async (messageId: string, aiResponse: string, chatId: string | null) => {
+    try {
+      const prompt = `Based on the following AI response, suggest exactly 2 follow-up questions or prompts the user could ask next.
+Format your response strictly as a JSON array of objects, with each object having a "title" (maximum 5 words) and a "prompt" (the full follow-up question).
+Example: [{"title": "Tell me more", "prompt": "Can you elaborate on that point?"}]
+
+AI Response:
+${aiResponse.substring(0, 1000)}
+
+Return ONLY the JSON array.`;
+      
+      const result = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: prompt }], 'llama-3.3-70b-versatile');
+      const jsonMatch = result.match(/\[.*\]/s);
+      if (jsonMatch) {
+        const recs = JSON.parse(jsonMatch[0]);
+        if (Array.isArray(recs) && recs.length > 0) {
+          const finalRecs = recs.slice(0, 2);
+          if (user && chatId) {
+            await updateDoc(doc(db, 'users', user.uid, 'chats', chatId, 'messages', messageId), {
+              recommendations: finalRecs
+            });
+          } else {
+            setMessages(prev => prev.map(m => m.id === messageId ? { ...m, recommendations: finalRecs } : m));
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Failed to generate recommendations", e);
+    }
+  };
+
   const handleSubmit = async (e?: React.FormEvent, text?: string, image?: { data: string, mimeType: string }) => {
     if (e) e.preventDefault();
     setLastError(null);
-    if (!user) {
-      try {
-        await loginWithGoogle();
-      } catch (error) {
-        handleError(error, "Login failed");
-      }
-      return;
-    }
     
     const userMessage = text || input.trim();
     const currentImage = image || selectedImage;
     
     if ((!userMessage && !currentImage) || isLoading) return;
+
+    const isImageRequest = /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(userMessage.trim());
+
+    if (!user) {
+      if (currentImage || isImageRequest) {
+        setShowSignInModal(true);
+        return;
+      }
+      
+      if (guestRequestCount >= 10) {
+        setShowSignInModal(true);
+        return;
+      }
+      
+      const newCount = guestRequestCount + 1;
+      setGuestRequestCount(newCount);
+      localStorage.setItem('guestRequestCount', newCount.toString());
+      
+      if (mode !== 'flash') {
+        setMode('flash');
+      }
+    }
 
     if (!text) setInput('');
     if (!image) setSelectedImage(null);
@@ -592,73 +651,80 @@ Session Title Status: "false"`;
     let chatId = currentChatId;
     let isNewChat = false;
 
-    if (!chatId) {
-      isNewChat = true;
-      try {
-        const chatRef = await addDoc(collection(db, 'users', user.uid, 'chats'), {
-          title: userMessage.slice(0, 40) || 'New Chat',
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        });
-        chatId = chatRef.id;
-        setCurrentChatId(chatId);
-      } catch (error) {
-        setIsLoading(false);
+    if (user) {
+      if (!chatId) {
+        isNewChat = true;
         try {
-          handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/chats`);
-        } catch (e) {
-          handleError(e, "Failed to create chat session");
+          const chatRef = await addDoc(collection(db, 'users', user.uid, 'chats'), {
+            title: userMessage.slice(0, 40) || 'New Chat',
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+          });
+          chatId = chatRef.id;
+          setCurrentChatId(chatId);
+        } catch (error) {
+          setIsLoading(false);
+          try {
+            handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/chats`);
+          } catch (e) {
+            handleError(e, "Failed to create chat session");
+          }
+          return;
         }
-        return;
       }
     }
 
     let userMessageRef: any = null;
-    try {
-      const messageData: any = {
-        role: 'user',
-        content: userMessage,
-        hasImage: !!currentImage,
-        createdAt: serverTimestamp()
-      };
-      if (currentImage) {
-        // Temporarily use the base64 data URL so it shows up instantly
-        messageData.imageUrl = `data:${currentImage.mimeType};base64,${currentImage.data}`;
-      }
-      userMessageRef = await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
-      
-      // Update chat updatedAt immediately so sidebar syncs in real-time across devices
-      await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
-        updatedAt: serverTimestamp()
-      });
-    } catch (error) {
-      setIsLoading(false);
+    const messageData: any = {
+      role: 'user',
+      content: userMessage,
+      hasImage: !!currentImage,
+      createdAt: user ? serverTimestamp() : new Date()
+    };
+    if (currentImage) {
+      messageData.imageUrl = `data:${currentImage.mimeType};base64,${currentImage.data}`;
+    }
+
+    if (user) {
       try {
-        handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
-      } catch (e) {
-        handleError(e, "Failed to send message");
-      }
-      return;
-    }
-
-    // Upload image to storage in the background
-    if (currentImage && userMessageRef) {
-      const imageToUpload = currentImage; // Capture in closure
-      const msgRef = userMessageRef;
-      const cid = chatId;
-      (async () => {
+        userMessageRef = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), messageData);
+        await updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), {
+          updatedAt: serverTimestamp()
+        });
+      } catch (error) {
+        setIsLoading(false);
         try {
-          const imageRef = ref(storage, `users/${user.uid}/chats/${cid}/images/${Date.now()}`);
-          await uploadString(imageRef, `data:${imageToUpload.mimeType};base64,${imageToUpload.data}`, 'data_url');
-          const uploadedImageUrl = await getDownloadURL(imageRef);
-          await updateDoc(msgRef, { imageUrl: uploadedImageUrl });
-        } catch (error) {
-          console.error("Failed to upload image to storage in background", error);
+          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+        } catch (e) {
+          handleError(e, "Failed to send message");
         }
-      })();
-    }
+        return;
+      }
 
-    const isImageRequest = /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(userMessage.trim());
+      // Upload image to storage in the background
+      if (currentImage && userMessageRef) {
+        const imageToUpload = currentImage;
+        const msgRef = userMessageRef;
+        const cid = chatId;
+        (async () => {
+          try {
+            const imageRef = ref(storage, `users/${user.uid}/chats/${cid}/images/${Date.now()}`);
+            await uploadString(imageRef, `data:${imageToUpload.mimeType};base64,${imageToUpload.data}`, 'data_url');
+            const uploadedImageUrl = await getDownloadURL(imageRef);
+            await updateDoc(msgRef, { imageUrl: uploadedImageUrl });
+          } catch (error) {
+            console.error("Failed to upload image to storage in background", error);
+          }
+        })();
+      }
+    } else {
+      // Guest mode: update local state
+      const newMsg: Message = {
+        id: Date.now().toString(),
+        ...messageData
+      };
+      setMessages(prev => [...prev, newMsg]);
+    }
 
     if (isImageRequest && !currentImage) {
       setIsGeneratingImage(true);
@@ -733,18 +799,18 @@ Session Title Status: "false"`;
       }
 
       try {
-        await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), {
+        await addDoc(collection(db, 'users', user!.uid, 'chats', chatId!, 'messages'), {
           role: 'model',
           content: finalImageResponse,
           createdAt: serverTimestamp()
         });
-        await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+        await updateDoc(doc(db, 'users', user!.uid, 'chats', chatId!), {
           updatedAt: serverTimestamp()
         });
       } catch (error) {
         console.error("Failed to save image response", error);
         try {
-          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+          handleFirestoreError(error, OperationType.WRITE, `users/${user!.uid}/chats/${chatId!}/messages`);
         } catch (e) {
           handleError(e, "Failed to save image response");
         }
@@ -879,7 +945,7 @@ Session Title Status: "false"`;
         config.tools = tools;
       }
       
-      let modelName = 'gemini-3-flash-preview';
+      let modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
       let bytezModel = 'openai/gpt-4o';
       let groqModel = 'llama-3.1-8b-instant';
       let cloudflareModel = '';
@@ -922,34 +988,34 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
       let dynamicSystemInstruction = systemInstruction;
 
       if (mode === 'flash') {
-        modelName = 'gemini-3-flash-preview';
+        modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
         bytezModel = 'openai/gpt-4o';
         groqModel = 'llama-3.1-8b-instant';
       } else if (mode === 'pro') {
-        modelName = 'gemini-3.1-pro-preview';
+        modelName = user ? 'gemini-3.1-pro-preview' : 'gemini-3.1-flash-lite-preview';
         bytezModel = 'openai/gpt-4-turbo';
         groqModel = 'llama-3.3-70b-versatile';
         cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
       } else if (mode === 'auto') {
         if (classification === 'code') {
-          modelName = 'gemini-3.1-pro-preview';
+          modelName = user ? 'gemini-3.1-pro-preview' : 'gemini-3.1-flash-lite-preview';
           bytezModel = 'openai/gpt-4-turbo';
           groqModel = 'llama-3.3-70b-versatile';
           cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
           dynamicSystemInstruction += `\n\n[CODE NORMALIZATION LAYER ACTIVE]\nYou are an expert software engineer. Provide clean, efficient, and well-documented code.\n- ALWAYS wrap code snippets in standard Markdown triple-backtick blocks with the correct language identifier.\n- Ensure proper indentation.\n- Do not use HTML tags for code.\n- Structure your response with clear headings and explanations.\n- Avoid incomplete code blocks.`;
         } else if (classification === 'complex') {
-          modelName = 'gemini-3.1-pro-preview';
+          modelName = user ? 'gemini-3.1-pro-preview' : 'gemini-3.1-flash-lite-preview';
           bytezModel = 'openai/gpt-4-turbo';
           groqModel = 'llama-3.3-70b-versatile';
           cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
           dynamicSystemInstruction += `\n\n[COMPLEXITY LAYER ACTIVE]\nProvide a thorough, well-structured, and deeply reasoned response. Break down complex topics into digestible parts.`;
         } else {
-          modelName = 'gemini-3-flash-preview';
+          modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
           bytezModel = 'openai/gpt-4o';
           groqModel = 'llama-3.1-8b-instant';
         }
       } else {
-        modelName = 'gemini-3-flash-preview';
+        modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
       }
 
       if (currentImage) {
@@ -981,17 +1047,19 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
       ];
 
       let aiMessageRef: any = null;
-      try {
-        const ref = await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), {
-          role: 'model',
-          content: '',
-          isStreaming: true,
-          createdAt: serverTimestamp()
-        });
-        aiMessageRef = ref;
-        setCurrentStreamingMessageId(ref.id);
-      } catch (e) {
-        console.error("Failed to create placeholder message", e);
+      if (user) {
+        try {
+          const ref = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), {
+            role: 'model',
+            content: '',
+            isStreaming: true,
+            createdAt: serverTimestamp()
+          });
+          aiMessageRef = ref;
+          setCurrentStreamingMessageId(ref.id);
+        } catch (e) {
+          console.error("Failed to create placeholder message", e);
+        }
       }
 
       let lastUpdateTime = Date.now();
@@ -999,7 +1067,7 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
         fullResponse += text;
         setStreamingMessage(fullResponse);
         
-        if (aiMessageRef && Date.now() - lastUpdateTime > 1500) {
+        if (user && aiMessageRef && Date.now() - lastUpdateTime > 1500) {
           lastUpdateTime = Date.now();
           updateDoc(aiMessageRef, { content: fullResponse }).catch(e => console.error("Failed to sync chunk", e));
         }
@@ -1175,31 +1243,52 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
       }
 
       try {
-        if (aiMessageRef) {
-          await updateDoc(aiMessageRef, {
-            content: fullResponse,
-            isStreaming: false
+        let finalMessageId = aiMessageRef?.id;
+        if (user) {
+          if (aiMessageRef) {
+            await updateDoc(aiMessageRef, {
+              content: fullResponse,
+              isStreaming: false
+            });
+          } else {
+            const messageData: any = {
+              role: 'model',
+              content: fullResponse,
+              createdAt: serverTimestamp()
+            };
+            const docRef = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), messageData);
+            finalMessageId = docRef.id;
+          }
+
+          await updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), {
+            updatedAt: serverTimestamp()
           });
+
+          // Generate smart title asynchronously for new chats using the AI response
+          if (isNewChat) {
+            generateSmartTitle(chatId!, userMessage || (currentImage ? "Image uploaded" : "New Chat"), fullResponse);
+          }
         } else {
-          const messageData: any = {
+          // Guest mode: update local state
+          finalMessageId = Date.now().toString();
+          const newMsg: Message = {
+            id: finalMessageId,
             role: 'model',
             content: fullResponse,
-            createdAt: serverTimestamp()
+            createdAt: new Date()
           };
-          await addDoc(collection(db, 'users', user.uid, 'chats', chatId, 'messages'), messageData);
+          setMessages(prev => [...prev, newMsg]);
         }
 
-        await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
-          updatedAt: serverTimestamp()
-        });
-
-        // Generate smart title asynchronously for new chats using the AI response
-        if (isNewChat) {
-          generateSmartTitle(chatId, userMessage || (currentImage ? "Image uploaded" : "New Chat"), fullResponse);
+        // Generate prompt recommendations
+        if (finalMessageId && !fullResponse.startsWith('Error:')) {
+          generateRecommendations(finalMessageId, fullResponse, chatId);
         }
       } catch (error) {
         try {
-          handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+          if (user) {
+            handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
+          }
         } catch (e) {
           handleError(e, "Failed to save AI response");
         }
@@ -1268,20 +1357,36 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
       <div className="flex-1 overflow-y-auto scroll-smooth relative flex flex-col">
         {/* Sticky Floating Actions */}
         <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
-          <button 
-            onClick={onMenuClick}
-            className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
-          >
-            <Menu size={20} />
-          </button>
+          {!user ? (
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <PlanetLogo className="text-foreground w-6 h-6" />
+              <span className="font-semibold text-lg tracking-tight">Q1</span>
+            </div>
+          ) : (
+            <button 
+              onClick={onMenuClick}
+              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
+            >
+              <Menu size={20} />
+            </button>
+          )}
           <div className="flex-1" />
-          <button 
-            onClick={() => setCurrentChatId(null)}
-            className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
-            title="New Chat"
-          >
-            <SquarePen size={20} className="group-hover:scale-110 transition-transform" />
-          </button>
+          {!user ? (
+            <button 
+              onClick={loginWithGoogle}
+              className="px-4 py-2 bg-foreground text-background hover:opacity-90 rounded-full font-medium pointer-events-auto transition-all shadow-lg text-sm"
+            >
+              Sign In
+            </button>
+          ) : (
+            <button 
+              onClick={() => setCurrentChatId(null)}
+              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-muted hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
+              title="New Chat"
+            >
+              <SquarePen size={20} className="group-hover:scale-110 transition-transform" />
+            </button>
+          )}
         </div>
 
         {isLoadingMessages ? (
@@ -1378,16 +1483,24 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                               </div>
 
                               {/* Suggestions */}
-                              <div className="mt-5 space-y-3">
-                                <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
-                                  <CornerDownRight size={16} className="text-muted" />
-                                  Cebu Food Recommendations
-                                </button>
-                                <button className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors">
-                                  <CornerDownRight size={16} className="text-muted" />
-                                  Cebu Nightlife Spots
-                                </button>
-                              </div>
+                              {msg.recommendations && msg.recommendations.length > 0 && (
+                                <div className="mt-5 space-y-3">
+                                  {msg.recommendations.map((rec, i) => (
+                                    <button 
+                                      key={i}
+                                      onClick={() => {
+                                        setInput(rec.prompt);
+                                        textareaRef.current?.focus();
+                                      }}
+                                      className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors text-left"
+                                      title={rec.prompt}
+                                    >
+                                      <CornerDownRight size={16} className="text-muted shrink-0" />
+                                      {rec.title}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
                             </>
                           )}
                         </div>
@@ -1582,6 +1695,66 @@ Return ONLY the category name (simple, complex, or code) in lowercase, with no o
                   )}
                 </>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Sign In Modal */}
+      <AnimatePresence>
+        {showSignInModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowSignInModal(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="bg-surface border border-border rounded-2xl shadow-2xl p-6 md:p-8 max-w-sm w-full relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setShowSignInModal(false)}
+                className="absolute top-4 right-4 p-2 text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+              
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-16 h-16 bg-foreground/5 rounded-full flex items-center justify-center mb-4">
+                  <PlanetLogo className="w-8 h-8 text-foreground" />
+                </div>
+                <h2 className="text-2xl font-semibold text-foreground mb-2">Sign In Required</h2>
+                <p className="text-muted text-sm">
+                  {guestRequestCount >= 10 
+                    ? "You've reached the free guest limit. Sign in to continue chatting and unlock more features." 
+                    : "Sign in to use image recognition and unlock the full power of Q1."}
+                </p>
+              </div>
+
+              <button 
+                onClick={async () => {
+                  try {
+                    await loginWithGoogle();
+                    setShowSignInModal(false);
+                  } catch (error) {
+                    handleError(error, "Login failed");
+                  }
+                }}
+                className="w-full py-3 px-4 bg-foreground text-background hover:opacity-90 rounded-xl font-medium transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                </svg>
+                Continue with Google
+              </button>
             </motion.div>
           </motion.div>
         )}
