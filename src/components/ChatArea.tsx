@@ -34,6 +34,36 @@ type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
 
 const BYTEZ_API_KEY = process.env.NEXT_PUBLIC_BYTEZ_API_KEY || '62f9e959f3fff48ee9ec96bd091ba1ec';
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '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';
+const CEREBRAS_API_KEY = process.env.NEXT_PUBLIC_CEREBRAS_API_KEY || 'csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c';
+
+const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal) => {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      url: 'https://api.cerebras.ai/v1/chat/completions',
+      apiKey: CEREBRAS_API_KEY,
+      model,
+      messages,
+      stream: false,
+      temperature: 0.3
+    }),
+    signal
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    try {
+      const errorJson = JSON.parse(errorText);
+      throw new Error(errorJson.error || errorJson.message || `Cerebras Error ${res.status}: ${errorText}`);
+    } catch {
+      throw new Error(`Cerebras Error ${res.status}: ${errorText}`);
+    }
+  }
+  const data = await res.json();
+  return data.choices[0].message.content;
+};
 
 const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal) => {
   const response = await fetch('/api/chat', {
@@ -487,7 +517,20 @@ AI: "${aiResponse}"
 
 Session Title Status: "false"`;
 
-      const generatedTitle = await callGroqChatNonStream('moonshotai/kimi-k2-instruct-0905', [{ role: 'user', content: prompt }], 'llama-3.3-70b-versatile');
+      let generatedTitle = '';
+      try {
+        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        if (!apiKey) throw new Error("Missing Gemini key");
+        const ai = new GoogleGenAI({ apiKey });
+        const response = await ai.models.generateContent({
+          model: 'gemini-3-flash-preview',
+          contents: prompt
+        });
+        generatedTitle = response.text || '';
+      } catch (e) {
+        console.warn("Gemini title generation failed, falling back to Groq:", e);
+        generatedTitle = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: prompt }]);
+      }
       
       if (generatedTitle && !generatedTitle.includes("Title already generated")) {
         const cleanTitle = generatedTitle.replace(/^["']|["']$/g, '').trim();
@@ -577,7 +620,7 @@ User Input:
 
 Return ONLY the JSON array.`;
       
-      const result = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: prompt }], 'llama-3.3-70b-versatile');
+      const result = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: prompt }]);
       const jsonMatch = result.match(/\[.*\]/s);
       if (jsonMatch) {
         const recs = JSON.parse(jsonMatch[0]);
@@ -845,10 +888,18 @@ Return ONLY the JSON array.`;
         const historyText = olderMessages.map(m => `${m.role}: ${m.content}`).join('\n');
         const summaryPrompt = `Summarize the following conversation history, keeping only important details to reduce token usage while retaining context for future responses:\n\n${historyText}`;
         try {
-          const summary = await callGroqChatNonStream('llama-3.3-70b-versatile', [{ role: 'user', content: summaryPrompt }], 'llama-3.1-8b-instant');
+          let summary = '';
+          try {
+            summary = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: summaryPrompt }]);
+          } catch (e) {
+            console.warn("Cerebras summarization failed, falling back to Gemini 2.5 Pro:", e);
+            const aiFallback = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
+            const response = await aiFallback.models.generateContent({ model: 'gemini-2.5-pro', contents: summaryPrompt });
+            summary = response.text || '';
+          }
           contextText = `[Summary of older conversation: ${summary}]\n\n`;
         } catch (e) {
-          console.error("Summarization failed", e);
+          console.error("Summarization failed completely", e);
         }
       }
 
@@ -949,110 +1000,38 @@ Return ONLY the JSON array.`;
       }
       
       let modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
-      let bytezModel = 'openai/gpt-4o';
-      let groqModel = 'llama-3.1-8b-instant';
-      let cloudflareModel = '';
+      if (mode === 'pro' && !user) {
+        modelName = 'gemini-3.1-flash-lite-preview';
+      } else if (mode === 'pro' && user) {
+        modelName = 'gemini-3.1-pro-preview';
+      }
       
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
-      let classification = 'simple';
+      let classification = 'fast';
 
       if (mode === 'auto') {
-        try {
-          // Hybrid Approach: Rule-based intent classification combined with lightweight contextual parsing
-          const text = lastMessage.toLowerCase();
-          
-          // 1. Rule-based classification for explicit commands and cues
-          const isCodeRule = /\b(function|class|def|const|let|var|import|export|npm|pip|code|debug|error|exception|api|endpoint|script|query)\b/i.test(text) || 
-                             /(?:=>|\{|\}|\[|\]|<html>|<script>)/.test(text);
-                             
-          const isComplexRule = text.length > 400 || 
-                                /\b(analyze|explain|compare|summarize|evaluate|synthesize|architecture|design|strategy|plan|generate|create|write|translate|format|tone|style)\b/i.test(text);
-                                
-          const isImageRule = /\b(image|picture|photo|draw|render|visualize)\b/i.test(text);
-          const isStructuredRule = /\b(json|xml|csv|table|format|list|array|object|schema)\b/i.test(text);
-
-          let ruleBasedCategory = null;
-          if (isCodeRule) ruleBasedCategory = 'code';
-          else if (isComplexRule || isStructuredRule || isImageRule) ruleBasedCategory = 'complex';
-
-          // 2. Lightweight contextual parsing to confirm or refine
-          const classifierPrompt = `Analyze the user request to infer actual intent, task type, and parameters (format, tone).
-Classify into ONE category:
-- 'simple': General questions, facts, casual chat.
-- 'complex': Analysis, creative writing, reasoning, structured output (JSON/tables), image generation.
-- 'code': Programming, debugging, architecture.
-
-User Request: "${lastMessage.substring(0, 500)}"
-
-Return ONLY the category name (simple, complex, or code) in lowercase.`;
-          
-          const result = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: classifierPrompt }], 'llama-3.3-70b-versatile');
-          const cleanResult = result.toLowerCase().trim();
-          
-          // Combine rule-based and LLM parsing for consistent and predictable performance
-          if (cleanResult.includes('code') || ruleBasedCategory === 'code') {
-            classification = 'code';
-            setLoadingStatus('Crafting Code...');
-          } else if (cleanResult.includes('complex') || ruleBasedCategory === 'complex') {
-            classification = 'complex';
-            setLoadingStatus('Analyzing...');
-          } else {
-            classification = 'simple';
-            setLoadingStatus('Thinking...');
-          }
-          
-          console.log(`Auto Mode Classification: ${classification} (Rule: ${ruleBasedCategory}, LLM: ${cleanResult})`);
-        } catch (e) {
-          console.error("Classification failed, defaulting to rule-based", e);
-          const text = lastMessage.toLowerCase();
-          classification = text.length > 300 || /analyze|explain|code|write|create|compare|summarize/i.test(text) ? 'complex' : 'simple';
+        const text = lastMessage.toLowerCase();
+        const isProRule = /\b(function|class|def|const|let|var|import|export|npm|pip|code|debug|error|exception|api|endpoint|script|query|math|calculate|solve|equation|integral|derivative|sum|multiply|divide)\b/i.test(text) || 
+                           /(?:=>|\{|\}|\[|\]|<html>|<script>)/.test(text);
+        
+        if (isProRule) {
+          classification = 'pro';
+          setLoadingStatus('Crafting Code...');
+        } else {
+          classification = 'fast';
+          setLoadingStatus('Thinking...');
         }
+      } else {
+        classification = mode;
       }
 
       let dynamicSystemInstruction = systemInstruction;
 
-      if (mode === 'flash') {
-        modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
-        bytezModel = 'openai/gpt-4o';
-        groqModel = 'llama-3.1-8b-instant';
-      } else if (mode === 'pro') {
-        modelName = user ? 'gemini-3.1-pro-preview' : 'gemini-3.1-flash-lite-preview';
-        bytezModel = 'openai/gpt-4-turbo';
-        groqModel = 'llama-3.3-70b-versatile';
-        cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
-      } else if (mode === 'auto') {
-        if (classification === 'code') {
-          modelName = user ? 'gemini-3.1-pro-preview' : 'gemini-3.1-flash-lite-preview';
-          bytezModel = 'openai/gpt-4-turbo';
-          groqModel = 'llama-3.3-70b-versatile';
-          cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
-          dynamicSystemInstruction += `\n\n[CODE NORMALIZATION LAYER ACTIVE]\nYou are an expert software engineer. Provide clean, efficient, and well-documented code.\n- ALWAYS wrap code snippets in standard Markdown triple-backtick blocks with the correct language identifier.\n- Ensure proper indentation.\n- Do not use HTML tags for code.\n- Structure your response with clear headings and explanations.\n- Avoid incomplete code blocks.`;
-        } else if (classification === 'complex') {
-          modelName = user ? 'gemini-3.1-pro-preview' : 'gemini-3.1-flash-lite-preview';
-          bytezModel = 'openai/gpt-4-turbo';
-          groqModel = 'llama-3.3-70b-versatile';
-          cloudflareModel = '@cf/nvidia/nemotron-3-120b-a12b';
-          dynamicSystemInstruction += `\n\n[COMPLEXITY LAYER ACTIVE]\nProvide a thorough, well-structured, and deeply reasoned response. Break down complex topics into digestible parts.`;
-        } else {
-          modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
-          bytezModel = 'openai/gpt-4o';
-          groqModel = 'llama-3.1-8b-instant';
-        }
-      } else {
-        modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
-      }
-
-      if (currentImage) {
-        groqModel = 'meta-llama/llama-4-scout-17b-16e-instruct';
+      if (classification === 'pro') {
+        dynamicSystemInstruction += `\n\n[PRO LAYER ACTIVE]\nYou are an expert software engineer and mathematician. Provide clean, efficient, and well-documented code or step-by-step logic.\n- ALWAYS wrap code snippets in standard Markdown triple-backtick blocks with the correct language identifier.\n- Ensure proper indentation.\n- Do not use HTML tags for code.\n- Structure your response with clear headings and explanations.\n- Avoid incomplete code blocks.`;
       }
 
       config.systemInstruction = dynamicSystemInstruction;
-
-      const requestParams: any = {
-        model: modelName,
-        contents: contents,
-        config: config
-      };
 
       const openAIMessages = [
         { role: 'system', content: dynamicSystemInstruction },
@@ -1097,162 +1076,126 @@ Return ONLY the category name (simple, complex, or code) in lowercase.`;
         }
       };
 
-      const runBytez = () => callOpenAIStream('https://api.bytez.com/v1/chat/completions', BYTEZ_API_KEY, bytezModel, openAIMessages, handleChunk, controller.signal);
-      const runGroq = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, groqModel, openAIMessages, handleChunk, controller.signal);
-      const runCloudflare = () => callCloudflareStream(cloudflareModel, openAIMessages, handleChunk, controller.signal);
+      const executeWithTimeoutAndFallback = async (primaryFn: () => Promise<void>, fallbackFn: () => Promise<void>, timeoutMs: number = 6000) => {
+        try {
+          const timeoutPromise = new Promise<void>((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs));
+          await Promise.race([primaryFn(), timeoutPromise]);
+        } catch (error: any) {
+          console.warn(`Primary failed (${error.message}). Triggering fallback (1 level max)...`);
+          await fallbackFn();
+        }
+      };
 
-      // Helper function to execute API call with retry logic and fallback model for 429/503 errors
-      const executeWithRetry = async (fn: () => Promise<any>, maxRetries = 3) => {
-        let retries = 0;
-        while (true) {
-          try {
-            return await fn();
-          } catch (error: any) {
-            const isQuotaError = error?.message?.toLowerCase().includes('quota') || 
-                               error?.message?.includes('429') || 
-                               error?.status === 429 ||
-                               error?.message?.includes('402');
-            const isUnavailableError = error?.message?.includes('503') || 
-                                     error?.status === 503 || 
-                                     error?.message?.toLowerCase().includes('unavailable');
-            
-            if ((isQuotaError || isUnavailableError) && retries < maxRetries) {
-              retries++;
-              const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
-              console.warn(`${isQuotaError ? 'Rate limit' : 'Service unavailable'} hit. Retrying in ${Math.round(delay/1000)}s... (Attempt ${retries}/${maxRetries})`);
-              await new Promise(resolve => setTimeout(resolve, delay));
-              continue;
+      let searchWebCallArgs: any = null;
+      let searchWebCallId: string | null = null;
+
+      const runGeminiStream = async (model: string) => {
+        const res = await ai.models.generateContentStream({ model, contents, config });
+        for await (const chunk of res) {
+          if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+          if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+            const call = chunk.functionCalls[0];
+            if (call.name === 'search_web') {
+              searchWebCallArgs = call.args;
+              searchWebCallId = call.id || null;
             }
-            throw error;
           }
+          if (chunk.text) handleChunk(chunk.text);
         }
       };
 
       try {
-        let streamResponse;
-        try {
-          streamResponse = await executeWithRetry(() => ai.models.generateContentStream(requestParams), 2);
-        } catch (error: any) {
-          console.warn("Gemini failed. Falling back to Bytez...", error);
-          try {
-            await executeWithRetry(runBytez, 1);
-            streamResponse = null;
-          } catch (bytezError: any) {
-            console.warn("Bytez failed. Falling back to Groq...", bytezError);
-            try {
-              await executeWithRetry(runGroq, 1);
-              streamResponse = null;
-            } catch (groqError: any) {
-              console.error("Groq failed.", groqError);
-              const isQuotaError = groqError?.message?.toLowerCase().includes('quota') || 
-                                   groqError?.message?.includes('429') || 
-                                   groqError?.status === 429 ||
-                                   groqError?.message?.includes('402');
-              if (currentImage && isQuotaError) {
-                throw new Error("The image recognition model has reached its quota. Please try again later.");
-              }
-              if (cloudflareModel) {
-                console.warn("Falling back to Cloudflare...", groqError);
-                try {
-                  await executeWithRetry(runCloudflare, 1);
-                  streamResponse = null;
-                } catch (cfError: any) {
-                  console.error("Cloudflare failed as well.", cfError);
-                  throw error; // Throw original error
-                }
-              } else {
-                throw error; // Throw the original Gemini error
-              }
-            }
+        if (currentImage) {
+          // Image Analysis
+          const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, controller.signal);
+          await executeWithTimeoutAndFallback(runPrimary, () => runGeminiStream('gemini-3-flash-preview'), 8000);
+        } else if (classification === 'pro') {
+          // Pro Mode
+          const runPrimary = () => callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', CEREBRAS_API_KEY, 'qwen-3-235b-a22b-instruct-2507', openAIMessages, handleChunk, controller.signal);
+          const runFallback = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama-3.3-70b-versatile', openAIMessages, handleChunk, controller.signal);
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 6000);
+        } else if (classification === 'search') {
+          // Search Mode (Gemini handles tool call, formatting is done later if needed, but here we just stream)
+          const runPrimary = () => runGeminiStream('gemini-3-flash-preview');
+          const runFallback = () => callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', CEREBRAS_API_KEY, 'llama-3.1-8b-instant', openAIMessages, handleChunk, controller.signal);
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 6000);
+        } else {
+          // Fast Mode (with Load Distribution)
+          const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
+          if (useLlama) {
+            const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama-3.1-8b-instant', openAIMessages, handleChunk, controller.signal);
+            const runFallback = () => runGeminiStream('gemini-3-flash-preview');
+            await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000);
+          } else {
+            const runPrimary = () => runGeminiStream('gemini-3-flash-preview');
+            const runFallback = () => runGeminiStream('gemini-2.5-flash');
+            await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000);
           }
         }
 
-        if (streamResponse) {
-          let searchWebCallArgs: any = null;
-            let searchWebCallId: string | null = null;
-
-            if (controller.signal.aborted) {
-              throw new DOMException('Aborted', 'AbortError');
+        if (searchWebCallArgs && !controller.signal.aborted) {
+          setIsSearching(true);
+          setLoadingStatus('Searching...');
+          
+          let searchResults = "Search unavailable. Rely on training data.";
+          try {
+            const searchRes = await fetch('/api/search', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: searchWebCallArgs.query }),
+              signal: controller.signal
+            });
+            if (searchRes.ok) {
+              const searchData = await searchRes.json();
+              searchResults = searchData.results;
             }
-
-            for await (const chunk of streamResponse) {
-              if (controller.signal.aborted) {
-                throw new DOMException('Aborted', 'AbortError');
-              }
-              if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-                const call = chunk.functionCalls[0];
-                if (call.name === 'search_web') {
-                  searchWebCallArgs = call.args;
-                  searchWebCallId = call.id || null;
-                }
-              }
-              const text = chunk.text;
-              if (text) {
-                fullResponse += text;
-                setStreamingMessage(fullResponse);
-                
-                if (aiMessageRef && Date.now() - lastUpdateTime > 1500) {
-                  lastUpdateTime = Date.now();
-                  updateDoc(aiMessageRef, { content: fullResponse }).catch(e => console.error("Failed to sync chunk", e));
-                }
-              }
-            }
-
-            if (searchWebCallArgs && !controller.signal.aborted) {
-              setIsSearching(true);
-              setLoadingStatus('Searching...');
-              
-              let searchResults = "Search unavailable. Rely on training data.";
-              try {
-                const searchRes = await fetch('/api/search', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ query: searchWebCallArgs.query }),
-                  signal: controller.signal
-                });
-                if (searchRes.ok) {
-                  const searchData = await searchRes.json();
-                  searchResults = searchData.results;
-                }
-              } catch (err: any) {
-                if (err.name !== 'AbortError') {
-                  console.error('Search API call failed:', err);
-                }
-              }
-              
-              if (!controller.signal.aborted) {
-                let parsedResults: any[] = [];
-                try {
-                  parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
-                } catch (e) {
-                  // ignore
-                }
-
-                if (Array.isArray(parsedResults) && parsedResults.length > 0) {
-                  const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
-                  const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
-                  
-                  let formattedSearch = "";
-                  try {
-                    formattedSearch = await callGroqChatNonStream('qwen/qwen3-32b', [{ role: 'user', content: formatPrompt }], undefined, controller.signal);
-                  } catch (e: any) {
-                    if (e.name !== 'AbortError') {
-                      console.error("Search formatting failed", e);
-                    }
-                    formattedSearch = rawSearchText;
-                  }
-
-                  if (!controller.signal.aborted) {
-                    fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
-                  }
-                } else {
-                  fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
-                }
-                setIsSearching(false);
-                setStreamingMessage(fullResponse);
-              }
+          } catch (err: any) {
+            if (err.name !== 'AbortError') {
+              console.error('Search API call failed:', err);
             }
           }
+          
+          if (!controller.signal.aborted) {
+            let parsedResults: any[] = [];
+            try {
+              parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
+            } catch (e) {
+              // ignore
+            }
+
+            if (Array.isArray(parsedResults) && parsedResults.length > 0) {
+              const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
+              const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
+              
+              let formattedSearch = "";
+              try {
+                const aiFormat = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
+                const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
+                formattedSearch = response.text || rawSearchText;
+              } catch (e: any) {
+                if (e.name !== 'AbortError') {
+                  console.warn("Gemini search formatting failed, falling back to Cerebras:", e);
+                  try {
+                    formattedSearch = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: formatPrompt }]);
+                  } catch (fallbackError) {
+                    console.error("Search formatting fallback failed", fallbackError);
+                    formattedSearch = rawSearchText;
+                  }
+                } else {
+                  formattedSearch = rawSearchText;
+                }
+              }
+
+              if (!controller.signal.aborted) {
+                fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
+              }
+            } else {
+              fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
+            }
+            setIsSearching(false);
+            setStreamingMessage(fullResponse);
+          }
+        }
       } catch (error: any) {
         if (error.name === 'AbortError') {
           console.log('Generation aborted by user');

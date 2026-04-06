@@ -192,7 +192,9 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
     
     try {
       const img = new Image();
-      img.crossOrigin = "anonymous";
+      if (!src.startsWith('data:')) {
+        img.crossOrigin = "anonymous";
+      }
       img.src = src;
       
       await new Promise((resolve, reject) => {
@@ -206,6 +208,9 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) throw new Error("Could not get canvas context");
       
+      // Fill with white background in case of transparency
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
       
       const pngUrl = canvas.toDataURL('image/png');
@@ -220,7 +225,10 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
       // Fallback to direct download if conversion fails
       const link = document.createElement('a');
       link.href = src;
-      link.download = (alt || 'generated-image').replace(/\.[^/.]+$/, "") + '.png';
+      // If we fallback to src and it's webp, we shouldn't name it .png as it will be corrupted
+      const isWebp = src.startsWith('data:image/webp') || src.includes('.webp');
+      const ext = isWebp ? '.webp' : '.png';
+      link.download = (alt || 'generated-image').replace(/\.[^/.]+$/, "") + ext;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
