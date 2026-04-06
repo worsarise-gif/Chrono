@@ -1358,13 +1358,13 @@ Return ONLY the JSON array.`;
           {!user ? (
             <div className="flex items-center gap-2 pointer-events-auto">
               <Link href="/">
-                <PlanetLogo className="text-black dark:text-white w-6 h-6 hover:opacity-80 transition-opacity" />
+                <PlanetLogo className="text-foreground/60 hover:text-foreground w-6 h-6 transition-all" />
               </Link>
             </div>
           ) : (
             <button 
               onClick={onMenuClick}
-              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-black dark:text-white md:hidden pointer-events-auto transition-all shadow-lg"
+              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
             >
               <Menu size={20} />
             </button>
@@ -1380,7 +1380,7 @@ Return ONLY the JSON array.`;
           ) : (
             <button 
               onClick={() => setCurrentChatId(null)}
-              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-black dark:text-white pointer-events-auto transition-all shadow-lg ml-auto group"
+              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
               title="New Chat"
             >
               <SquarePen size={20} className="group-hover:scale-110 transition-transform" />
