@@ -1145,66 +1145,71 @@ Return ONLY the JSON array.`;
         }
 
         if (searchWebCallArgs && !controller.signal.aborted) {
-          setIsSearching(true);
-          setLoadingStatus('Searching...');
-          
-          let searchResults = "Search unavailable. Rely on training data.";
-          try {
-            const searchRes = await fetch('/api/search', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ query: searchWebCallArgs.query }),
-              signal: controller.signal
-            });
-            if (searchRes.ok) {
-              const searchData = await searchRes.json();
-              searchResults = searchData.results;
-            }
-          } catch (err: any) {
-            if (err.name !== 'AbortError') {
-              console.error('Search API call failed:', err);
-            }
-          }
-          
-          if (!controller.signal.aborted) {
-            let parsedResults: any[] = [];
+          // If the AI model has already provided a substantial response, do not trigger search
+          if (fullResponse.trim().length > 0) {
+            console.log("AI already provided a response, skipping search.");
+          } else {
+            setIsSearching(true);
+            setLoadingStatus('Searching...');
+            
+            let searchResults = "Search unavailable. Rely on training data.";
             try {
-              parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
-            } catch (e) {
-              // ignore
+              const searchRes = await fetch('/api/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: searchWebCallArgs.query }),
+                signal: controller.signal
+              });
+              if (searchRes.ok) {
+                const searchData = await searchRes.json();
+                searchResults = searchData.results;
+              }
+            } catch (err: any) {
+              if (err.name !== 'AbortError') {
+                console.error('Search API call failed:', err);
+              }
             }
-
-            if (Array.isArray(parsedResults) && parsedResults.length > 0) {
-              const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
-              const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
-              
-              let formattedSearch = "";
+            
+            if (!controller.signal.aborted) {
+              let parsedResults: any[] = [];
               try {
-                const aiFormat = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
-                const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
-                formattedSearch = response.text || rawSearchText;
-              } catch (e: any) {
-                if (e.name !== 'AbortError') {
-                  console.warn("Gemini search formatting failed, falling back to Cerebras:", e);
-                  try {
-                    formattedSearch = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: formatPrompt }]);
-                  } catch (fallbackError) {
-                    console.error("Search formatting fallback failed", fallbackError);
+                parsedResults = typeof searchResults === 'string' ? JSON.parse(searchResults) : searchResults;
+              } catch (e) {
+                // ignore
+              }
+
+              if (Array.isArray(parsedResults) && parsedResults.length > 0) {
+                const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
+                const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
+                
+                let formattedSearch = "";
+                try {
+                  const aiFormat = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
+                  const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
+                  formattedSearch = response.text || rawSearchText;
+                } catch (e: any) {
+                  if (e.name !== 'AbortError') {
+                    console.warn("Gemini search formatting failed, falling back to Cerebras:", e);
+                    try {
+                      formattedSearch = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: formatPrompt }]);
+                    } catch (fallbackError) {
+                      console.error("Search formatting fallback failed", fallbackError);
+                      formattedSearch = rawSearchText;
+                    }
+                  } else {
                     formattedSearch = rawSearchText;
                   }
-                } else {
-                  formattedSearch = rawSearchText;
                 }
-              }
 
-              if (!controller.signal.aborted) {
-                fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
+                if (!controller.signal.aborted) {
+                  fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
+                }
+              } else {
+                fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
               }
-            } else {
-              fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
+              setIsSearching(false);
+              setStreamingMessage(fullResponse);
             }
-            setIsSearching(false);
-            setStreamingMessage(fullResponse);
           }
         }
       } catch (error: any) {

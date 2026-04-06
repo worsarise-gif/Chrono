@@ -94,6 +94,7 @@ service cloud.firestore {
              isValidOptionalString('displayName', 0, 100) &&
              isValidOptionalString('photoURL', 0, 2048) &&
              isValidOptionalString('role', 0, 20) &&
+             isValidOptionalBoolean('hasMigratedImages') &&
              (!( 'updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
     }
 
@@ -110,7 +111,16 @@ service cloud.firestore {
              request.resource.data.content is string && request.resource.data.content.size() >= 0 && request.resource.data.content.size() < 1048576 && // 1MB limit
              request.resource.data.createdAt is timestamp &&
              isValidOptionalBoolean('hasImage') &&
-             isValidOptionalBoolean('hasAudio');
+             isValidOptionalBoolean('hasAudio') &&
+             isValidOptionalBoolean('isGeneratedImage') &&
+             isValidOptionalBoolean('isStreaming');
+    }
+
+    function isValidGeneratedImage() {
+      return hasRequiredFields(['prompt', 'imageData', 'createdAt']) &&
+             request.resource.data.prompt is string && request.resource.data.prompt.size() >= 0 && request.resource.data.prompt.size() < 1048576 &&
+             request.resource.data.imageData is string && request.resource.data.imageData.size() >= 0 && request.resource.data.imageData.size() < 1048576 &&
+             request.resource.data.createdAt is timestamp;
     }
 
     // ===============================================================
@@ -121,6 +131,13 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidUser() && uidUnchanged() && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == 'user')) || isAdmin());
       allow update: if isAuthenticated() && isValidUser() && uidNotModified() && areImmutableFieldsUnchanged(['uid', 'email', 'createdAt']) && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)) || isAdmin());
       allow delete: if isOwner(userId) || isAdmin();
+
+      match /generated_images/{imageId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidGeneratedImage();
+        allow update: if isOwner(userId) && isValidGeneratedImage() && areImmutableFieldsUnchanged(['createdAt']);
+        allow delete: if isOwner(userId);
+      }
 
       match /chats/{chatId} {
         allow read: if isOwner(userId);
