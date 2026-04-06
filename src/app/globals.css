@@ -16,20 +16,27 @@
 }
 /* Outside @theme */
 .prose {
-  color: #000000;
-}
-
-.prose :where(p, li, h1, h2, h3, h4, strong, em, blockquote, td, th):not(:where([class~="not-prose"] *)) {
-  color: #000000;
+  --tw-prose-body: #000000;
+  --tw-prose-headings: #000000;
+  --tw-prose-lead: #000000;
+  --tw-prose-bold: #000000;
+  --tw-prose-code: #000000;
+  --tw-prose-counters: #000000;
+  --tw-prose-bullets: #000000;
+  --tw-prose-quotes: #000000;
 }
 
 .dark .prose {
-  color: #ffffff;
+  --tw-prose-body: #ffffff;
+  --tw-prose-headings: #ffffff;
+  --tw-prose-lead: #ffffff;
+  --tw-prose-bold: #ffffff;
+  --tw-prose-code: #ffffff;
+  --tw-prose-counters: #ffffff;
+  --tw-prose-bullets: #ffffff;
+  --tw-prose-quotes: #ffffff;
 }
 
-.dark .prose :where(p, li, h1, h2, h3, h4, strong, em, blockquote, td, th):not(:where([class~="not-prose"] *)) {
-  color: #ffffff;
-}
 .dark {
   --color-background: #000000;
   --color-sidebar-bg: #09090A;
