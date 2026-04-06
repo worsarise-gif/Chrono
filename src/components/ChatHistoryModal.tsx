@@ -1,0 +1,211 @@
+"use client";
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { X, Search, Trash2, MessageSquare, Calendar, Clock, ArrowRight, Edit2 } from 'lucide-react';
+import { format } from 'date-fns';
+
+interface Chat {
+  id: string;
+  title: string;
+  updatedAt: any;
+}
+
+interface ChatHistoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  chats: Chat[];
+  onSelectChat: (id: string) => void;
+  onDeleteChat: (id: string, title: string) => void;
+  onEditChat: (id: string, title: string) => void;
+  currentChatId: string | null;
+}
+
+export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
+  isOpen,
+  onClose,
+  chats,
+  onSelectChat,
+  onDeleteChat,
+  onEditChat,
+  currentChatId
+}) => {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim()) return chats;
+    const query = searchQuery.toLowerCase();
+    return chats.filter(chat => 
+      chat.title.toLowerCase().includes(query)
+    );
+  }, [chats, searchQuery]);
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'Unknown date';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return format(date, 'MMM d, yyyy');
+  };
+
+  const formatTime = (timestamp: any) => {
+    if (!timestamp) return '';
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return format(date, 'h:mm a');
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 md:p-8">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+          />
+
+          {/* Modal Content */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-5xl h-[80vh] bg-surface border border-border rounded-[32px] shadow-2xl overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-6 md:p-8 border-b border-border flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground">
+                  <MessageSquare size={20} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-foreground">Chat History</h2>
+                  <p className="text-sm text-foreground/60">{chats.length} conversations found</p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-2 rounded-full hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="px-6 md:px-8 py-4 bg-surface/50 border-b border-border shrink-0">
+              <div className="relative group">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40 group-focus-within:text-foreground transition-colors" size={18} />
+                <input
+                  type="text"
+                  placeholder="Search your conversations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-surface-hover border border-border rounded-2xl pl-12 pr-4 py-3 text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 sidebar-scroll">
+              {filteredChats.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-60">
+                  <div className="w-16 h-16 rounded-full bg-surface-hover flex items-center justify-center">
+                    <Search size={32} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium">No chats found</h3>
+                    <p className="text-sm">Try searching for a different keyword</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredChats.map((chat) => (
+                    <motion.div
+                      layout
+                      key={chat.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`group relative p-5 rounded-2xl border transition-all cursor-pointer ${
+                        currentChatId === chat.id 
+                          ? 'bg-foreground/5 border-foreground/20' 
+                          : 'bg-surface-hover/30 border-border/50 hover:bg-surface-hover hover:border-border'
+                      }`}
+                      onClick={() => {
+                        onSelectChat(chat.id);
+                        onClose();
+                      }}
+                    >
+                      <div className="flex flex-col h-full justify-between space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-semibold text-foreground line-clamp-2 leading-tight">
+                              {chat.title}
+                            </h3>
+                            {currentChatId === chat.id && (
+                              <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-foreground/40 font-medium uppercase tracking-wider">
+                            <div className="flex items-center gap-1">
+                              <Calendar size={12} />
+                              {formatDate(chat.updatedAt)}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Clock size={12} />
+                              {formatTime(chat.updatedAt)}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2">
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onEditChat(chat.id, chat.title);
+                              }}
+                              className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-all"
+                              title="Rename"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDeleteChat(chat.id, chat.title);
+                              }}
+                              className="p-2 rounded-lg hover:bg-red-500/10 text-foreground/40 hover:text-red-500 transition-all"
+                              title="Delete"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                          <div className="text-foreground/0 group-hover:text-foreground/40 transition-all">
+                            <ArrowRight size={16} />
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 bg-surface/50 border-t border-border flex items-center justify-between shrink-0">
+              <div className="text-xs text-foreground/40 font-medium">
+                Showing {filteredChats.length} of {chats.length} conversations
+              </div>
+              <button
+                onClick={onClose}
+                className="px-6 py-2 bg-foreground text-background rounded-xl font-bold text-sm hover:opacity-90 transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};

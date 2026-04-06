@@ -5,7 +5,7 @@ import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
-import { loginWithGoogle, db } from '../firebase';
+import { loginWithGoogle, db, auth } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { useRouter, usePathname } from 'next/navigation';
 import { ProfileModal } from './ProfileModal';
+import { ChatHistoryModal } from './ChatHistoryModal';
 
 interface Chat {
   id: string;
@@ -87,6 +88,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const [editingTitle, setEditingTitle] = useState("");
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isChatHistoryModalOpen, setIsChatHistoryModalOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -344,7 +346,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                     </li>
                   ))}
                 </ul>
-                <button className="text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground mt-2 font-normal">
+                <button 
+                  onClick={() => setIsChatHistoryModalOpen(true)}
+                  className="text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground mt-2 font-normal"
+                >
                   See all
                 </button>
               </>
@@ -422,6 +427,24 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       <ProfileModal 
         isOpen={isProfileModalOpen} 
         onClose={() => setIsProfileModalOpen(false)} 
+      />
+
+      {/* Chat History Modal */}
+      <ChatHistoryModal
+        isOpen={isChatHistoryModalOpen}
+        onClose={() => setIsChatHistoryModalOpen(false)}
+        chats={chats}
+        onSelectChat={(id) => {
+          setCurrentChatId(id);
+          setIsMobileOpen?.(false);
+        }}
+        onDeleteChat={(id, title) => {
+          setChatToDelete({ id, title });
+        }}
+        onEditChat={(id, title) => {
+          handleStartEdit({ stopPropagation: () => {} } as any, id, title);
+        }}
+        currentChatId={currentChatId}
       />
 
       {/* Delete Confirmation Modal */}

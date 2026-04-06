@@ -8,7 +8,7 @@ import { Paperclip, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Vol
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
-import { db, storage, loginWithGoogle } from '../firebase';
+import { db, storage, loginWithGoogle, auth } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
