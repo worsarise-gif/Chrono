@@ -24,6 +24,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const [displayName, setDisplayName] = useState(user?.profile?.displayName || user?.displayName || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const handleLogout = async () => {
     try {
       await logout();
+      setShowLogoutConfirm(false);
       onClose();
     } catch (error) {
       console.error("Logout failed:", error);
@@ -288,7 +290,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   )}
                   
                   <button
-                    onClick={handleLogout}
+                    onClick={() => setShowLogoutConfirm(true)}
                     className="w-full group flex items-center justify-center gap-2 py-4 px-6 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl font-bold transition-all duration-300 border border-red-500/20 hover:border-red-500 shadow-sm"
                   >
                     <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
@@ -303,6 +305,53 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           </motion.div>
         </div>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowLogoutConfirm(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative bg-surface border border-border w-full max-w-[360px] rounded-[32px] p-8 shadow-2xl overflow-hidden"
+            >
+              <div className="flex flex-col items-center text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+                  <LogOut size={32} />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-foreground">Sign Out?</h3>
+                  <p className="text-sm text-foreground/60 leading-relaxed">
+                    Are you sure you want to sign out of your account? You'll need to sign in again to access your chats.
+                  </p>
+                </div>
+                <div className="flex flex-col w-full gap-3 pt-2">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full py-4 px-6 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-all shadow-lg active:scale-[0.98]"
+                  >
+                    Yes, Sign Out
+                  </button>
+                  <button
+                    onClick={() => setShowLogoutConfirm(false)}
+                    className="w-full py-4 px-6 bg-surface-hover text-foreground/60 hover:text-foreground rounded-2xl font-bold transition-all active:scale-[0.98]"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   );
 };
