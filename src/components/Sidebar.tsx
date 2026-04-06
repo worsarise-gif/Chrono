@@ -1,12 +1,12 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon } from 'lucide-react';
+import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { loginWithGoogle, db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
 import { Helix } from 'ldrs/react';
@@ -83,6 +83,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [chatToDelete, setChatToDelete] = useState<{ id: string, title: string } | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -114,6 +117,39 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         handleError(e, "Failed to delete chat");
       }
     }
+  };
+
+  const handleStartEdit = (e: React.MouseEvent, chatId: string, currentTitle: string) => {
+    e.stopPropagation();
+    setEditingChatId(chatId);
+    setEditingTitle(currentTitle);
+    setActiveMenuId(null);
+  };
+
+  const handleSaveTitle = async (chatId: string) => {
+    if (!user || !editingTitle.trim() || isSavingTitle) return;
+    
+    setIsSavingTitle(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+        title: editingTitle.trim(),
+        updatedAt: serverTimestamp()
+      });
+      setEditingChatId(null);
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/chats/${chatId}`);
+      } catch (e) {
+        handleError(e, "Failed to update chat title");
+      }
+    } finally {
+      setIsSavingTitle(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingChatId(null);
+    setEditingTitle("");
   };
 
   useEffect(() => {
@@ -217,51 +253,89 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 <ul className="space-y-0.5 flex-1">
                   {chats.map(chat => (
                     <li key={chat.id} className="group relative">
-                      <button
-                        onClick={() => {
-                          setCurrentChatId(chat.id);
-                          setIsMobileOpen?.(false);
-                        }}
-                        className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface' : 'text-foreground/60 hover:bg-surface hover:text-foreground'}`}
-                      >
-                        {chat.title}
-                      </button>
-                      
-                      {/* Chat Title Full Visibility on Hover */}
-                      <div className="absolute left-0 top-0 w-full h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-[50]">
-                        <div className="absolute left-0 top-0 min-w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] text-foreground shadow-xl whitespace-normal break-words z-[51]">
-                          {chat.title}
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
-                        }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all z-[60]"
-                        title="More options"
-                      >
-                        <MoreVertical size={14} />
-                      </button>
-
-                      {activeMenuId === chat.id && (
-                        <>
-                          <div 
-                            className="fixed inset-0 z-[100]" 
-                            onClick={() => setActiveMenuId(null)}
+                      {editingChatId === chat.id ? (
+                        <div className="flex items-center gap-1 px-2 py-1 bg-surface rounded-lg border border-blue-500/50">
+                          <input
+                            autoFocus
+                            type="text"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveTitle(chat.id);
+                              if (e.key === 'Escape') handleCancelEdit();
+                            }}
+                            className="flex-1 bg-transparent border-none outline-none text-[13px] text-foreground py-1"
                           />
-                          <div className="absolute right-2 top-10 bg-surface border border-border rounded-lg shadow-xl py-1 z-[101] min-w-[120px]">
-                            <button
-                              onClick={(e) => {
-                                handleDeleteChat(e, chat.id, chat.title);
-                              }}
-                              className="w-full text-left px-3 py-1.5 text-[12px] text-red-400 hover:bg-surface-hover flex items-center gap-2 transition-colors"
-                            >
-                              <Trash2 size={12} />
-                              Delete
-                            </button>
+                          <button 
+                            onClick={() => handleSaveTitle(chat.id)}
+                            disabled={isSavingTitle}
+                            className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors"
+                          >
+                            <Check size={14} />
+                          </button>
+                          <button 
+                            onClick={handleCancelEdit}
+                            className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              setCurrentChatId(chat.id);
+                              setIsMobileOpen?.(false);
+                            }}
+                            className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface' : 'text-foreground/60 hover:bg-surface hover:text-foreground'}`}
+                          >
+                            {chat.title}
+                          </button>
+                          
+                          {/* Chat Title Full Visibility on Hover */}
+                          <div className="absolute left-0 top-0 w-full h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-[50]">
+                            <div className="absolute left-0 top-0 min-w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] text-foreground shadow-xl whitespace-normal break-words z-[51]">
+                              {chat.title}
+                            </div>
                           </div>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
+                            }}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all z-[60]"
+                            title="More options"
+                          >
+                            <MoreVertical size={14} />
+                          </button>
+
+                          {activeMenuId === chat.id && (
+                            <>
+                              <div 
+                                className="fixed inset-0 z-[100]" 
+                                onClick={() => setActiveMenuId(null)}
+                              />
+                              <div className="absolute right-2 top-10 bg-surface border border-border rounded-lg shadow-xl py-1 z-[101] min-w-[120px]">
+                                <button
+                                  onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
+                                  className="w-full text-left px-3 py-1.5 text-[12px] text-foreground/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
+                                >
+                                  <Edit2 size={12} />
+                                  Edit Title
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    handleDeleteChat(e, chat.id, chat.title);
+                                  }}
+                                  className="w-full text-left px-3 py-1.5 text-[12px] text-red-400 hover:bg-surface-hover flex items-center gap-2 transition-colors"
+                                >
+                                  <Trash2 size={12} />
+                                  Delete
+                                </button>
+                              </div>
+                            </>
+                          )}
                         </>
                       )}
                     </li>
