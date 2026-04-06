@@ -16,25 +16,19 @@
 }
 /* Outside @theme */
 .prose {
-  --tw-prose-body: #000000;
-  --tw-prose-headings: #000000;
-  --tw-prose-lead: #000000;
-  --tw-prose-bold: #000000;
-  --tw-prose-code: #000000;
-  --tw-prose-counters: #000000;
-  --tw-prose-bullets: #000000;
-  --tw-prose-quotes: #000000;
+  color: #000000;
+}
+
+.prose :where(p, li, h1, h2, h3, h4, h5, h6, strong, em, b, i, blockquote, td, th, dt, dd, figcaption, caption, label, span, a, code, pre, ul, ol):not(:where([class~="not-prose"] *)) {
+  color: #000000;
 }
 
 .dark .prose {
-  --tw-prose-body: #ffffff;
-  --tw-prose-headings: #ffffff;
-  --tw-prose-lead: #ffffff;
-  --tw-prose-bold: #ffffff;
-  --tw-prose-code: #ffffff;
-  --tw-prose-counters: #ffffff;
-  --tw-prose-bullets: #ffffff;
-  --tw-prose-quotes: #ffffff;
+  color: #ffffff;
+}
+
+.dark .prose :where(p, li, h1, h2, h3, h4, h5, h6, strong, em, b, i, blockquote, td, th, dt, dd, figcaption, caption, label, span, a, code, pre, ul, ol):not(:where([class~="not-prose"] *)) {
+  color: #ffffff;
 }
 
 .dark {
