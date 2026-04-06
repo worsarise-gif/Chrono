@@ -90,10 +90,10 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   return (
     <div className={`relative group my-6 rounded-2xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
       <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}/50 backdrop-blur-sm rounded-t-2xl`}>
-        <span className="text-[11px] font-mono text-muted uppercase tracking-wider font-semibold">{language || 'text'}</span>
+        <span className="text-[11px] font-mono text-black dark:text-white uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-[11px] text-muted hover:text-foreground transition-colors font-medium"
+          className="flex items-center gap-1.5 text-[11px] text-black dark:text-white hover:opacity-80 transition-opacity font-medium"
         >
           {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
           {copied ? 'Copied!' : 'Copy'}
@@ -131,20 +131,20 @@ const ThinkingProcess = ({ content }: { content: string }) => {
     <div className="my-4 border border-border/50 rounded-2xl overflow-hidden bg-transparent transition-all duration-300">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-black/60 dark:text-muted group"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-black dark:text-white group"
       >
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center">
             <div className={`absolute inset-0 rounded-full blur-sm transition-opacity duration-500 ${isOpen ? 'bg-blue-500/20 opacity-100' : 'bg-transparent opacity-0'}`} />
-            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 relative z-10 ${isOpen ? 'bg-blue-500 scale-125' : 'bg-black/20 dark:bg-muted/40'}`} />
+            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 relative z-10 ${isOpen ? 'bg-blue-500 scale-125' : 'bg-black/20 dark:bg-white/40'}`} />
           </div>
-          <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 ${isOpen ? 'text-black dark:text-foreground' : 'text-black/60 dark:text-muted'}`}>
+          <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 text-black dark:text-white`}>
             Thinking Process
           </span>
         </div>
         <ChevronDown 
           size={14} 
-          className={`transition-transform duration-500 ease-in-out ${isOpen ? 'rotate-180 text-black dark:text-foreground' : 'text-black/40 dark:text-muted/60 group-hover:text-black/60 dark:group-hover:text-muted'}`} 
+          className={`transition-transform duration-500 ease-in-out ${isOpen ? 'rotate-180 text-black dark:text-white' : 'text-black dark:text-white'}`} 
         />
       </button>
       <AnimatePresence initial={false}>
@@ -155,8 +155,8 @@ const ThinkingProcess = ({ content }: { content: string }) => {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
           >
-            <div className="px-5 pb-5 pt-1 text-[13px] text-black/70 dark:text-muted/80 leading-relaxed border-t border-border/30 bg-transparent">
-              <div className="prose prose-sm dark:prose-invert max-w-none italic">
+            <div className="px-5 pb-5 pt-1 text-[13px] text-black dark:text-white leading-relaxed border-t border-border/30 bg-transparent">
+              <div className="prose prose-sm dark:prose-invert max-w-none italic prose-p:text-black dark:prose-p:text-white prose-li:text-black dark:prose-li:text-white">
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeKatex]}
@@ -255,7 +255,7 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
           {...props} 
         />
         <div className="absolute inset-0 rounded-2xl bg-transparent transition-colors flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 bg-transparent dark:bg-black/50 text-foreground dark:text-white p-2 rounded-full backdrop-blur-sm transition-opacity">
+          <div className="opacity-0 group-hover:opacity-100 bg-transparent dark:bg-black/50 text-black dark:text-white p-2 rounded-full backdrop-blur-sm transition-opacity">
             <Maximize2 size={20} />
           </div>
         </div>
@@ -338,7 +338,7 @@ const markdownComponents = {
   },
   blockquote({ node, children, ...props }: any) {
     return (
-      <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-black dark:text-muted not-italic shadow-sm" {...props}>
+      <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-black dark:text-white not-italic shadow-sm" {...props}>
         {children}
       </blockquote>
     );
@@ -353,10 +353,10 @@ const markdownComponents = {
     );
   },
   th({ node, children, ...props }: any) {
-    return <th className="bg-surface-hover px-4 py-3 font-medium text-black dark:text-foreground border-b border-border whitespace-nowrap" {...props}>{children}</th>;
+    return <th className="bg-surface-hover px-4 py-3 font-medium text-black dark:text-white border-b border-border whitespace-nowrap" {...props}>{children}</th>;
   },
   td({ node, children, ...props }: any) {
-    return <td className="px-4 py-3 border-b border-border/50 text-black dark:text-muted" {...props}>{children}</td>;
+    return <td className="px-4 py-3 border-b border-border/50 text-black dark:text-white" {...props}>{children}</td>;
   },
   pre({ node, children, ...props }: any) {
     return <div className="not-prose m-0 p-0 bg-transparent">{children}</div>;
@@ -371,9 +371,9 @@ const markdownComponents = {
         const data = JSON.parse(String(children));
         return (
           <div className="my-6 flex flex-col gap-3 not-prose">
-            <div className="flex items-center gap-2 text-sm font-normal text-black/60 dark:text-muted mb-2 px-1">
+            <div className="flex items-center gap-2 text-sm font-normal text-black dark:text-white mb-2 px-1">
               <Search size={16} className="text-blue-500" />
-              <span>Search results for <span className="text-black dark:text-foreground">"{data.query}"</span></span>
+              <span>Search results for <span className="text-black dark:text-white">"{data.query}"</span></span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {data.results.map((res: any, idx: number) => {
@@ -385,11 +385,11 @@ const markdownComponents = {
                       {res.title}
                       <ExternalLink size={14} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
                     </div>
-                    <div className="text-[11px] text-black/50 dark:text-muted truncate flex items-center gap-1.5">
+                    <div className="text-[11px] text-black dark:text-white truncate flex items-center gap-1.5">
                       <div className="w-3.5 h-3.5 rounded-full bg-surface-hover flex items-center justify-center text-[8px]">🌐</div>
                       {hostname}
                     </div>
-                    <div className="text-xs text-black/70 dark:text-muted line-clamp-3 leading-relaxed mt-1">{res.snippet}</div>
+                    <div className="text-xs text-black dark:text-white line-clamp-3 leading-relaxed mt-1">{res.snippet}</div>
                   </a>
                 );
               })}
@@ -403,7 +403,7 @@ const markdownComponents = {
 
     if (isInline) {
       return (
-        <code className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50" {...props}>
+        <code className="bg-surface/30 text-black dark:text-white px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50" {...props}>
           {children}
         </code>
       );
@@ -424,29 +424,29 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
 
   const markdownComponents = {
     h1({ node, children, ...props }: any) {
-      return <h1 className="text-xl font-bold text-black dark:text-foreground mt-2 mb-4" {...props}>{children}</h1>;
+      return <h1 className="text-xl font-bold text-black dark:text-white mt-2 mb-4" {...props}>{children}</h1>;
     },
     h2({ node, children, ...props }: any) {
-      return <h2 className="text-lg font-bold text-black dark:text-foreground mt-2 mb-3" {...props}>{children}</h2>;
+      return <h2 className="text-lg font-bold text-black dark:text-white mt-2 mb-3" {...props}>{children}</h2>;
     },
     h3({ node, children, ...props }: any) {
       const text = String(children).toLowerCase();
       const isFinal = text.includes('final') || text.includes('conclusion');
       return (
-        <h3 className={`text-base font-bold mt-1 mb-3 flex items-center gap-2 ${isFinal ? 'text-blue-500' : 'text-black dark:text-foreground'}`} {...props}>
+        <h3 className={`text-base font-bold mt-1 mb-3 flex items-center gap-2 ${isFinal ? 'text-blue-500' : 'text-black dark:text-white'}`} {...props}>
           {isFinal && <span className="w-1.5 h-5 bg-blue-500 rounded-full inline-block"></span>}
           {children}
         </h3>
       );
     },
     p({ node, children, ...props }: any) {
-      return <p className="text-black dark:text-muted/90 font-light leading-relaxed mb-3 last:mb-0" {...props}>{children}</p>;
+      return <p className="text-black dark:text-white font-light leading-relaxed mb-3 last:mb-0" {...props}>{children}</p>;
     },
     strong({ node, children, ...props }: any) {
-      return <strong className="font-medium text-black dark:text-foreground" {...props}>{children}</strong>;
+      return <strong className="font-medium text-black dark:text-white" {...props}>{children}</strong>;
     },
     li({ node, children, ...props }: any) {
-      return <li className="text-black dark:text-muted/90 font-light" {...props}>{children}</li>;
+      return <li className="text-black dark:text-white font-light" {...props}>{children}</li>;
     },
     img({ node, src, alt, ...props }: any) {
       return <ImageRenderer src={src} alt={alt} onImageClick={onImageClick} {...props} />;
@@ -476,7 +476,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
     },
     blockquote({ node, children, ...props }: any) {
       return (
-        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-black dark:text-muted not-italic shadow-sm" {...props}>
+        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-black dark:text-white not-italic shadow-sm" {...props}>
           {children}
         </blockquote>
       );
@@ -491,10 +491,10 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
       );
     },
     th({ node, children, ...props }: any) {
-      return <th className="bg-surface-hover px-4 py-3 font-medium text-black dark:text-foreground border-b border-border whitespace-nowrap" {...props}>{children}</th>;
+      return <th className="bg-surface-hover px-4 py-3 font-medium text-black dark:text-white border-b border-border whitespace-nowrap" {...props}>{children}</th>;
     },
     td({ node, children, ...props }: any) {
-      return <td className="px-4 py-3 border-b border-border/50 text-black dark:text-muted" {...props}>{children}</td>;
+      return <td className="px-4 py-3 border-b border-border/50 text-black dark:text-white" {...props}>{children}</td>;
     },
     pre({ node, children, ...props }: any) {
       return <div className="not-prose m-0 p-0 bg-transparent">{children}</div>;
@@ -509,9 +509,9 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
           const data = JSON.parse(String(children));
           return (
             <div className="my-6 flex flex-col gap-3 not-prose">
-              <div className="flex items-center gap-2 text-sm font-normal text-muted mb-2 px-1">
+              <div className="flex items-center gap-2 text-sm font-normal text-black dark:text-white mb-2 px-1">
                 <Search size={16} className="text-blue-500" />
-                <span>Search results for <span className="text-foreground">"{data.query}"</span></span>
+                <span>Search results for <span className="text-black dark:text-white">"{data.query}"</span></span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {data.results.map((res: any, idx: number) => {
@@ -523,11 +523,11 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
                         {res.title}
                         <ExternalLink size={14} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
                       </div>
-                      <div className="text-[11px] text-muted truncate flex items-center gap-1.5">
+                      <div className="text-[11px] text-black dark:text-white truncate flex items-center gap-1.5">
                         <div className="w-3.5 h-3.5 rounded-full bg-surface-hover flex items-center justify-center text-[8px]">🌐</div>
                         {hostname}
                       </div>
-                      <div className="text-xs text-muted line-clamp-3 leading-relaxed mt-1">{res.snippet}</div>
+                      <div className="text-xs text-black dark:text-white line-clamp-3 leading-relaxed mt-1">{res.snippet}</div>
                     </a>
                   );
                 })}
@@ -541,7 +541,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
 
       if (isInline) {
         return (
-          <code className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50" {...props}>
+          <code className="bg-surface/30 text-black dark:text-white px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50" {...props}>
             {children}
           </code>
         );
@@ -575,7 +575,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-black dark:prose-li:marker:text-muted max-w-none font-normal break-words text-black dark:text-foreground prose-p:text-black dark:prose-p:text-muted/90 prose-li:text-black dark:prose-li:text-muted/90 prose-headings:text-black dark:prose-headings:text-foreground prose-strong:font-normal prose-strong:text-black dark:prose-strong:text-foreground prose-code:text-black dark:prose-code:text-foreground text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-black dark:prose-li:marker:text-white max-w-none font-normal break-words text-black dark:text-white prose-p:text-black dark:prose-p:text-white prose-li:text-black dark:prose-li:text-white prose-headings:text-black dark:prose-headings:text-white prose-strong:font-normal prose-strong:text-black dark:prose-strong:text-white prose-code:text-black dark:prose-code:text-white text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
