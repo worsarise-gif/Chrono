@@ -141,7 +141,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div className="absolute top-6 right-6 z-10">
               <button
                 onClick={onClose}
-                className="p-2 rounded-full bg-surface-hover text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all border border-border/50"
+                className="p-2 rounded-full bg-surface-hover text-foreground/60 hover:text-foreground transition-all border border-border/50"
               >
                 <X size={20} />
               </button>
@@ -193,20 +193,20 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                           type="text"
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
-                          className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2 text-center text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-semibold text-lg"
+                          className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2 text-center text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-semibold text-lg"
                           placeholder="Your display name"
                           autoFocus
                         />
                       </div>
                     ) : (
                       <h2 
-                        className="text-2xl font-bold tracking-tight text-black dark:text-white cursor-pointer hover:text-blue-500 transition-colors"
+                        className="text-2xl font-bold tracking-tight text-foreground cursor-pointer hover:text-blue-500 transition-colors"
                         onClick={() => setIsEditing(true)}
                       >
                         {user.profile?.displayName || user.displayName || "Anonymous User"}
                       </h2>
                     )}
-                    <div className="flex items-center justify-center gap-2 text-black/60 dark:text-white/60">
+                    <div className="flex items-center justify-center gap-2 text-foreground/60">
                       <Mail size={14} />
                       <span className="text-sm font-medium">{user.email}</span>
                     </div>
@@ -234,8 +234,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         {mounted && (theme === 'dark' ? <Moon size={16} className="text-indigo-500" /> : <Sun size={16} className="text-yellow-500" />)}
                       </div>
                       <div className="text-left">
-                        <p className="text-xs font-bold text-black dark:text-white">Appearance</p>
-                        <p className="text-[10px] text-black/60 dark:text-white/60 font-medium uppercase tracking-wider">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</p>
+                        <p className="text-xs font-bold text-foreground">Appearance</p>
+                        <p className="text-[10px] text-foreground/60 font-medium uppercase tracking-wider">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</p>
                       </div>
                     </div>
                     <button
@@ -254,8 +254,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div className="p-4 rounded-2xl bg-surface-hover/50 border border-border/50 flex flex-col items-start gap-2">
                       <Calendar size={16} className="text-blue-500" />
                       <div className="text-left">
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-black/40 dark:text-white/40">Joined</p>
-                        <p className="text-xs font-semibold text-black dark:text-white">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-foreground/40">Joined</p>
+                        <p className="text-xs font-semibold text-foreground">
                           {user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently'}
                         </p>
                       </div>
@@ -263,8 +263,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <div className="p-4 rounded-2xl bg-surface-hover/50 border border-border/50 flex flex-col items-start gap-2">
                       <Shield size={16} className="text-purple-500" />
                       <div className="text-left">
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-black/40 dark:text-white/40">Status</p>
-                        <p className="text-xs font-semibold text-black dark:text-white">Verified</p>
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-foreground/40">Status</p>
+                        <p className="text-xs font-semibold text-foreground">Verified</p>
                       </div>
                     </div>
                   </div>

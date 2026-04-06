@@ -1427,11 +1427,11 @@ Return ONLY the JSON array.`;
                       </motion.div>
                     )}
 
-                    <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-black dark:text-white shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-black dark:text-white text-[16px] md:text-[15px] w-full'}`}>
+          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-foreground text-[16px] md:text-[15px] w-full'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full">
                           {msg.content.startsWith('Error:') ? (
-                            <div className="p-4 bg-surface-hover border border-border rounded-xl text-black dark:text-white flex items-start gap-3 mb-2">
+                            <div className="p-4 bg-surface-hover border border-border rounded-xl text-foreground flex items-start gap-3 mb-2">
                               <AlertCircle size={18} className="mt-0.5 shrink-0" />
                               <div className="text-sm font-medium leading-relaxed">
                                 {msg.content.replace('Error:', '').trim()}
@@ -1444,7 +1444,7 @@ Return ONLY the JSON array.`;
                           {!msg.isStreaming && (
                             <>
                               {/* Action Row */}
-                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-black dark:text-white">
+                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-foreground">
                                 {[
                                   { icon: <RefreshCcw size={14} />, title: "Regenerate", onClick: () => handleRegenerate(index) },
                                   { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
@@ -1473,7 +1473,7 @@ Return ONLY the JSON array.`;
                                   <button 
                                     key={i}
                                     onClick={btn.onClick}
-                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-black dark:hover:text-white'}`} 
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-foreground'}`} 
                                     title={btn.title}
                                   >
                                     {btn.icon}
@@ -1491,10 +1491,10 @@ Return ONLY the JSON array.`;
                                         setInput(rec.prompt);
                                         textareaRef.current?.focus();
                                       }}
-                                      className="flex items-center gap-3 text-sm font-normal text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors text-left"
+                                      className="flex items-center gap-3 text-sm font-normal text-foreground/60 hover:text-foreground transition-colors text-left"
                                       title={rec.prompt}
                                     >
-                                      <CornerDownRight size={16} className="text-black/40 dark:text-white/40 shrink-0" />
+                                      <CornerDownRight size={16} className="text-foreground/40 shrink-0" />
                                       {rec.title}
                                     </button>
                                   ))}
@@ -1510,13 +1510,13 @@ Return ONLY the JSON array.`;
                               <textarea
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
-                                className="w-full bg-chat-bg/50 text-black dark:text-white rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
+                                className="w-full bg-chat-bg/50 text-foreground rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
                                 rows={3}
                                 autoFocus
                               />
                               <div className="flex items-center justify-end gap-2 mt-1">
-                                <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors rounded-lg hover:bg-surface-hover">Cancel</button>
-                                <button onClick={() => handleSaveEdit(msg.id, false)} className="px-3 py-1.5 text-xs font-medium text-black dark:text-white bg-surface-hover hover:bg-surface transition-colors rounded-lg border border-border/50">Save</button>
+                                <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium text-foreground/60 hover:text-foreground transition-colors rounded-lg hover:bg-surface-hover">Cancel</button>
+                                <button onClick={() => handleSaveEdit(msg.id, false)} className="px-3 py-1.5 text-xs font-medium text-foreground bg-surface-hover hover:bg-surface transition-colors rounded-lg border border-border/50">Save</button>
                                 <button onClick={() => handleSaveEdit(msg.id, true)} className="px-3 py-1.5 text-xs font-medium text-background bg-foreground hover:opacity-90 transition-colors rounded-lg">Save & Submit</button>
                               </div>
                             </div>
@@ -1524,10 +1524,10 @@ Return ONLY the JSON array.`;
                             <>
                               <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
                               <div className="absolute -bottom-10 right-0 flex items-center gap-1 opacity-0 group-hover/user:opacity-100 transition-opacity">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white" title="Edit">
+                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/60 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white" title="Copy">
+                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/60 hover:text-foreground" title="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                                 </button>
                               </div>
@@ -1547,7 +1547,7 @@ Return ONLY the JSON array.`;
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className="flex justify-start group w-full"
                 >
-                  <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent text-black dark:text-white text-[16px] md:text-[15px] w-full">
+                  <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent text-foreground text-[16px] md:text-[15px] w-full">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} isStreaming={true} onImageClick={handleImageClick} />
                     </div>
@@ -1575,12 +1575,12 @@ Return ONLY the JSON array.`;
                 >
                   <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square border border-border bg-surface">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full" style={{ animation: 'shimmer-skeleton 2s infinite' }} />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-black/40 dark:text-white/40">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-foreground/40">
                       <motion.div
                         animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       >
-                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-black/20 dark:border-white/20 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-foreground/20 flex items-center justify-center">
                           <span className="text-xl">✨</span>
                         </div>
                       </motion.div>
@@ -1718,17 +1718,17 @@ Return ONLY the JSON array.`;
             >
               <button 
                 onClick={() => setShowSignInModal(false)}
-                className="absolute top-4 right-4 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white hover:bg-surface-hover rounded-full transition-colors"
+                className="absolute top-4 right-4 p-2 text-foreground/60 hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
               
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-foreground/5 rounded-full flex items-center justify-center mb-4">
-                  <PlanetLogo className="w-8 h-8 text-black dark:text-white" />
+                  <PlanetLogo className="w-8 h-8 text-foreground" />
                 </div>
-                <h2 className="text-2xl font-semibold text-black dark:text-white mb-2">Sign In Required</h2>
-                <p className="text-black dark:text-white text-sm">
+                <h2 className="text-2xl font-semibold text-foreground mb-2">Sign In Required</h2>
+                <p className="text-foreground text-sm">
                   {guestRequestCount >= 10 
                     ? "You've reached the free guest limit. Sign in to continue chatting and unlock more features." 
                     : "Sign in to use image recognition and unlock the full power of Q1."}
@@ -1765,12 +1765,12 @@ Return ONLY the JSON array.`;
           <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             {!user ? (
               <Link href="/">
-                <PlanetLogo className="text-black dark:text-white w-10 h-10 md:w-12 md:h-12 hover:opacity-80 transition-opacity" />
+                <PlanetLogo className="text-foreground w-10 h-10 md:w-12 md:h-12 hover:opacity-80 transition-opacity" />
               </Link>
             ) : (
               <>
-                <PlanetLogo className="text-black dark:text-white w-10 h-10 md:w-12 md:h-12" />
-                <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-black dark:text-white">Q1</h1>
+                <PlanetLogo className="text-foreground w-10 h-10 md:w-12 md:h-12" />
+                <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">Q1</h1>
               </>
             )}
           </div>
@@ -1782,18 +1782,18 @@ Return ONLY the JSON array.`;
             {lastError && (
               <div className="mb-4 p-4 bg-surface-hover border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center text-black/60 dark:text-white/60 shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center text-foreground/60 shrink-0">
                     <AlertCircle size={18} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-black dark:text-white">Generation Failed</p>
-                    <p className="text-xs text-black dark:text-white leading-tight mt-0.5">{lastError.message}</p>
+                    <p className="text-sm font-medium text-foreground">Generation Failed</p>
+                    <p className="text-xs text-foreground leading-tight mt-0.5">{lastError.message}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button 
                     onClick={() => setLastError(null)}
-                    className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-black dark:text-white hover:bg-surface-hover rounded-lg transition-colors"
+                    className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-hover rounded-lg transition-colors"
                   >
                     Dismiss
                   </button>
