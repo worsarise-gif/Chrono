@@ -27,7 +27,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center w-full rounded-lg transition-all relative pointer-events-auto h-[44px] ${active ? 'text-foreground' : 'text-muted hover:text-foreground'} ${!isCollapsed && !active ? 'hover:bg-surface' : ''}`}
+        className={`flex items-center w-full rounded-lg transition-all relative pointer-events-auto h-[44px] ${active ? 'text-black dark:text-white' : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface' : ''}`}
       >
         {/* Stationary Icon Container */}
         <div className="w-[68px] flex-shrink-0 flex items-center justify-center relative">
@@ -59,7 +59,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
       {/* Tooltip - Fixed positioning to float above everything */}
       {isCollapsed && (
         <div 
-          className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0"
+          className="fixed left-[76px] bg-surface-hover text-black dark:text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0"
           style={{ 
             top: `${60 + index * 44.5 + 22}px`,
             transform: 'translateY(-50%)'
@@ -180,12 +180,12 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative">
           <div className="w-[68px] flex-shrink-0 flex items-center justify-center">
-            <PlanetLogo className="text-foreground w-6 h-6" />
+            <PlanetLogo className="text-black dark:text-white w-6 h-6" />
           </div>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
               onClick={() => setIsCollapsed(true)}
-              className="text-muted hover:text-foreground transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
+              className="text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
             >
               <ChevronsLeft size={16} strokeWidth={2} />
             </button>
@@ -222,14 +222,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                           setCurrentChatId(chat.id);
                           setIsMobileOpen?.(false);
                         }}
-                        className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface' : 'text-muted hover:bg-surface hover:text-foreground'}`}
+                        className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-black dark:text-white bg-surface' : 'text-black/60 dark:text-white/60 hover:bg-surface hover:text-black dark:hover:text-white'}`}
                       >
                         {chat.title}
                       </button>
                       
                       {/* Chat Title Full Visibility on Hover */}
                       <div className="absolute left-0 top-0 w-full h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-[50]">
-                        <div className="absolute left-0 top-0 min-w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] text-foreground shadow-xl whitespace-normal break-words z-[51]">
+                        <div className="absolute left-0 top-0 min-w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] text-black dark:text-white shadow-xl whitespace-normal break-words z-[51]">
                           {chat.title}
                         </div>
                       </div>
@@ -239,7 +239,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                           e.stopPropagation();
                           setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
                         }}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface-hover text-muted hover:text-foreground transition-all z-[60]"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface-hover text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-all z-[60]"
                         title="More options"
                       >
                         <MoreVertical size={14} />
@@ -267,7 +267,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                     </li>
                   ))}
                 </ul>
-                <button className="text-left px-3 py-2 text-[13px] text-gray-400 hover:text-white mt-2 font-normal">
+                <button className="text-left px-3 py-2 text-[13px] text-black/40 dark:text-white/40 hover:text-black dark:hover:text-white mt-2 font-normal">
                   See all
                 </button>
               </>
@@ -281,14 +281,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
               onClick={() => setIsCollapsed(false)}
-              className="text-muted hover:text-foreground transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
+              className="text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
             >
               <ChevronsRight size={20} strokeWidth={1.5} />
             </button>
             
             {/* Expand Tooltip */}
             {isCollapsed && (
-              <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[118px]">
+              <div className="fixed left-[76px] bg-surface-hover text-black dark:text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[118px]">
                 <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
                 Expand Sidebar
               </div>
@@ -315,7 +315,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 
                 {/* Profile Tooltip */}
                 {isCollapsed && (
-                  <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[22px]">
+                  <div className="fixed left-[76px] bg-surface-hover text-black dark:text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[22px]">
                     <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
                     Profile Settings
                   </div>
@@ -329,7 +329,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 
                 {/* Login Tooltip */}
                 {isCollapsed && (
-                  <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[22px]">
+                  <div className="fixed left-[76px] bg-surface-hover text-black dark:text-white text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[22px]">
                     <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
                     Login with Google
                   </div>
@@ -369,9 +369,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                   <Trash2 size={24} />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-foreground">Delete Chat?</h3>
-                  <p className="text-sm text-muted leading-relaxed">
-                    This will permanently delete <span className="text-foreground font-medium">"{chatToDelete.title}"</span> and all its messages. This action cannot be undone.
+                  <h3 className="text-lg font-semibold text-black dark:text-white">Delete Chat?</h3>
+                  <p className="text-sm text-black/60 dark:text-white/60 leading-relaxed">
+                    This will permanently delete <span className="text-black dark:text-white font-medium">"{chatToDelete.title}"</span> and all its messages. This action cannot be undone.
                   </p>
                 </div>
                 <div className="flex flex-col w-full gap-2 pt-2">
@@ -383,7 +383,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                   </button>
                   <button
                     onClick={() => setChatToDelete(null)}
-                    className="w-full py-3 px-4 bg-transparent hover:bg-surface text-muted hover:text-foreground rounded-xl font-medium transition-colors"
+                    className="w-full py-3 px-4 bg-transparent hover:bg-surface text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white rounded-xl font-medium transition-colors"
                   >
                     Cancel
                   </button>

@@ -1473,7 +1473,7 @@ Return ONLY the JSON array.`;
                                   <button 
                                     key={i}
                                     onClick={btn.onClick}
-                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-foreground'}`} 
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-black dark:hover:text-white'}`} 
                                     title={btn.title}
                                   >
                                     {btn.icon}
@@ -1491,10 +1491,10 @@ Return ONLY the JSON array.`;
                                         setInput(rec.prompt);
                                         textareaRef.current?.focus();
                                       }}
-                                      className="flex items-center gap-3 text-sm font-normal text-muted hover:text-foreground transition-colors text-left"
+                                      className="flex items-center gap-3 text-sm font-normal text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors text-left"
                                       title={rec.prompt}
                                     >
-                                      <CornerDownRight size={16} className="text-muted shrink-0" />
+                                      <CornerDownRight size={16} className="text-black/40 dark:text-white/40 shrink-0" />
                                       {rec.title}
                                     </button>
                                   ))}
@@ -1510,13 +1510,13 @@ Return ONLY the JSON array.`;
                               <textarea
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
-                                className="w-full bg-chat-bg/50 text-foreground rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
+                                className="w-full bg-chat-bg/50 text-black dark:text-white rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
                                 rows={3}
                                 autoFocus
                               />
                               <div className="flex items-center justify-end gap-2 mt-1">
-                                <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium text-muted hover:text-foreground transition-colors rounded-lg hover:bg-surface-hover">Cancel</button>
-                                <button onClick={() => handleSaveEdit(msg.id, false)} className="px-3 py-1.5 text-xs font-medium text-foreground bg-surface-hover hover:bg-surface transition-colors rounded-lg border border-border/50">Save</button>
+                                <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors rounded-lg hover:bg-surface-hover">Cancel</button>
+                                <button onClick={() => handleSaveEdit(msg.id, false)} className="px-3 py-1.5 text-xs font-medium text-black dark:text-white bg-surface-hover hover:bg-surface transition-colors rounded-lg border border-border/50">Save</button>
                                 <button onClick={() => handleSaveEdit(msg.id, true)} className="px-3 py-1.5 text-xs font-medium text-background bg-foreground hover:opacity-90 transition-colors rounded-lg">Save & Submit</button>
                               </div>
                             </div>
@@ -1524,10 +1524,10 @@ Return ONLY the JSON array.`;
                             <>
                               <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
                               <div className="absolute -bottom-10 right-0 flex items-center gap-1 opacity-0 group-hover/user:opacity-100 transition-opacity">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-muted hover:text-foreground" title="Edit">
+                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-muted hover:text-foreground" title="Copy">
+                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white" title="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                                 </button>
                               </div>
@@ -1575,12 +1575,12 @@ Return ONLY the JSON array.`;
                 >
                   <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square border border-border bg-surface">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full" style={{ animation: 'shimmer-skeleton 2s infinite' }} />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-black/40 dark:text-white/40">
                       <motion.div
                         animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       >
-                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-muted/50 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-black/20 dark:border-white/20 flex items-center justify-center">
                           <span className="text-xl">✨</span>
                         </div>
                       </motion.div>
@@ -1718,7 +1718,7 @@ Return ONLY the JSON array.`;
             >
               <button 
                 onClick={() => setShowSignInModal(false)}
-                className="absolute top-4 right-4 p-2 text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
+                className="absolute top-4 right-4 p-2 text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white hover:bg-surface-hover rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
@@ -1782,7 +1782,7 @@ Return ONLY the JSON array.`;
             {lastError && (
               <div className="mb-4 p-4 bg-surface-hover border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-muted/20 flex items-center justify-center text-muted shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-black/10 dark:bg-white/10 flex items-center justify-center text-black/60 dark:text-white/60 shrink-0">
                     <AlertCircle size={18} />
                   </div>
                   <div>
