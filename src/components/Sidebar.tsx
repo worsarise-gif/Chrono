@@ -198,7 +198,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             <NavItem icon={<Search size={18} strokeWidth={2} />} label="Search" onClick={() => {}} isCollapsed={isCollapsed} index={0} />
             <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
             <NavItem icon={<AudioLines size={18} strokeWidth={2} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={2} />
-            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagine" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={3} />
+            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={3} />
           </ul>
         </nav>
 
