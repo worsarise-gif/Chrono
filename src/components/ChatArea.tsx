@@ -32,7 +32,6 @@ interface Message {
 
 type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
 
-const BYTEZ_API_KEY = process.env.NEXT_PUBLIC_BYTEZ_API_KEY || '62f9e959f3fff48ee9ec96bd091ba1ec';
 const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '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';
 const CEREBRAS_API_KEY = process.env.NEXT_PUBLIC_CEREBRAS_API_KEY || 'csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c';
 
@@ -776,6 +775,7 @@ Return ONLY the JSON array.`;
       setLoadingStatus('Creating Art...');
       
       let finalImageResponse = '';
+      let generatedImageBase64 = '';
       try {
         const res = await fetch('/api/generate-image', {
           method: 'POST',
@@ -836,6 +836,7 @@ Return ONLY the JSON array.`;
             img.src = URL.createObjectURL(blob);
           });
           
+          generatedImageBase64 = compressedBase64;
           const safeAltText = userMessage.replace(/[\r\n\[\]]/g, ' ').substring(0, 150).trim() || 'Generated Image';
           finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${compressedBase64})`;
         }
@@ -848,11 +849,21 @@ Return ONLY the JSON array.`;
         await addDoc(collection(db, 'users', user!.uid, 'chats', chatId!, 'messages'), {
           role: 'model',
           content: finalImageResponse,
-          createdAt: serverTimestamp()
+          createdAt: serverTimestamp(),
+          isGeneratedImage: true
         });
         await updateDoc(doc(db, 'users', user!.uid, 'chats', chatId!), {
           updatedAt: serverTimestamp()
         });
+
+        // Save to dedicated images collection for the gallery
+        if (generatedImageBase64) {
+          await addDoc(collection(db, 'users', user!.uid, 'generated_images'), {
+            prompt: userMessage,
+            imageData: generatedImageBase64,
+            createdAt: serverTimestamp()
+          });
+        }
       } catch (error) {
         console.error("Failed to save image response", error);
         try {

@@ -13,6 +13,7 @@ import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
+import { useRouter, usePathname } from 'next/navigation';
 import { ProfileModal } from './ProfileModal';
 
 interface Chat {
@@ -75,6 +76,8 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
 export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpen?: boolean, setIsMobileOpen?: (val: boolean) => void }) {
   const { user } = useAuth();
   const { currentChatId, setCurrentChatId } = useChatContext();
+  const router = useRouter();
+  const pathname = usePathname();
   const [chats, setChats] = useState<Chat[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
@@ -193,9 +196,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         <nav className="transition-all duration-300">
           <ul className="space-y-0.5">
             <NavItem icon={<Search size={18} strokeWidth={2} />} label="Search" onClick={() => {}} isCollapsed={isCollapsed} index={0} />
-            <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId} isCollapsed={isCollapsed} index={1} />
+            <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
             <NavItem icon={<AudioLines size={18} strokeWidth={2} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={2} />
-            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagine" onClick={() => {}} hasDot isCollapsed={isCollapsed} index={3} />
+            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagine" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={3} />
           </ul>
         </nav>
 
