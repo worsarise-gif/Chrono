@@ -575,7 +575,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = ({ content, i
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-[#000000] dark:prose-li:marker:text-white max-w-none font-normal break-words text-[#000000] dark:text-white prose-p:text-[#000000] dark:prose-p:text-white prose-li:text-[#000000] dark:prose-li:text-white prose-headings:text-[#000000] dark:prose-headings:text-white prose-strong:font-normal prose-strong:text-[#000000] dark:prose-strong:text-white prose-code:text-[#000000] dark:prose-code:text-white text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`prose prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-[#000000] dark:prose-li:marker:text-white max-w-none font-normal break-words text-[#000000] dark:text-white prose-p:text-[#000000] dark:prose-p:text-white prose-li:text-[#000000] dark:prose-li:text-white prose-headings:text-[#000000] dark:prose-headings:text-white prose-strong:font-normal prose-strong:text-[#000000] dark:prose-strong:text-white prose-code:text-[#000000] dark:prose-code:text-white text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
