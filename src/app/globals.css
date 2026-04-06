@@ -14,22 +14,6 @@
   --color-muted: #6b7280;
   --color-stars: rgba(0, 0, 0, 0.03);
 }
-/* Outside @theme */
-.prose {
-  color: #000000;
-}
-
-.prose :where(p, li, h1, h2, h3, h4, h5, h6, strong, em, b, i, blockquote, td, th, dt, dd, figcaption, caption, label, span, a, code, pre, ul, ol):not(:where([class~="not-prose"] *)) {
-  color: #000000;
-}
-
-.dark .prose {
-  color: #ffffff;
-}
-
-.dark .prose :where(p, li, h1, h2, h3, h4, h5, h6, strong, em, b, i, blockquote, td, th, dt, dd, figcaption, caption, label, span, a, code, pre, ul, ol):not(:where([class~="not-prose"] *)) {
-  color: #ffffff;
-}
 
 .dark {
   --color-background: #000000;
