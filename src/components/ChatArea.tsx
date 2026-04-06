@@ -1427,7 +1427,7 @@ Return ONLY the JSON array.`;
                       </motion.div>
                     )}
 
-                    <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-black dark:text-white shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-black dark:text-white text-[16px] md:text-[15px] w-full'}`}>
+                    <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground dark:text-white shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-[#000000] dark:text-white text-[16px] md:text-[15px] w-full'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full">
                           {msg.content.startsWith('Error:') ? (
@@ -1444,7 +1444,7 @@ Return ONLY the JSON array.`;
                           {!msg.isStreaming && (
                             <>
                               {/* Action Row */}
-                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-black dark:text-white">
+                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-foreground dark:text-white">
                                 {[
                                   { icon: <RefreshCcw size={14} />, title: "Regenerate", onClick: () => handleRegenerate(index) },
                                   { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
@@ -1491,7 +1491,7 @@ Return ONLY the JSON array.`;
                                         setInput(rec.prompt);
                                         textareaRef.current?.focus();
                                       }}
-                                      className="flex items-center gap-3 text-sm font-normal text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white transition-colors text-left"
+                                      className="flex items-center gap-3 text-sm font-normal text-foreground/60 dark:text-white/60 hover:text-foreground dark:hover:text-white transition-colors text-left"
                                       title={rec.prompt}
                                     >
                                       <CornerDownRight size={16} className="text-black/40 dark:text-white/40 shrink-0" />
@@ -1547,7 +1547,7 @@ Return ONLY the JSON array.`;
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className="flex justify-start group w-full"
                 >
-                  <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent text-black dark:text-white text-[16px] md:text-[15px] w-full">
+                  <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent text-[#000000] dark:text-white text-[16px] md:text-[15px] w-full">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} isStreaming={true} onImageClick={handleImageClick} />
                     </div>
@@ -1585,8 +1585,8 @@ Return ONLY the JSON array.`;
                         </div>
                       </motion.div>
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-sm font-medium">Creating Art...</span>
-                        <span className="text-xs opacity-70">This usually takes a few seconds</span>
+                        <span className="text-sm font-medium text-foreground dark:text-white">Creating Art...</span>
+                        <span className="text-xs text-foreground/70 dark:text-white/70">This usually takes a few seconds</span>
                       </div>
                     </div>
                   </div>
