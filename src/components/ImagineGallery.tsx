@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, getDocs, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 
@@ -19,6 +19,60 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
   const [images, setImages] = useState<GeneratedImage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
+  const [isMigrating, setIsMigrating] = useState(false);
+
+  // Migration logic to pull old images from chat messages
+  useEffect(() => {
+    if (!user) return;
+
+    const migrateOldImages = async () => {
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        // If we've already migrated, don't do it again
+        if (userSnap.data()?.hasMigratedImages) {
+          return;
+        }
+
+        setIsMigrating(true);
+        const chatsSnapshot = await getDocs(collection(db, 'users', user.uid, 'chats'));
+        
+        for (const chatDoc of chatsSnapshot.docs) {
+          const messagesSnapshot = await getDocs(collection(db, 'users', user.uid, 'chats', chatDoc.id, 'messages'));
+          
+          for (const msgDoc of messagesSnapshot.docs) {
+            const data = msgDoc.data();
+            // Check if it's a model message containing an image markdown
+            if (data.role === 'model' && data.content && data.content.includes('![') && data.content.includes('](data:image')) {
+              // Extract prompt and base64 data
+              const match = data.content.match(/!\[(.*?)\]\((data:image.*?)\)/);
+              if (match) {
+                const prompt = match[1] || 'Generated Image';
+                const imageData = match[2];
+                
+                // Add to generated_images collection
+                await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
+                  prompt,
+                  imageData,
+                  createdAt: data.createdAt || new Date()
+                });
+              }
+            }
+          }
+        }
+
+        // Mark migration as complete
+        await setDoc(userRef, { hasMigratedImages: true }, { merge: true });
+        setIsMigrating(false);
+      } catch (error) {
+        console.error("Failed to migrate old images:", error);
+        setIsMigrating(false);
+      }
+    };
+
+    migrateOldImages();
+  }, [user]);
 
   useEffect(() => {
     if (!user) {
@@ -93,10 +147,13 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
         <div className="max-w-7xl mx-auto">
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center h-64 text-muted">
-              <Loader2 className="w-8 h-8 animate-spin mb-4" />
-              <p>Loading your creations...</p>
+          {isLoading || isMigrating ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="aspect-square rounded-xl bg-surface border border-border relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer-skeleton_2s_infinite]" />
+                </div>
+              ))}
             </div>
           ) : images.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-muted">

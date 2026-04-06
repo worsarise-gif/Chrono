@@ -238,7 +238,7 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
   return (
     <>
       <div 
-        className="relative flex w-fit max-w-full rounded-2xl overflow-hidden cursor-pointer group"
+        className="relative flex w-fit max-w-full rounded-2xl overflow-hidden cursor-pointer group border border-border"
         onClick={handleImageClick}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}

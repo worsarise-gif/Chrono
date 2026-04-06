@@ -1553,7 +1553,7 @@ Return ONLY the JSON array.`;
                   exit={{ opacity: 0 }}
                   className="flex justify-start group w-full"
                 >
-                  <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square">
+                  <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square border border-border bg-surface">
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full" style={{ animation: 'shimmer-skeleton 2s infinite' }} />
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted">
                       <motion.div
