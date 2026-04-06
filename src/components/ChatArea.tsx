@@ -756,6 +756,14 @@ Return ONLY the JSON array.`;
             await uploadString(imageRef, `data:${imageToUpload.mimeType};base64,${imageToUpload.data}`, 'data_url');
             const uploadedImageUrl = await getDownloadURL(imageRef);
             await updateDoc(msgRef, { imageUrl: uploadedImageUrl });
+            
+            // Save to dedicated images collection for the gallery
+            await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
+              prompt: userMessage || 'Uploaded Image',
+              imageData: uploadedImageUrl,
+              createdAt: serverTimestamp(),
+              isUploaded: true
+            });
           } catch (error) {
             console.error("Failed to upload image to storage in background", error);
           }
@@ -1126,10 +1134,17 @@ Return ONLY the JSON array.`;
           const runFallback = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama-3.3-70b-versatile', openAIMessages, handleChunk, controller.signal);
           await executeWithTimeoutAndFallback(runPrimary, runFallback, 6000);
         } else if (classification === 'search') {
-          // Search Mode (Gemini handles tool call, formatting is done later if needed, but here we just stream)
-          const runPrimary = () => runGeminiStream('gemini-3-flash-preview');
-          const runFallback = () => callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', CEREBRAS_API_KEY, 'llama-3.1-8b-instant', openAIMessages, handleChunk, controller.signal);
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 6000);
+          // Search Mode: groq/compound -> groq/compound-mini -> Gemini (with Tavily tool)
+          const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'groq/compound', openAIMessages, handleChunk, controller.signal);
+          const runFallback = async () => {
+            try {
+              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'groq/compound-mini', openAIMessages, handleChunk, controller.signal);
+            } catch (err) {
+              console.warn("groq/compound-mini failed, falling back to Gemini with search tool", err);
+              await runGeminiStream('gemini-3-flash-preview');
+            }
+          };
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000);
         } else {
           // Fast Mode (with Load Distribution)
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B

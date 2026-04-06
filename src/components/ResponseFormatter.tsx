@@ -178,6 +178,7 @@ const ThinkingProcess = ({ content }: { content: string }) => {
 
 const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleImageClick = () => {
     if (onImageClick) {
@@ -238,11 +239,21 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
   return (
     <>
       <div 
-        className="relative flex w-fit max-w-full rounded-2xl overflow-hidden cursor-pointer group border border-border"
+        className="relative flex w-fit max-w-full rounded-2xl overflow-hidden cursor-pointer group border-2 border-primary/20 hover:border-primary/50 transition-colors"
         onClick={handleImageClick}
       >
+        {isLoading && (
+          <div className="absolute inset-0 bg-muted animate-pulse rounded-2xl" />
+        )}
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt={alt || 'Generated Image'} className="max-w-full h-auto block rounded-2xl" loading="lazy" {...props} />
+        <img 
+          src={src} 
+          alt={alt || 'Generated Image'} 
+          className={`max-w-full h-auto block rounded-2xl transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`} 
+          loading="lazy" 
+          onLoad={() => setIsLoading(false)}
+          {...props} 
+        />
         <div className="absolute inset-0 rounded-2xl bg-transparent transition-colors flex items-center justify-center">
           <div className="opacity-0 group-hover:opacity-100 bg-transparent dark:bg-black/50 text-foreground dark:text-white p-2 rounded-full backdrop-blur-sm transition-opacity">
             <Maximize2 size={20} />

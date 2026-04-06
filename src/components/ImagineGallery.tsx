@@ -31,7 +31,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
         const userSnap = await getDoc(userRef);
         
         // If we've already migrated, don't do it again
-        if (userSnap.data()?.hasMigratedImages) {
+        if (userSnap.data()?.hasMigratedImagesV2) {
           return;
         }
 
@@ -43,11 +43,23 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
           
           for (const msgDoc of messagesSnapshot.docs) {
             const data = msgDoc.data();
+            
+            // Check for user uploaded images
+            if (data.imageUrl) {
+              await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
+                prompt: data.content || 'Uploaded Image',
+                imageData: data.imageUrl,
+                createdAt: data.createdAt || new Date(),
+                isUploaded: true
+              });
+            }
+            
             // Check if it's a model message containing an image markdown
-            if (data.role === 'model' && data.content && data.content.includes('![') && data.content.includes('](data:image')) {
-              // Extract prompt and base64 data
-              const match = data.content.match(/!\[(.*?)\]\((data:image.*?)\)/);
-              if (match) {
+            if (data.role === 'model' && data.content && data.content.includes('![')) {
+              // Extract prompt and base64 data or URL
+              const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+              let match;
+              while ((match = imgRegex.exec(data.content)) !== null) {
                 const prompt = match[1] || 'Generated Image';
                 const imageData = match[2];
                 
@@ -63,7 +75,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
         }
 
         // Mark migration as complete
-        await setDoc(userRef, { hasMigratedImages: true }, { merge: true });
+        await setDoc(userRef, { hasMigratedImagesV2: true }, { merge: true });
         setIsMigrating(false);
       } catch (error) {
         console.error("Failed to migrate old images:", error);
