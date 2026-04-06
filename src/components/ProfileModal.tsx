@@ -44,6 +44,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       await logout();
       setShowLogoutConfirm(false);
       onClose();
+      // Force a full page reload and redirect to home to clear all states immediately
+      window.location.href = '/';
     } catch (error) {
       console.error("Logout failed:", error);
     }

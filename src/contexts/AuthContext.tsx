@@ -39,15 +39,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }, 10000);
 
+    let unsubscribeProfile: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       console.log("AuthProvider: Auth state changed:", currentUser?.uid || "No user");
       clearTimeout(timeoutId);
       
+      // Clean up previous profile listener if it exists
+      if (unsubscribeProfile) {
+        unsubscribeProfile();
+        unsubscribeProfile = null;
+      }
+
       if (currentUser) {
         // Listen to user document
         const userRef = doc(db, 'users', currentUser.uid);
         
-        const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+        unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
             const profile = docSnap.data() as UserProfile;
             setUser({ ...currentUser, profile } as any);
@@ -62,10 +70,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(currentUser as any);
           setLoading(false);
         });
-
-        return () => {
-          unsubscribeProfile();
-        };
       } else {
         setUser(null);
         setLoading(false);
@@ -105,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return () => {
       unsubscribe();
+      if (unsubscribeProfile) unsubscribeProfile();
       clearTimeout(timeoutId);
     };
   }, []);

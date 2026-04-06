@@ -447,6 +447,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       setMessages(messageData);
       setIsLoadingMessages(false);
     }, (error) => {
+      // Ignore errors if the user is logged out or logging out
+      if (!auth.currentUser) return;
+      
       setIsLoadingMessages(false);
       try {
         handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/chats/${currentChatId}/messages`);

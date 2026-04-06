@@ -173,6 +173,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       setChats(chatData);
       setIsLoadingChats(false);
     }, (error) => {
+      // Ignore errors if the user is logged out or logging out
+      if (!auth.currentUser) return;
+      
       setIsLoadingChats(false);
       try {
         handleFirestoreError(error, OperationType.LIST, `users/${user.uid}/chats`);
