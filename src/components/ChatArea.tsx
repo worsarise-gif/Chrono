@@ -1574,13 +1574,13 @@ Return ONLY the JSON array.`;
                   className="flex justify-start group w-full"
                 >
                   <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square border border-border bg-surface">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full" style={{ animation: 'shimmer-skeleton 2s infinite' }} />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-foreground/40">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent -translate-x-full" style={{ animation: 'shimmer-skeleton 2s infinite' }} />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted">
                       <motion.div
                         animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
                         transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                       >
-                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-foreground/20 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-muted/30 flex items-center justify-center">
                           <span className="text-xl">✨</span>
                         </div>
                       </motion.div>
