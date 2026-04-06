@@ -363,9 +363,21 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   };
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const handleScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      // Show button if we are more than 200px from the bottom and have scrolled down a bit
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
+      setShowScrollButton(!isNearBottom && scrollTop > 300);
+    }
+  };
 
   const retryLastMessage = async () => {
     if (!lastError || !lastError.retryParams) return;
@@ -375,7 +387,14 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
+    } else {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   useEffect(() => {
@@ -1355,7 +1374,11 @@ Return ONLY the JSON array.`;
   return (
     <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden font-sans">
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto scroll-smooth relative flex flex-col">
+      <div 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto scroll-smooth relative flex flex-col"
+      >
         {/* Sticky Floating Actions */}
         <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
           {!user ? (
@@ -1447,7 +1470,7 @@ Return ONLY the JSON array.`;
                           {!msg.isStreaming && (
                             <>
                               {/* Action Row */}
-                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-foreground">
+                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-foreground/40">
                                 {[
                                   { icon: <RefreshCcw size={14} />, title: "Regenerate", onClick: () => handleRegenerate(index) },
                                   { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
@@ -1527,10 +1550,10 @@ Return ONLY the JSON array.`;
                             <>
                               <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
                               <div className="absolute -bottom-10 right-0 flex items-center gap-1 opacity-0 group-hover/user:opacity-100 transition-opacity">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/60 hover:text-foreground" title="Edit">
+                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/60 hover:text-foreground" title="Copy">
+                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                                 </button>
                               </div>
@@ -1764,6 +1787,22 @@ Return ONLY the JSON array.`;
 
       {/* Input Area */}
       <div className={`absolute left-0 right-0 p-3 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0 pb-safe'}`}>
+        {/* Scroll to Bottom Button */}
+        <AnimatePresence>
+          {showScrollButton && isChatStarted && (
+            <motion.button
+              initial={{ opacity: 0, y: 10, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.9 }}
+              onClick={scrollToBottom}
+              className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-foreground/60 hover:text-foreground shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
+              title="Scroll to bottom"
+            >
+              <ChevronDown size={20} />
+            </motion.button>
+          )}
+        </AnimatePresence>
+
         {!isChatStarted && (
           <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             {!user ? (

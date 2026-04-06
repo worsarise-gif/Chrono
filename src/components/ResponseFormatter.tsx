@@ -93,7 +93,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
         <span className="text-[11px] font-mono text-foreground uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-[11px] text-foreground hover:opacity-80 transition-opacity font-medium"
+          className="flex items-center gap-1.5 text-[11px] text-foreground/40 hover:text-foreground transition-colors font-medium"
         >
           {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
           {copied ? 'Copied!' : 'Copy'}
@@ -131,20 +131,20 @@ const ThinkingProcess = ({ content }: { content: string }) => {
     <div className="my-4 border border-border/50 rounded-2xl overflow-hidden bg-transparent transition-all duration-300">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-foreground group"
+        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-foreground/40 group"
       >
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center">
             <div className={`absolute inset-0 rounded-full blur-sm transition-opacity duration-500 ${isOpen ? 'bg-blue-500/20 opacity-100' : 'bg-transparent opacity-0'}`} />
             <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 relative z-10 ${isOpen ? 'bg-blue-500 scale-125' : 'bg-foreground/20'}`} />
           </div>
-          <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 text-foreground`}>
+          <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 text-foreground/40`}>
             Thinking Process
           </span>
         </div>
         <ChevronDown 
           size={14} 
-          className={`transition-transform duration-500 ease-in-out ${isOpen ? 'rotate-180 text-foreground' : 'text-foreground'}`} 
+          className={`transition-transform duration-500 ease-in-out ${isOpen ? 'rotate-180 text-foreground/40' : 'text-foreground/40'}`} 
         />
       </button>
       <AnimatePresence initial={false}>
