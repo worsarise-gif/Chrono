@@ -1247,14 +1247,12 @@ Return ONLY the JSON array.`;
                 
                 let formattedSearch = "";
                 try {
-                  const aiFormat = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
-                  const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
-                  formattedSearch = response.text || rawSearchText;
+                  formattedSearch = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: formatPrompt }], 'llama-3.3-70b-versatile', controller.signal);
                 } catch (e: any) {
                   if (e.name !== 'AbortError') {
-                    console.warn("Gemini search formatting failed, falling back to Cerebras:", e);
+                    console.warn("Groq search formatting failed, falling back to Cerebras:", e);
                     try {
-                      formattedSearch = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: formatPrompt }]);
+                      formattedSearch = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: formatPrompt }], controller.signal);
                     } catch (fallbackError) {
                       console.error("Search formatting fallback failed", fallbackError);
                       formattedSearch = rawSearchText;
