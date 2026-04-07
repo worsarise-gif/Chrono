@@ -570,8 +570,8 @@ Session Title Status: "false"`;
         });
         generatedTitle = response.text || '';
       } catch (e) {
-        console.warn("Gemini title generation failed, falling back to Groq:", e);
-        generatedTitle = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: prompt }]);
+        console.warn("Gemini title generation failed, falling back to Cerebras:", e);
+        generatedTitle = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }]);
       }
       
       if (generatedTitle && !generatedTitle.includes("Title already generated")) {
@@ -662,7 +662,7 @@ User Input:
 
 Return ONLY the JSON array.`;
       
-      const result = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: prompt }]);
+      const result = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }]);
       const jsonMatch = result.match(/\[.*\]/s);
       if (jsonMatch) {
         const recs = JSON.parse(jsonMatch[0]);
@@ -1247,10 +1247,12 @@ Return ONLY the JSON array.`;
                 
                 let formattedSearch = "";
                 try {
-                  formattedSearch = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: formatPrompt }], 'llama-3.3-70b-versatile', controller.signal);
+                  const aiFormat = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
+                  const response = await aiFormat.models.generateContent({ model: 'gemini-2.5-flash', contents: formatPrompt });
+                  formattedSearch = response.text || rawSearchText;
                 } catch (e: any) {
                   if (e.name !== 'AbortError') {
-                    console.warn("Groq search formatting failed, falling back to Cerebras:", e);
+                    console.warn("Gemini search formatting failed, falling back to Cerebras:", e);
                     try {
                       formattedSearch = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: formatPrompt }], controller.signal);
                     } catch (fallbackError) {
@@ -1465,7 +1467,7 @@ Return ONLY the JSON array.`;
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group w-full`}
                 >
-                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[95%] md:max-w-[85%] relative`}>
+                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[95%] md:max-w-[85%]' : 'items-start w-full'} relative`}>
                     {msg.role === 'user' && msg.imageUrl && (
                       <motion.div 
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -1637,7 +1639,7 @@ Return ONLY the JSON array.`;
                   transition={{ duration: 0.3, ease: "easeOut" }}
                   className="flex justify-start group w-full"
                 >
-                  <div className="max-w-[95%] md:max-w-[80%] relative bg-transparent text-foreground text-[16px] md:text-[15px] w-full">
+                  <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} isStreaming={true} onImageClick={handleImageClick} />
                     </div>
