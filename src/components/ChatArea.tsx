@@ -1243,7 +1243,7 @@ Return ONLY the JSON array.`;
                 };
                 
                 const rawSearchText = JSON.stringify(searchData.results);
-                const formatPrompt = `You are a helpful AI assistant. Answer the user's query directly and concisely using ONLY the provided search results. Do not include introductory phrases like "Here are the search results" or "Sources for...". Just provide the answer in clean, readable markdown.\n\nUser Query: ${searchWebCallArgs.query}\n\nSearch Results:\n${rawSearchText}`;
+                const formatPrompt = `You are a helpful AI assistant. Answer the user's query directly and concisely using ONLY the provided search results. Do not include introductory phrases like "Here are the search results" or "Sources for...". Just provide the answer in clean, readable markdown. If the search results do not contain the answer, say "I couldn't find the answer in the search results."\n\nUser Query: ${searchWebCallArgs.query}\n\nSearch Results:\n${rawSearchText}`;
                 
                 let formattedSearch = "";
                 try {
@@ -1262,8 +1262,12 @@ Return ONLY the JSON array.`;
                   }
                 }
 
+                if (!formattedSearch || formattedSearch.trim() === "") {
+                  formattedSearch = "I couldn't find a direct answer in the search results.";
+                }
+
                 if (!controller.signal.aborted) {
-                  fullResponse += `\n\n${formattedSearch}\n\n\`\`\`search-results\n${JSON.stringify(searchData)}\n\`\`\`\n\n`;
+                  fullResponse += `${fullResponse.length > 0 ? '\n\n' : ''}${formattedSearch}\n\n\`\`\`search-results\n${JSON.stringify(searchData)}\n\`\`\`\n\n`;
                 }
               } else {
                 fullResponse += `\n\n*No results found for "${searchWebCallArgs.query}".*\n\n`;
@@ -1284,6 +1288,10 @@ Return ONLY the JSON array.`;
           });
           fullResponse = `Error: ${friendlyMessage}`;
         }
+      }
+
+      if (!fullResponse || fullResponse.trim() === "") {
+        fullResponse = "I'm sorry, I couldn't generate a response. Please try again.";
       }
 
       try {
