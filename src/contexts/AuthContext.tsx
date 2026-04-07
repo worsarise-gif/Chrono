@@ -13,22 +13,29 @@ interface UserProfile {
   email: string;
   displayName?: string;
   photoURL?: string;
+  role?: 'admin' | 'user';
   createdAt: any;
   updatedAt?: any;
 }
 
 interface AuthContextType {
   user: (User & { profile?: UserProfile }) | null;
+  isAdmin: boolean;
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true });
+const AuthContext = createContext<AuthContextType>({ user: null, isAdmin: false, loading: true });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<(User & { profile?: UserProfile }) | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const isAdmin = !!(
+    user?.profile?.role === 'admin' || 
+    (user?.email === 'johnkerveelayese@gmail.com' && user?.emailVerified)
+  );
 
   useEffect(() => {
     console.log("AuthProvider: Initializing onAuthStateChanged...");
@@ -125,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, isAdmin, loading }}>
       {children}
     </AuthContext.Provider>
   );

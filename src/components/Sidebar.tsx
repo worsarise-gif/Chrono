@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X } from 'lucide-react';
+import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
@@ -75,7 +75,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
 };
 
 export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpen?: boolean, setIsMobileOpen?: (val: boolean) => void }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { currentChatId, setCurrentChatId } = useChatContext();
   const router = useRouter();
   const pathname = usePathname();
@@ -376,6 +376,27 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               </div>
             )}
           </div>
+
+          {/* Admin Panel Link */}
+          {isAdmin && (
+            <div className="w-[68px] flex-shrink-0 flex items-center justify-center group relative mb-2">
+              <Link 
+                href="/admin"
+                className="w-9 h-9 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-foreground/60 hover:text-foreground transition-all flex-shrink-0 shadow-sm pointer-events-auto"
+                title="Admin Dashboard"
+              >
+                <Shield size={18} />
+              </Link>
+              
+              {/* Admin Tooltip */}
+              {isCollapsed && (
+                <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[72px]">
+                  <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
+                  Admin Dashboard
+                </div>
+              )}
+            </div>
+          )}
 
           {/* User Profile / Login */}
           <div className="w-[68px] flex-shrink-0 flex items-center justify-center group relative">

@@ -265,10 +265,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
                     </div>
                     <div className="p-4 rounded-2xl bg-surface-hover/50 border border-border/50 flex flex-col items-start gap-2">
-                      <Shield size={16} className="text-purple-500" />
+                      <Shield size={16} className={user.profile?.role === 'admin' ? "text-purple-500" : "text-blue-500"} />
                       <div className="text-left">
                         <p className="text-[10px] uppercase tracking-wider font-bold text-foreground/40">Status</p>
-                        <p className="text-xs font-semibold text-foreground">Verified</p>
+                        <p className="text-xs font-semibold text-foreground">
+                          {user.profile?.role === 'admin' ? 'Administrator' : 'Verified User'}
+                        </p>
                       </div>
                     </div>
                   </div>
