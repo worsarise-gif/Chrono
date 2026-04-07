@@ -100,7 +100,7 @@ export async function webSearch(query: string): Promise<string> {
       try {
         const client = tavily({ apiKey: tavilyApiKey });
         const tavilyData = await client.search(query, {
-          searchDepth: "advanced",
+          searchDepth: "basic",
           maxResults: 5
         });
 

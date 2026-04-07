@@ -1242,11 +1242,33 @@ Return ONLY the JSON array.`;
                   results: parsedResults.slice(0, 5)
                 };
                 
+                const rawSearchText = JSON.stringify(searchData.results);
+                const formatPrompt = `You are a helpful AI assistant. Answer the user's query directly and concisely using ONLY the provided search results. Do not include introductory phrases like "Here are the search results" or "Sources for...". Just provide the answer in clean, readable markdown.\n\nUser Query: ${searchWebCallArgs.query}\n\nSearch Results:\n${rawSearchText}`;
+                
+                let formattedSearch = "";
+                try {
+                  const aiFormat = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
+                  const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
+                  formattedSearch = response.text || rawSearchText;
+                } catch (e: any) {
+                  if (e.name !== 'AbortError') {
+                    console.warn("Gemini search formatting failed, falling back to Cerebras:", e);
+                    try {
+                      formattedSearch = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: formatPrompt }]);
+                    } catch (fallbackError) {
+                      console.error("Search formatting fallback failed", fallbackError);
+                      formattedSearch = rawSearchText;
+                    }
+                  } else {
+                    formattedSearch = rawSearchText;
+                  }
+                }
+
                 if (!controller.signal.aborted) {
-                  fullResponse += `\n\n\`\`\`search-results\n${JSON.stringify(searchData)}\n\`\`\`\n\n`;
+                  fullResponse += `\n\n${formattedSearch}\n\n\`\`\`search-results\n${JSON.stringify(searchData)}\n\`\`\`\n\n`;
                 }
               } else {
-                fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
+                fullResponse += `\n\n*No results found for "${searchWebCallArgs.query}".*\n\n`;
               }
               setIsSearching(false);
               setStreamingMessage(fullResponse);
