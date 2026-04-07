@@ -382,7 +382,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
     table({ node, children, ...props }: any) {
       return (
         <div className="w-full overflow-x-auto my-8 rounded-xl border border-border/40 shadow-sm bg-surface/10">
-          <table className="w-full text-sm text-left border-collapse m-0" {...props}>
+          <table className="w-full text-sm text-left border-collapse !m-0" {...props}>
             {children}
           </table>
         </div>
@@ -398,10 +398,10 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
       return <tr className="hover:bg-surface/20 transition-colors duration-150" {...props}>{children}</tr>;
     },
     th({ node, children, ...props }: any) {
-      return <th className="px-5 py-3.5 font-medium text-foreground/80 border-b border-border/60 whitespace-nowrap tracking-wide text-xs uppercase" {...props}>{children}</th>;
+      return <th className="!px-5 !py-3.5 font-medium text-foreground/80 border-b border-border/60 whitespace-nowrap tracking-wide text-xs uppercase" {...props}>{children}</th>;
     },
     td({ node, children, ...props }: any) {
-      return <td className="px-5 py-4 text-foreground/90 align-top leading-relaxed" {...props}>{children}</td>;
+      return <td className="!px-5 !py-4 text-foreground/90 align-top leading-relaxed" {...props}>{children}</td>;
     },
     pre({ node, children, ...props }: any) {
       return <div className="not-prose m-0 p-0 bg-transparent">{children}</div>;
