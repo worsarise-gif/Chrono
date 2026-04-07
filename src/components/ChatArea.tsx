@@ -368,6 +368,27 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
 
+  const getSourcesFromContent = (content: string) => {
+    const sources: { title: string, link: string }[] = [];
+    const searchResultsMatches = content.match(/```search-results\n([\s\S]*?)\n```/g);
+    if (searchResultsMatches) {
+      searchResultsMatches.forEach(match => {
+        try {
+          const jsonStr = match.replace(/```search-results\n/, '').replace(/\n```/, '');
+          const data = JSON.parse(jsonStr);
+          if (data && data.results) {
+            data.results.forEach((res: any) => {
+              sources.push({ title: res.title, link: res.link });
+            });
+          }
+        } catch (e) {
+          // ignore
+        }
+      });
+    }
+    return sources;
+  };
+
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   const handleScroll = () => {
@@ -1216,30 +1237,13 @@ Return ONLY the JSON array.`;
               }
 
               if (Array.isArray(parsedResults) && parsedResults.length > 0) {
-                const rawSearchText = JSON.stringify(parsedResults.slice(0, 5));
-                const formatPrompt = `Organize, clean, and structure the following search results for readable, well-formatted output. Keep the essential facts and links. Return ONLY the formatted markdown.\n\nSearch Results:\n${rawSearchText}`;
+                const searchData = {
+                  query: searchWebCallArgs.query,
+                  results: parsedResults.slice(0, 5)
+                };
                 
-                let formattedSearch = "";
-                try {
-                  const aiFormat = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
-                  const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
-                  formattedSearch = response.text || rawSearchText;
-                } catch (e: any) {
-                  if (e.name !== 'AbortError') {
-                    console.warn("Gemini search formatting failed, falling back to Cerebras:", e);
-                    try {
-                      formattedSearch = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: formatPrompt }]);
-                    } catch (fallbackError) {
-                      console.error("Search formatting fallback failed", fallbackError);
-                      formattedSearch = rawSearchText;
-                    }
-                  } else {
-                    formattedSearch = rawSearchText;
-                  }
-                }
-
                 if (!controller.signal.aborted) {
-                  fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n${formattedSearch}\n\n`;
+                  fullResponse += `\n\n\`\`\`search-results\n${JSON.stringify(searchData)}\n\`\`\`\n\n`;
                 }
               } else {
                 fullResponse += `\n\n### 🔍 Search Results for "${searchWebCallArgs.query}"\n\n*No results found.*\n\n`;
@@ -1505,6 +1509,38 @@ Return ONLY the JSON array.`;
                                     {btn.icon}
                                   </button>
                                 ))}
+
+                                {(() => {
+                                  const sources = getSourcesFromContent(msg.content);
+                                  if (sources.length > 0) {
+                                    return (
+                                      <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border/50">
+                                        <span className="text-[10px] uppercase tracking-wider font-semibold mr-1">Sources</span>
+                                        {sources.slice(0, 3).map((source, i) => {
+                                          let hostname = source.link;
+                                          try { hostname = new URL(source.link).hostname.replace('www.', ''); } catch (e) {}
+                                          return (
+                                            <a 
+                                              key={i} 
+                                              href={source.link} 
+                                              target="_blank" 
+                                              rel="noopener noreferrer"
+                                              className="flex items-center gap-1 px-2 py-1 rounded-md bg-surface-hover hover:bg-surface border border-border/50 transition-colors text-[11px] font-medium text-foreground/80 hover:text-foreground no-underline"
+                                              title={source.title}
+                                            >
+                                              <Globe size={10} className="text-blue-500" />
+                                              <span className="max-w-[80px] truncate">{hostname}</span>
+                                            </a>
+                                          );
+                                        })}
+                                        {sources.length > 3 && (
+                                          <span className="text-[11px] font-medium px-1">+{sources.length - 3}</span>
+                                        )}
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
 
                               {/* Suggestions */}
