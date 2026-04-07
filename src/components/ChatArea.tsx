@@ -97,6 +97,10 @@ const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs
   let buffer = '';
 
   while (!done) {
+    if (signal?.aborted) {
+      reader.cancel();
+      throw new DOMException('Aborted', 'AbortError');
+    }
     const { value, done: doneReading } = await reader.read();
     done = doneReading;
     if (value) {
@@ -167,6 +171,10 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
   let buffer = '';
 
   while (!done) {
+    if (signal?.aborted) {
+      reader.cancel();
+      throw new DOMException('Aborted', 'AbortError');
+    }
     const { value, done: doneReading } = await reader.read();
     done = doneReading;
     if (value) {
@@ -648,6 +656,9 @@ Session Title Status: "false"`;
       abortController.abort();
       setAbortController(null);
     }
+    setIsLoading(false);
+    setIsSearching(false);
+    setIsGeneratingImage(false);
   };
 
   const generateRecommendations = async (messageId: string, userMessage: string, chatId: string | null) => {
@@ -1641,7 +1652,7 @@ Return ONLY the JSON array.`;
                 >
                   <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
                     <div className="w-full">
-                      <ResponseFormatter content={streamingMessage} isStreaming={true} onImageClick={handleImageClick} />
+                      <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
                     </div>
                   </div>
                 </motion.div>
