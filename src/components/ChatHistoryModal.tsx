@@ -1,8 +1,12 @@
 "use client";
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Trash2, MessageSquare, Calendar, Clock, ArrowRight, Edit2 } from 'lucide-react';
+import { X, Search, Trash2, MessageSquare, Calendar, Clock, ArrowRight, Edit2, Check } from 'lucide-react';
 import { format } from 'date-fns';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from '../firebase';
+import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
+import { handleError } from '../utils/errorHandler';
 
 interface Chat {
   id: string;
@@ -16,7 +20,6 @@ interface ChatHistoryModalProps {
   chats: Chat[];
   onSelectChat: (id: string) => void;
   onDeleteChat: (id: string, title: string) => void;
-  onEditChat: (id: string, title: string) => void;
   currentChatId: string | null;
 }
 
@@ -26,10 +29,47 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
   chats,
   onSelectChat,
   onDeleteChat,
-  onEditChat,
   currentChatId
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleStartEdit = (e: React.MouseEvent, chatId: string, currentTitle: string) => {
+    e.stopPropagation();
+    setEditingChatId(chatId);
+    setEditingTitle(currentTitle);
+  };
+
+  const handleSaveTitle = async (e: React.MouseEvent | React.KeyboardEvent, chatId: string) => {
+    e.stopPropagation();
+    const user = auth.currentUser;
+    if (!user || !editingTitle.trim() || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+        title: editingTitle.trim(),
+        updatedAt: serverTimestamp()
+      });
+      setEditingChatId(null);
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/chats/${chatId}`);
+      } catch (e) {
+        handleError(e, "Failed to update chat title");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    setEditingChatId(null);
+    setEditingTitle("");
+  };
 
   const filteredChats = useMemo(() => {
     if (!searchQuery.trim()) return chats;
@@ -138,11 +178,42 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                       <div className="flex flex-col h-full justify-between space-y-4">
                         <div className="space-y-2">
                           <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-semibold text-foreground line-clamp-2 leading-tight">
-                              {chat.title}
-                            </h3>
-                            {currentChatId === chat.id && (
-                              <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                            {editingChatId === chat.id ? (
+                              <div className="flex-1 flex items-center gap-1 bg-surface border border-blue-500/50 rounded-lg p-1" onClick={(e) => e.stopPropagation()}>
+                                <input
+                                  autoFocus
+                                  type="text"
+                                  value={editingTitle}
+                                  onChange={(e) => setEditingTitle(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveTitle(e, chat.id);
+                                    if (e.key === 'Escape') handleCancelEdit(e);
+                                  }}
+                                  className="flex-1 bg-transparent border-none outline-none text-sm text-foreground py-1 px-2"
+                                />
+                                <button 
+                                  onClick={(e) => handleSaveTitle(e, chat.id)}
+                                  disabled={isSaving}
+                                  className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors"
+                                >
+                                  <Check size={16} />
+                                </button>
+                                <button 
+                                  onClick={(e) => handleCancelEdit(e)}
+                                  className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <h3 className="font-semibold text-foreground line-clamp-2 leading-tight">
+                                  {chat.title}
+                                </h3>
+                                {currentChatId === chat.id && (
+                                  <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+                                )}
+                              </>
                             )}
                           </div>
                           <div className="flex items-center gap-3 text-[11px] text-foreground/40 font-medium uppercase tracking-wider">
@@ -159,16 +230,15 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
 
                         <div className="flex items-center justify-between pt-2">
                           <div className="flex items-center gap-1">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditChat(chat.id, chat.title);
-                              }}
-                              className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-all"
-                              title="Rename"
-                            >
-                              <Edit2 size={14} />
-                            </button>
+                            {editingChatId !== chat.id && (
+                              <button
+                                onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
+                                className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-all"
+                                title="Rename"
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                            )}
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();

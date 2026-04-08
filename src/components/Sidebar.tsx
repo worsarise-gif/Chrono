@@ -462,9 +462,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         onDeleteChat={(id, title) => {
           setChatToDelete({ id, title });
         }}
-        onEditChat={(id, title) => {
-          handleStartEdit({ stopPropagation: () => {} } as any, id, title);
-        }}
         currentChatId={currentChatId}
       />
 
