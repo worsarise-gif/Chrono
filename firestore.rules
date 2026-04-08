@@ -95,6 +95,7 @@ service cloud.firestore {
              isValidOptionalString('photoURL', 0, 2048) &&
              isValidOptionalString('role', 0, 20) &&
              isValidOptionalBoolean('hasMigratedImages') &&
+             isValidOptionalBoolean('isBanned') &&
              (!( 'updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
     }
 
@@ -129,7 +130,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isAuthenticated() && isValidUser() && uidUnchanged() && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == 'user')) || isAdmin());
-      allow update: if isAuthenticated() && isValidUser() && uidNotModified() && areImmutableFieldsUnchanged(['uid', 'email', 'createdAt']) && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)) || isAdmin());
+      allow update: if isAuthenticated() && isValidUser() && uidNotModified() && areImmutableFieldsUnchanged(['uid', 'email', 'createdAt']) && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role) && (!('isBanned' in request.resource.data) || request.resource.data.isBanned == resource.data.isBanned)) || isAdmin());
       allow delete: if isOwner(userId) || isAdmin();
 
       match /generated_images/{imageId} {

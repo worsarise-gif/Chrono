@@ -1,11 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Search, MoreVertical, Shield, ShieldOff, Ban, CheckCircle2, MessageSquare, Loader2 } from 'lucide-react';
+import { Search, MoreVertical, Shield, ShieldOff, Ban, CheckCircle2, Loader2 } from 'lucide-react';
+
+const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, setActionMenuOpen }: any) => {
+  const [chatCount, setChatCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const chatsRef = collection(db, 'users', user.id, 'chats');
+    const unsubscribe = onSnapshot(chatsRef, (snapshot) => {
+      setChatCount(snapshot.size);
+    }, (error) => {
+      console.error("Error fetching chats for user", user.id, error);
+      setChatCount(0);
+    });
+    return () => unsubscribe();
+  }, [user.id]);
+
+  return (
+    <tr className={`hover:bg-background/50 transition-colors ${user.isBanned ? 'opacity-60 bg-red-500/5' : ''}`}>
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          {user.photoURL ? (
+            <img src={user.photoURL} alt={user.displayName} className="w-9 h-9 rounded-full object-cover border border-border" />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-foreground/10 flex items-center justify-center text-foreground font-medium border border-border">
+              {user.email?.charAt(0).toUpperCase() || '?'}
+            </div>
+          )}
+          <div>
+            <div className="font-medium text-foreground flex items-center gap-2">
+              {user.displayName || 'Unknown User'}
+              {user.isBanned && <span className="text-[10px] uppercase tracking-wider bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold">Banned</span>}
+            </div>
+            <div className="text-xs text-muted-foreground">{user.email}</div>
+            <div className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{user.id}</div>
+          </div>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' : 'bg-surface border border-border text-muted-foreground'}`}>
+          {user.role === 'admin' ? 'Admin' : 'User'}
+        </span>
+      </td>
+      <td className="px-6 py-4 text-foreground font-medium">
+        {chatCount !== null ? chatCount : <Loader2 className="animate-spin w-4 h-4 text-muted-foreground" />}
+      </td>
+      <td className="px-6 py-4 text-muted-foreground">
+        {user.createdAt?.toDate ? user.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
+      </td>
+      <td className="px-6 py-4 text-right relative">
+        <button 
+          onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
+          className="p-2 hover:bg-border rounded-md text-muted-foreground transition-colors"
+        >
+          <MoreVertical size={16} />
+        </button>
+        
+        {actionMenuOpen === user.id && (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setActionMenuOpen(null)}></div>
+            <div className="absolute right-8 top-10 w-48 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-200">
+              <button 
+                onClick={() => handleToggleAdmin(user.id, user.role)}
+                className="w-full text-left px-4 py-2.5 text-sm hover:bg-background flex items-center gap-2 text-foreground transition-colors"
+              >
+                {user.role === 'admin' ? <ShieldOff size={14} /> : <Shield size={14} />}
+                {user.role === 'admin' ? 'Revoke Admin' : 'Make Admin'}
+              </button>
+              <button 
+                onClick={() => handleToggleBan(user.id, user.isBanned)}
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-background flex items-center gap-2 transition-colors ${user.isBanned ? 'text-green-500' : 'text-red-500'}`}
+              >
+                {user.isBanned ? <CheckCircle2 size={14} /> : <Ban size={14} />}
+                {user.isBanned ? 'Unban User' : 'Ban User'}
+              </button>
+            </div>
+          </>
+        )}
+      </td>
+    </tr>
+  );
+};
 
 export default function UsersTab() {
   const [users, setUsers] = useState<any[]>([]);
-  const [chatCounts, setChatCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
@@ -20,16 +99,6 @@ export default function UsersTab() {
       }));
       setUsers(usersData);
       setLoading(false);
-
-      // Fetch chat counts for each user
-      snapshot.docs.forEach(async (userDoc) => {
-        try {
-          const chatsSnap = await getDocs(collection(db, 'users', userDoc.id, 'chats'));
-          setChatCounts(prev => ({ ...prev, [userDoc.id]: chatsSnap.size }));
-        } catch (error) {
-          console.error("Error fetching chats for user", userDoc.id, error);
-        }
-      });
     });
     return () => unsubscribe();
   }, []);
@@ -107,68 +176,14 @@ export default function UsersTab() {
                 </tr>
               ) : (
                 filteredUsers.map((user) => (
-                  <tr key={user.id} className={`hover:bg-background/50 transition-colors ${user.isBanned ? 'opacity-60 bg-red-500/5' : ''}`}>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        {user.photoURL ? (
-                          <img src={user.photoURL} alt={user.displayName} className="w-9 h-9 rounded-full object-cover border border-border" />
-                        ) : (
-                          <div className="w-9 h-9 rounded-full bg-foreground/10 flex items-center justify-center text-foreground font-medium border border-border">
-                            {user.email?.charAt(0).toUpperCase() || '?'}
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-medium text-foreground flex items-center gap-2">
-                            {user.displayName || 'Unknown User'}
-                            {user.isBanned && <span className="text-[10px] uppercase tracking-wider bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold">Banned</span>}
-                          </div>
-                          <div className="text-xs text-muted-foreground">{user.email}</div>
-                          <div className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{user.id}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' : 'bg-surface border border-border text-muted-foreground'}`}>
-                        {user.role === 'admin' ? 'Admin' : 'User'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-foreground font-medium">
-                      {chatCounts[user.id] !== undefined ? chatCounts[user.id] : <Loader2 className="animate-spin w-4 h-4 text-muted-foreground" />}
-                    </td>
-                    <td className="px-6 py-4 text-muted-foreground">
-                      {user.createdAt?.toDate ? user.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 text-right relative">
-                      <button 
-                        onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
-                        className="p-2 hover:bg-border rounded-md text-muted-foreground transition-colors"
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-                      
-                      {actionMenuOpen === user.id && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setActionMenuOpen(null)}></div>
-                          <div className="absolute right-8 top-10 w-48 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-200">
-                            <button 
-                              onClick={() => handleToggleAdmin(user.id, user.role)}
-                              className="w-full text-left px-4 py-2.5 text-sm hover:bg-background flex items-center gap-2 text-foreground transition-colors"
-                            >
-                              {user.role === 'admin' ? <ShieldOff size={14} /> : <Shield size={14} />}
-                              {user.role === 'admin' ? 'Revoke Admin' : 'Make Admin'}
-                            </button>
-                            <button 
-                              onClick={() => handleToggleBan(user.id, user.isBanned)}
-                              className={`w-full text-left px-4 py-2.5 text-sm hover:bg-background flex items-center gap-2 transition-colors ${user.isBanned ? 'text-green-500' : 'text-red-500'}`}
-                            >
-                              {user.isBanned ? <CheckCircle2 size={14} /> : <Ban size={14} />}
-                              {user.isBanned ? 'Unban User' : 'Ban User'}
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </td>
-                  </tr>
+                  <UserRow 
+                    key={user.id} 
+                    user={user} 
+                    handleToggleAdmin={handleToggleAdmin} 
+                    handleToggleBan={handleToggleBan} 
+                    actionMenuOpen={actionMenuOpen} 
+                    setActionMenuOpen={setActionMenuOpen} 
+                  />
                 ))
               )}
             </tbody>

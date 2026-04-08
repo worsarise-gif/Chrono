@@ -14,6 +14,7 @@ interface UserProfile {
   displayName?: string;
   photoURL?: string;
   role?: 'admin' | 'user';
+  isBanned?: boolean;
   createdAt: any;
   updatedAt?: any;
 }
@@ -21,10 +22,11 @@ interface UserProfile {
 interface AuthContextType {
   user: (User & { profile?: UserProfile }) | null;
   isAdmin: boolean;
+  isBanned: boolean;
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, isAdmin: false, loading: true });
+const AuthContext = createContext<AuthContextType>({ user: null, isAdmin: false, isBanned: false, loading: true });
 
 export const useAuth = () => useContext(AuthContext);
 
@@ -36,6 +38,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user?.profile?.role === 'admin' || 
     (user?.email === 'johnkerveelayese@gmail.com' && user?.emailVerified)
   );
+
+  const isBanned = !!user?.profile?.isBanned;
 
   useEffect(() => {
     console.log("AuthProvider: Initializing onAuthStateChanged...");
@@ -132,7 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, loading }}>
+    <AuthContext.Provider value={{ user, isAdmin, isBanned, loading }}>
       {children}
     </AuthContext.Provider>
   );

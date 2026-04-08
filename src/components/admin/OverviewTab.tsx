@@ -59,7 +59,7 @@ export default function OverviewTab() {
 
         usersData.forEach(u => {
           if (u.createdAt) {
-            const d = new Date(u.createdAt);
+            const d = u.createdAt?.toDate ? u.createdAt.toDate() : new Date(u.createdAt);
             const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             if (dataMap.has(dateStr)) {
               dataMap.get(dateStr).newUsers += 1;
@@ -69,7 +69,7 @@ export default function OverviewTab() {
 
         allChats.forEach(c => {
           if (c.createdAt) {
-            const d = new Date(c.createdAt);
+            const d = c.createdAt?.toDate ? c.createdAt.toDate() : new Date(c.createdAt);
             const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
             if (dataMap.has(dateStr)) {
               dataMap.get(dateStr).newChats += 1;
