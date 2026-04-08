@@ -81,6 +81,10 @@ service cloud.firestore {
       return !(field in request.resource.data) || request.resource.data[field] is bool;
     }
 
+    function isValidOptionalInteger(field) {
+      return !(field in request.resource.data) || request.resource.data[field] is int;
+    }
+
     function areImmutableFieldsUnchanged(fields) {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
     }
@@ -98,6 +102,7 @@ service cloud.firestore {
              isValidOptionalString('role', 0, 20) &&
              isValidOptionalBoolean('hasMigratedImages') &&
              isValidOptionalBoolean('isBanned') &&
+             isValidOptionalInteger('totalMessages') &&
              (!( 'updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
     }
 
@@ -114,6 +119,7 @@ service cloud.firestore {
              request.resource.data.role in ['user', 'model'] &&
              request.resource.data.content is string && request.resource.data.content.size() >= 0 && request.resource.data.content.size() < 1048576 && // 1MB limit
              request.resource.data.createdAt is timestamp &&
+             isValidOptionalString('uid', 0, 128) &&
              isValidOptionalBoolean('hasImage') &&
              isValidOptionalBoolean('hasAudio') &&
              isValidOptionalBoolean('isGeneratedImage') &&

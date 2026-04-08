@@ -10,6 +10,7 @@
         "displayName": { "type": "string", "description": "User display name" },
         "photoURL": { "type": "string", "description": "User profile photo URL" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Account creation time" },
+        "totalMessages": { "type": "integer", "description": "Total number of messages sent/received" },
         "hasMigratedImages": { "type": "boolean", "description": "Whether the user has migrated old images" }
       },
       "required": ["uid", "email", "createdAt"]
@@ -33,6 +34,7 @@
       "type": "object",
       "properties": {
         "id": { "type": "string", "description": "Message ID" },
+        "uid": { "type": "string", "description": "User ID of the chat owner" },
         "role": { "type": "string", "enum": ["user", "model"], "description": "Sender role" },
         "content": { "type": "string", "description": "Message text content" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Message creation time" },

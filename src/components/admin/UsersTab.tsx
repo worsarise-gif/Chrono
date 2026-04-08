@@ -48,6 +48,9 @@ const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, set
       <td className="px-6 py-4 text-foreground font-medium">
         {chatCount !== null ? chatCount : <Loader2 className="animate-spin w-4 h-4 text-muted-foreground" />}
       </td>
+      <td className="px-6 py-4 text-foreground font-medium">
+        {user.totalMessages !== undefined ? user.totalMessages : 0}
+      </td>
       <td className="px-6 py-4 text-muted-foreground">
         {user.createdAt?.toDate ? user.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
       </td>
@@ -175,6 +178,7 @@ export default function UsersTab() {
                 <th className="px-6 py-4 font-medium">User</th>
                 <th className="px-6 py-4 font-medium">Role</th>
                 <th className="px-6 py-4 font-medium">Chats</th>
+                <th className="px-6 py-4 font-medium">Messages</th>
                 <th className="px-6 py-4 font-medium">Joined</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
@@ -186,13 +190,14 @@ export default function UsersTab() {
                     <td className="px-6 py-4"><div className="h-10 w-48 bg-border/50 rounded-md"></div></td>
                     <td className="px-6 py-4"><div className="h-5 w-16 bg-border/50 rounded-md"></div></td>
                     <td className="px-6 py-4"><div className="h-5 w-12 bg-border/50 rounded-md"></div></td>
+                    <td className="px-6 py-4"><div className="h-5 w-12 bg-border/50 rounded-md"></div></td>
                     <td className="px-6 py-4"><div className="h-5 w-24 bg-border/50 rounded-md"></div></td>
                     <td className="px-6 py-4 text-right"><div className="h-8 w-8 bg-border/50 rounded-md ml-auto"></div></td>
                   </tr>
                 ))
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">No users found matching your search.</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">No users found matching your search.</td>
                 </tr>
               ) : (
                 filteredUsers.map((user) => (

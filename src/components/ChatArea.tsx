@@ -9,7 +9,7 @@ import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { db, storage, loginWithGoogle, auth } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
@@ -805,6 +805,7 @@ Return ONLY the JSON array.`;
     let userMessageRef: any = null;
     const messageData: any = {
       role: 'user',
+      uid: user?.uid || null,
       content: userMessage,
       hasImage: !!currentImage,
       createdAt: user ? serverTimestamp() : new Date()
@@ -818,6 +819,9 @@ Return ONLY the JSON array.`;
         userMessageRef = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), messageData);
         await updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), {
           updatedAt: serverTimestamp()
+        });
+        await updateDoc(doc(db, 'users', user.uid), {
+          totalMessages: increment(1)
         });
       } catch (error) {
         setIsLoading(false);
@@ -940,12 +944,16 @@ Return ONLY the JSON array.`;
       try {
         await addDoc(collection(db, 'users', user!.uid, 'chats', chatId!, 'messages'), {
           role: 'model',
+          uid: user!.uid,
           content: finalImageResponse,
           createdAt: serverTimestamp(),
           isGeneratedImage: true
         });
         await updateDoc(doc(db, 'users', user!.uid, 'chats', chatId!), {
           updatedAt: serverTimestamp()
+        });
+        await updateDoc(doc(db, 'users', user!.uid), {
+          totalMessages: increment(1)
         });
 
         // Save to dedicated images collection for the gallery
@@ -1156,12 +1164,16 @@ Return ONLY the JSON array.`;
         try {
           const ref = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), {
             role: 'model',
+            uid: user.uid,
             content: '',
             isStreaming: true,
             createdAt: serverTimestamp()
           });
           aiMessageRef = ref;
           setCurrentStreamingMessageId(ref.id);
+          await updateDoc(doc(db, 'users', user.uid), {
+            totalMessages: increment(1)
+          });
         } catch (e) {
           console.error("Failed to create placeholder message", e);
         }
@@ -1355,16 +1367,21 @@ Return ONLY the JSON array.`;
           if (aiMessageRef) {
             await updateDoc(aiMessageRef, {
               content: fullResponse,
+              uid: user.uid,
               isStreaming: false
             });
           } else {
             const messageData: any = {
               role: 'model',
+              uid: user.uid,
               content: fullResponse,
               createdAt: serverTimestamp()
             };
             const docRef = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), messageData);
             finalMessageId = docRef.id;
+            await updateDoc(doc(db, 'users', user.uid), {
+              totalMessages: increment(1)
+            });
           }
 
           await updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), {
