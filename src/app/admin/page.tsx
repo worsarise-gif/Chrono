@@ -53,10 +53,10 @@ export default function AdminDashboard() {
 
   return (
     <AdminGuard>
-      <div className="min-h-screen bg-background flex flex-col md:flex-row font-sans">
+      <div className="h-screen bg-background flex flex-col md:flex-row font-sans overflow-hidden">
         
         {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface z-50">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface z-50 shrink-0">
           <div className="flex items-center gap-2">
             <PlanetLogo className="w-6 h-6 text-foreground" />
             <span className="font-bold tracking-tight text-foreground">Admin</span>
@@ -67,13 +67,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Sidebar */}
-        <aside className={`fixed md:sticky top-0 left-0 h-screen w-64 bg-surface border-r border-border flex flex-col z-40 transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <aside className={`fixed md:relative top-0 left-0 h-full w-64 bg-surface border-r border-border flex flex-col z-40 transition-transform duration-300 ease-in-out shrink-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 hidden md:flex items-center gap-3">
             <PlanetLogo className="w-8 h-8 text-foreground" />
             <span className="text-xl font-bold tracking-tight text-foreground">Admin</span>
           </div>
           
-          <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
+          <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto sidebar-scroll">
             {navItems.map((item) => (
               <button 
                 key={item.id}
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
             ))}
           </nav>
 
-          <div className="p-4 border-t border-border space-y-2">
+          <div className="p-4 border-t border-border space-y-2 shrink-0">
             <Link 
               href="/"
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-foreground bg-surface border border-border hover:bg-background transition-colors"
@@ -107,8 +107,10 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 p-6 md:p-10 lg:p-12 overflow-y-auto w-full max-w-[1600px] mx-auto">
-          {renderTabContent()}
+        <main className="flex-1 h-full overflow-y-auto p-6 md:p-10 lg:p-12 w-full">
+          <div className="max-w-[1600px] mx-auto">
+            {renderTabContent()}
+          </div>
         </main>
 
         {/* Mobile Overlay */}
