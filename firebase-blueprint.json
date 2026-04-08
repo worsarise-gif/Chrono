@@ -21,6 +21,7 @@
       "properties": {
         "id": { "type": "string", "description": "Chat ID" },
         "title": { "type": "string", "description": "Chat title" },
+        "isPinned": { "type": "boolean", "description": "Whether the chat is pinned" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Creation time" },
         "updatedAt": { "type": "string", "format": "date-time", "description": "Last update time" }
       },

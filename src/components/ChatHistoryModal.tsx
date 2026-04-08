@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Trash2, MessageSquare, Calendar, Clock, ArrowRight, Edit2, Check } from 'lucide-react';
+import { X, Search, Trash2, MessageSquare, Calendar, Clock, ArrowRight, Edit2, Check, Pin, PinOff } from 'lucide-react';
 import { format } from 'date-fns';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase';
@@ -12,6 +12,7 @@ interface Chat {
   id: string;
   title: string;
   updatedAt: any;
+  isPinned?: boolean;
 }
 
 interface ChatHistoryModalProps {
@@ -71,12 +72,46 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
     setEditingTitle("");
   };
 
+  const handleTogglePin = async (e: React.MouseEvent, chatId: string, currentPinned: boolean) => {
+    e.stopPropagation();
+    const user = auth.currentUser;
+    if (!user || isSaving) return;
+
+    setIsSaving(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+        isPinned: !currentPinned,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/chats/${chatId}`);
+      } catch (e) {
+        handleError(e, "Failed to toggle pin status");
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const filteredChats = useMemo(() => {
-    if (!searchQuery.trim()) return chats;
-    const query = searchQuery.toLowerCase();
-    return chats.filter(chat => 
-      chat.title.toLowerCase().includes(query)
-    );
+    let result = chats;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = chats.filter(chat => 
+        chat.title.toLowerCase().includes(query)
+      );
+    }
+
+    // Sort by isPinned first, then updatedAt
+    return [...result].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      
+      const timeA = a.updatedAt?.toDate?.()?.getTime() || 0;
+      const timeB = b.updatedAt?.toDate?.()?.getTime() || 0;
+      return timeB - timeA;
+    });
   }, [chats, searchQuery]);
 
   const formatDate = (timestamp: any) => {
@@ -207,8 +242,11 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                               </div>
                             ) : (
                               <>
-                                <h3 className="font-semibold text-foreground line-clamp-2 leading-tight">
+                                <h3 className="font-semibold text-foreground line-clamp-2 leading-tight flex items-center gap-2">
                                   {chat.title}
+                                  {chat.isPinned && (
+                                    <Pin size={12} className="text-blue-500 fill-blue-500/20 shrink-0" />
+                                  )}
                                 </h3>
                                 {currentChatId === chat.id && (
                                   <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
@@ -231,13 +269,26 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                         <div className="flex items-center justify-between pt-2">
                           <div className="flex items-center gap-1">
                             {editingChatId !== chat.id && (
-                              <button
-                                onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
-                                className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-all"
-                                title="Rename"
-                              >
-                                <Edit2 size={14} />
-                              </button>
+                              <>
+                                <button
+                                  onClick={(e) => handleTogglePin(e, chat.id, !!chat.isPinned)}
+                                  className={`p-2 rounded-lg transition-all ${
+                                    chat.isPinned 
+                                      ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' 
+                                      : 'hover:bg-foreground/10 text-foreground/40 hover:text-foreground'
+                                  }`}
+                                  title={chat.isPinned ? "Unpin" : "Pin"}
+                                >
+                                  {chat.isPinned ? <PinOff size={14} /> : <Pin size={14} />}
+                                </button>
+                                <button
+                                  onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
+                                  className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-all"
+                                  title="Rename"
+                                >
+                                  <Edit2 size={14} />
+                                </button>
+                              </>
                             )}
                             <button
                               onClick={(e) => {

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield } from 'lucide-react';
+import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield, Pin, PinOff } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,6 +21,7 @@ interface Chat {
   id: string;
   title: string;
   updatedAt: any;
+  isPinned?: boolean;
 }
 
 const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: any) => {
@@ -154,6 +155,25 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
     setEditingTitle("");
   };
 
+  const handleTogglePin = async (e: React.MouseEvent, chatId: string, currentPinned: boolean) => {
+    e.stopPropagation();
+    if (!user) return;
+    
+    try {
+      await updateDoc(doc(db, 'users', user.uid, 'chats', chatId), {
+        isPinned: !currentPinned,
+        updatedAt: serverTimestamp()
+      });
+      setActiveMenuId(null);
+    } catch (error) {
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}/chats/${chatId}`);
+      } catch (e) {
+        handleError(e, "Failed to toggle pin status");
+      }
+    }
+  };
+
   useEffect(() => {
     if (!user) {
       setChats([]);
@@ -172,6 +192,17 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       snapshot.forEach((doc) => {
         chatData.push({ id: doc.id, ...doc.data() } as Chat);
       });
+      
+      // Sort by isPinned first, then updatedAt
+      chatData.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        
+        const timeA = a.updatedAt?.toDate?.()?.getTime() || 0;
+        const timeB = b.updatedAt?.toDate?.()?.getTime() || 0;
+        return timeB - timeA;
+      });
+
       setChats(chatData);
       setIsLoadingChats(false);
     }, (error) => {
@@ -295,6 +326,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface' : 'text-foreground/60 hover:bg-surface hover:text-foreground'}`}
                           >
                             {chat.title}
+                            {chat.isPinned && (
+                              <Pin size={10} className="text-blue-500 fill-blue-500/20" />
+                            )}
                           </button>
                           
                           {/* Chat Title Full Visibility on Hover */}
@@ -322,6 +356,13 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                 onClick={() => setActiveMenuId(null)}
                               />
                               <div className="absolute right-2 top-10 bg-surface border border-border rounded-lg shadow-xl py-1 z-[101] min-w-[120px]">
+                                <button
+                                  onClick={(e) => handleTogglePin(e, chat.id, !!chat.isPinned)}
+                                  className="w-full text-left px-3 py-1.5 text-[12px] text-foreground/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
+                                >
+                                  {chat.isPinned ? <PinOff size={12} /> : <Pin size={12} />}
+                                  {chat.isPinned ? 'Unpin' : 'Pin'}
+                                </button>
                                 <button
                                   onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
                                   className="w-full text-left px-3 py-1.5 text-[12px] text-foreground/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
