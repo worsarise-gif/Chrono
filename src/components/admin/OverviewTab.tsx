@@ -1,21 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Activity, Users, MessageSquare, Zap } from 'lucide-react';
-
-const generateMockData = (days: number) => {
-  const data = [];
-  const now = new Date();
-  for (let i = days; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    data.push({
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      users: Math.floor(Math.random() * 500) + 100,
-      messages: Math.floor(Math.random() * 5000) + 1000,
-    });
-  }
-  return data;
-};
+import { Activity, Users, MessageSquare, Zap, Loader2 } from 'lucide-react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 const modelUsageData = [
   { name: 'Gemini 2.5 Flash', usage: 45000, limit: 50000 },
@@ -27,7 +14,80 @@ const modelUsageData = [
 
 export default function OverviewTab() {
   const [timeRange, setTimeRange] = useState<7 | 30 | 90>(7);
-  const chartData = useMemo(() => generateMockData(timeRange), [timeRange]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [stats, setStats] = useState({ totalUsers: 0, totalChats: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+
+    const fetchStats = async () => {
+      try {
+        const usersSnap = await getDocs(collection(db, 'users'));
+        const usersData = usersSnap.docs.map(doc => ({ id: doc.id, ...(doc.data() as any) }));
+        
+        let totalChats = 0;
+        const allChats: any[] = [];
+        
+        // Fetch all chats to build accurate charts
+        await Promise.all(usersSnap.docs.map(async (userDoc) => {
+          try {
+            const chatsSnap = await getDocs(collection(db, 'users', userDoc.id, 'chats'));
+            totalChats += chatsSnap.size;
+            chatsSnap.forEach(chatDoc => {
+              allChats.push(chatDoc.data());
+            });
+          } catch (e) {
+            console.error("Error fetching chats for user", userDoc.id, e);
+          }
+        }));
+
+        if (!isMounted) return;
+
+        setStats({ totalUsers: usersSnap.size, totalChats });
+
+        // Build chart data
+        const dataMap = new Map();
+        const now = new Date();
+        for (let i = timeRange; i >= 0; i--) {
+          const d = new Date(now);
+          d.setDate(d.getDate() - i);
+          const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          dataMap.set(dateStr, { date: dateStr, newUsers: 0, newChats: 0 });
+        }
+
+        usersData.forEach(u => {
+          if (u.createdAt) {
+            const d = new Date(u.createdAt);
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (dataMap.has(dateStr)) {
+              dataMap.get(dateStr).newUsers += 1;
+            }
+          }
+        });
+
+        allChats.forEach(c => {
+          if (c.createdAt) {
+            const d = new Date(c.createdAt);
+            const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            if (dataMap.has(dateStr)) {
+              dataMap.get(dateStr).newChats += 1;
+            }
+          }
+        });
+
+        setChartData(Array.from(dataMap.values()));
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchStats();
+    return () => { isMounted = false; };
+  }, [timeRange]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -50,60 +110,94 @@ export default function OverviewTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { title: 'Total Active Users', value: '12,493', change: '+14%', icon: Users, color: 'text-blue-500' },
-          { title: 'Messages Sent', value: '1.2M', change: '+22%', icon: MessageSquare, color: 'text-green-500' },
-          { title: 'Avg Response Time', value: '840ms', change: '-5%', icon: Zap, color: 'text-yellow-500' },
-          { title: 'System Health', value: '99.9%', change: 'Stable', icon: Activity, color: 'text-emerald-500' },
-        ].map((stat, i) => (
-          <div key={i} className="bg-surface border border-border rounded-xl p-5 shadow-sm">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                <h3 className="text-2xl font-bold text-foreground mt-1">{stat.value}</h3>
-              </div>
-              <div className={`p-2 rounded-lg bg-background border border-border ${stat.color}`}>
-                <stat.icon size={18} />
-              </div>
+        <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+              <h3 className="text-2xl font-bold text-foreground mt-1">
+                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-muted-foreground" /> : stats.totalUsers}
+              </h3>
             </div>
-            <p className="text-xs font-medium text-muted-foreground mt-4">
-              <span className={stat.change.startsWith('+') ? 'text-green-500' : stat.change.startsWith('-') ? 'text-blue-500' : 'text-emerald-500'}>
-                {stat.change}
-              </span> from last period
-            </p>
+            <div className="p-2 rounded-lg bg-background border border-border text-blue-500">
+              <Users size={18} />
+            </div>
           </div>
-        ))}
+        </div>
+
+        <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Total Chats</p>
+              <h3 className="text-2xl font-bold text-foreground mt-1">
+                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-muted-foreground" /> : stats.totalChats}
+              </h3>
+            </div>
+            <div className="p-2 rounded-lg bg-background border border-border text-green-500">
+              <MessageSquare size={18} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Avg Response Time</p>
+              <h3 className="text-2xl font-bold text-foreground mt-1">840ms</h3>
+            </div>
+            <div className="p-2 rounded-lg bg-background border border-border text-yellow-500">
+              <Zap size={18} />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">System Health</p>
+              <h3 className="text-2xl font-bold text-foreground mt-1">99.9%</h3>
+            </div>
+            <div className="p-2 rounded-lg bg-background border border-border text-emerald-500">
+              <Activity size={18} />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-surface border border-border rounded-xl p-5 shadow-sm">
-          <h3 className="text-base font-semibold text-foreground mb-6">User Activity & Message Volume</h3>
+          <h3 className="text-base font-semibold text-foreground mb-6">User Growth & Chat Volume</h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorMessages" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                <XAxis dataKey="date" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="left" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-foreground)' }}
-                  itemStyle={{ color: 'var(--color-foreground)' }}
-                />
-                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Area yAxisId="left" type="monotone" dataKey="users" name="Active Users" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" />
-                <Area yAxisId="right" type="monotone" dataKey="messages" name="Messages" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorMessages)" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div className="w-full h-full flex items-center justify-center">
+                <Loader2 className="animate-spin text-muted-foreground w-8 h-8" />
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorMessages" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                  <XAxis dataKey="date" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis yAxisId="left" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <YAxis yAxisId="right" orientation="right" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-foreground)' }}
+                    itemStyle={{ color: 'var(--color-foreground)' }}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                  <Area yAxisId="left" type="monotone" dataKey="newUsers" name="New Users" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" />
+                  <Area yAxisId="right" type="monotone" dataKey="newChats" name="New Chats" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorMessages)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Search, MoreVertical, Shield, ShieldOff, Ban, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { Search, MoreVertical, Shield, ShieldOff, Ban, CheckCircle2, MessageSquare, Loader2 } from 'lucide-react';
 
 export default function UsersTab() {
   const [users, setUsers] = useState<any[]>([]);
+  const [chatCounts, setChatCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
@@ -12,20 +13,23 @@ export default function UsersTab() {
   useEffect(() => {
     const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const usersData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        // Mocking some data that might not be in the basic schema yet for demo purposes
-        return {
-          id: doc.id,
-          ...data,
-          status: Math.random() > 0.7 ? 'offline' : Math.random() > 0.5 ? 'online' : 'idle',
-          messageCount: Math.floor(Math.random() * 500),
-          lastLogin: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
-          isBanned: data.isBanned || false,
-        };
-      });
+      const usersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        isBanned: doc.data().isBanned || false,
+      }));
       setUsers(usersData);
       setLoading(false);
+
+      // Fetch chat counts for each user
+      snapshot.docs.forEach(async (userDoc) => {
+        try {
+          const chatsSnap = await getDocs(collection(db, 'users', userDoc.id, 'chats'));
+          setChatCounts(prev => ({ ...prev, [userDoc.id]: chatsSnap.size }));
+        } catch (error) {
+          console.error("Error fetching chats for user", userDoc.id, error);
+        }
+      });
     });
     return () => unsubscribe();
   }, []);
@@ -55,15 +59,6 @@ export default function UsersTab() {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    switch(status) {
-      case 'online': return <CheckCircle2 size={14} className="text-green-500" />;
-      case 'idle': return <Clock size={14} className="text-yellow-500" />;
-      case 'offline': return <XCircle size={14} className="text-muted-foreground" />;
-      default: return null;
-    }
-  };
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -89,9 +84,8 @@ export default function UsersTab() {
             <thead className="bg-background border-b border-border text-muted-foreground">
               <tr>
                 <th className="px-6 py-4 font-medium">User</th>
-                <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium">Role</th>
-                <th className="px-6 py-4 font-medium">Messages</th>
+                <th className="px-6 py-4 font-medium">Chats</th>
                 <th className="px-6 py-4 font-medium">Joined</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
@@ -102,7 +96,6 @@ export default function UsersTab() {
                   <tr key={i} className="animate-pulse">
                     <td className="px-6 py-4"><div className="h-10 w-48 bg-border/50 rounded-md"></div></td>
                     <td className="px-6 py-4"><div className="h-5 w-16 bg-border/50 rounded-md"></div></td>
-                    <td className="px-6 py-4"><div className="h-5 w-16 bg-border/50 rounded-md"></div></td>
                     <td className="px-6 py-4"><div className="h-5 w-12 bg-border/50 rounded-md"></div></td>
                     <td className="px-6 py-4"><div className="h-5 w-24 bg-border/50 rounded-md"></div></td>
                     <td className="px-6 py-4 text-right"><div className="h-8 w-8 bg-border/50 rounded-md ml-auto"></div></td>
@@ -110,7 +103,7 @@ export default function UsersTab() {
                 ))
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">No users found matching your search.</td>
+                  <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">No users found matching your search.</td>
                 </tr>
               ) : (
                 filteredUsers.map((user) => (
@@ -135,21 +128,15 @@ export default function UsersTab() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 capitalize text-xs font-medium">
-                        {getStatusIcon(user.status)}
-                        <span className={user.status === 'online' ? 'text-green-500' : user.status === 'idle' ? 'text-yellow-500' : 'text-muted-foreground'}>
-                          {user.status}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' : 'bg-surface border border-border text-muted-foreground'}`}>
                         {user.role === 'admin' ? 'Admin' : 'User'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-foreground font-medium">{user.messageCount}</td>
+                    <td className="px-6 py-4 text-foreground font-medium">
+                      {chatCounts[user.id] !== undefined ? chatCounts[user.id] : <Loader2 className="animate-spin w-4 h-4 text-muted-foreground" />}
+                    </td>
                     <td className="px-6 py-4 text-muted-foreground">
-                      {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {user.createdAt?.toDate ? user.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-right relative">
                       <button 
