@@ -48,8 +48,10 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "johnkerveelayese@gmail.com" && request.auth.token.email_verified == true)); // Default admin
+        ( (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+          (request.auth.token.email == "johnkerveelayese@gmail.com") ); // Default admin
     }
 
     function uidUnchanged() {
@@ -90,7 +92,7 @@ service cloud.firestore {
       return hasRequiredFields(['uid', 'email', 'createdAt']) &&
              request.resource.data.uid is string && request.resource.data.uid.size() > 0 && request.resource.data.uid.size() < 128 &&
              request.resource.data.email is string && isValidEmail(request.resource.data.email) &&
-             request.resource.data.createdAt is timestamp &&
+             (request.resource.data.createdAt is timestamp || request.resource.data.createdAt is string) &&
              isValidOptionalString('displayName', 0, 100) &&
              isValidOptionalString('photoURL', 0, 2048) &&
              isValidOptionalString('role', 0, 20) &&

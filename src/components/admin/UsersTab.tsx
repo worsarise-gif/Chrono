@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Search, MoreVertical, Shield, ShieldOff, Ban, CheckCircle2, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { handleFirestoreError, OperationType } from '../../utils/firebaseErrorHandler';
 
 const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, setActionMenuOpen }: any) => {
   const [chatCount, setChatCount] = useState<number | null>(null);
@@ -111,20 +113,38 @@ export default function UsersTab() {
 
   const handleToggleBan = async (userId: string, currentStatus: boolean) => {
     try {
-      await updateDoc(doc(db, 'users', userId), { isBanned: !currentStatus });
+      await updateDoc(doc(db, 'users', userId), { 
+        isBanned: !currentStatus,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(currentStatus ? 'User unbanned successfully' : 'User banned successfully');
       setActionMenuOpen(null);
     } catch (error) {
       console.error("Error updating ban status", error);
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
+      } catch (e: any) {
+        toast.error(`Failed to update ban status: ${e.message}`);
+      }
     }
   };
 
   const handleToggleAdmin = async (userId: string, currentRole: string) => {
     try {
       const newRole = currentRole === 'admin' ? 'user' : 'admin';
-      await updateDoc(doc(db, 'users', userId), { role: newRole });
+      await updateDoc(doc(db, 'users', userId), { 
+        role: newRole,
+        updatedAt: serverTimestamp()
+      });
+      toast.success(`User role updated to ${newRole}`);
       setActionMenuOpen(null);
     } catch (error) {
       console.error("Error updating role", error);
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
+      } catch (e: any) {
+        toast.error(`Failed to update role: ${e.message}`);
+      }
     }
   };
 
