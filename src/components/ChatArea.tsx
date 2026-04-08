@@ -32,111 +32,124 @@ interface Message {
 
 type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
 
-const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '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';
-const CEREBRAS_API_KEY = process.env.NEXT_PUBLIC_CEREBRAS_API_KEY || 'csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c';
+import { getApiKeys, withFallback } from '../lib/apiFallback';
 
 const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal) => {
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      url: 'https://api.cerebras.ai/v1/chat/completions',
-      apiKey: CEREBRAS_API_KEY,
-      model,
-      messages,
-      stream: false,
-      temperature: 0.3
-    }),
-    signal
-  });
-  if (!res.ok) {
-    const errorText = await res.text();
-    try {
-      const errorJson = JSON.parse(errorText);
-      throw new Error(errorJson.error || errorJson.message || `Cerebras Error ${res.status}: ${errorText}`);
-    } catch {
-      throw new Error(`Cerebras Error ${res.status}: ${errorText}`);
+  const keys = getApiKeys('cerebras');
+  // Fallback to default if no keys in env
+  if (keys.length === 0) keys.push('csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c');
+
+  return withFallback(keys, async (apiKey) => {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        url: 'https://api.cerebras.ai/v1/chat/completions',
+        apiKey,
+        model,
+        messages,
+        stream: false,
+        temperature: 0.3
+      }),
+      signal
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.error || errorJson.message || `Cerebras Error ${res.status}: ${errorText}`);
+      } catch {
+        throw new Error(`Cerebras Error ${res.status}: ${errorText}`);
+      }
     }
-  }
-  const data = await res.json();
-  return data.choices[0].message.content;
+    const data = await res.json();
+    return data.choices[0].message.content;
+  });
 };
 
-const callOpenAIStream = async (url: string, apiKey: string, model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal) => {
-  const response = await fetch('/api/chat', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      url,
-      apiKey,
-      model,
-      messages: msgs,
-      stream: true
-    }),
-    signal
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    try {
-      const errorJson = JSON.parse(errorText);
-      throw new Error(errorJson.error || errorJson.message || `API Error ${response.status}: ${errorText}`);
-    } catch {
-      throw new Error(`API Error ${response.status}: ${errorText}`);
-    }
+const callOpenAIStream = async (url: string, provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal) => {
+  const keys = getApiKeys(provider);
+  if (keys.length === 0) {
+    if (provider === 'groq') keys.push('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');
+    if (provider === 'cerebras') keys.push('csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c');
   }
 
-  const reader = response.body?.getReader();
-  if (!reader) throw new Error('No reader available');
-  const decoder = new TextDecoder();
-  let done = false;
-  let buffer = '';
+  return withFallback(keys, async (apiKey) => {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        url,
+        apiKey,
+        model,
+        messages: msgs,
+        stream: true
+      }),
+      signal
+    });
 
-  while (!done) {
-    if (signal?.aborted) {
-      reader.cancel();
-      throw new DOMException('Aborted', 'AbortError');
+    if (!response.ok) {
+      const errorText = await response.text();
+      try {
+        const errorJson = JSON.parse(errorText);
+        throw new Error(errorJson.error || errorJson.message || `API Error ${response.status}: ${errorText}`);
+      } catch {
+        throw new Error(`API Error ${response.status}: ${errorText}`);
+      }
     }
-    const { value, done: doneReading } = await reader.read();
-    done = doneReading;
-    if (value) {
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      
-      for (const line of lines) {
-        const trimmedLine = line.trim();
-        if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
-          try {
-            const data = JSON.parse(trimmedLine.slice(6));
-            if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-              onChunk(data.choices[0].delta.content);
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No reader available');
+    const decoder = new TextDecoder();
+    let done = false;
+    let buffer = '';
+
+    while (!done) {
+      if (signal?.aborted) {
+        reader.cancel();
+        throw new DOMException('Aborted', 'AbortError');
+      }
+      const { value, done: doneReading } = await reader.read();
+      done = doneReading;
+      if (value) {
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+          const trimmedLine = line.trim();
+          if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+            try {
+              const data = JSON.parse(trimmedLine.slice(6));
+              if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+                onChunk(data.choices[0].delta.content);
+              }
+            } catch (e) {
+              // ignore parse errors
             }
-          } catch (e) {
-            // ignore parse errors
           }
         }
       }
     }
-  }
 
-  if (buffer.trim()) {
-    const trimmedLine = buffer.trim();
-    if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
-      try {
-        const data = JSON.parse(trimmedLine.slice(6));
-        if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-          onChunk(data.choices[0].delta.content);
+    if (buffer.trim()) {
+      const trimmedLine = buffer.trim();
+      if (trimmedLine.startsWith('data: ') && trimmedLine !== 'data: [DONE]') {
+        try {
+          const data = JSON.parse(trimmedLine.slice(6));
+          if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
+            onChunk(data.choices[0].delta.content);
+          }
+        } catch (e) {
+          // ignore parse errors
         }
-      } catch (e) {
-        // ignore parse errors
       }
     }
-  }
+  });
 };
 
 const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal) => {
@@ -218,33 +231,38 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
 };
 
 const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal) => {
+  const keys = getApiKeys('groq');
+  if (keys.length === 0) keys.push('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');
+
   const makeRequest = async (m: string) => {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ 
-        url: 'https://api.groq.com/openai/v1/chat/completions',
-        apiKey: GROQ_API_KEY,
-        model: m, 
-        messages, 
-        stream: false,
-        temperature: 0.3
-      }),
-      signal
-    });
-    if (!res.ok) {
-      const errorText = await res.text();
-      try {
-        const errorJson = JSON.parse(errorText);
-        throw new Error(errorJson.error || errorJson.message || `Groq Error ${res.status}: ${errorText}`);
-      } catch {
-        throw new Error(`Groq Error ${res.status}: ${errorText}`);
+    return withFallback(keys, async (apiKey) => {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          url: 'https://api.groq.com/openai/v1/chat/completions',
+          apiKey,
+          model: m, 
+          messages, 
+          stream: false,
+          temperature: 0.3
+        }),
+        signal
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        try {
+          const errorJson = JSON.parse(errorText);
+          throw new Error(errorJson.error || errorJson.message || `Groq Error ${res.status}: ${errorText}`);
+        } catch {
+          throw new Error(`Groq Error ${res.status}: ${errorText}`);
+        }
       }
-    }
-    const data = await res.json();
-    return data.choices[0].message.content;
+      const data = await res.json();
+      return data.choices[0].message.content;
+    });
   };
 
   try {
@@ -259,25 +277,30 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
 };
 
 const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string, prompt?: string) => {
+  const keys = getApiKeys('groq');
+  if (keys.length === 0) keys.push('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');
+
   const makeRequest = async (m: string) => {
-    const formData = new FormData();
-    const ext = audioBlob.type.includes('webm') ? 'webm' : 'wav';
-    formData.append('file', audioBlob, `audio.${ext}`);
-    formData.append('model', m);
-    formData.append('apiKey', GROQ_API_KEY);
-    if (prompt) {
-      formData.append('prompt', prompt);
-    }
-    const res = await fetch('/api/transcribe', {
-      method: 'POST',
-      body: formData
+    return withFallback(keys, async (apiKey) => {
+      const formData = new FormData();
+      const ext = audioBlob.type.includes('webm') ? 'webm' : 'wav';
+      formData.append('file', audioBlob, `audio.${ext}`);
+      formData.append('model', m);
+      formData.append('apiKey', apiKey);
+      if (prompt) {
+        formData.append('prompt', prompt);
+      }
+      const res = await fetch('/api/transcribe', {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Groq Transcription Error: ${res.statusText}`);
+      }
+      const data = await res.json();
+      return data.text;
     });
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}));
-      throw new Error(errorData.error || `Groq Transcription Error: ${res.statusText}`);
-    }
-    const data = await res.json();
-    return data.text;
   };
 
   try {
@@ -569,17 +592,24 @@ Session Title Status: "false"`;
 
       let generatedTitle = '';
       try {
-        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-        if (!apiKey) throw new Error("Missing Gemini key");
-        const ai = new GoogleGenAI({ apiKey });
-        const response = await ai.models.generateContent({
-          model: 'gemini-3-flash-preview',
-          contents: prompt
+        const keys = getApiKeys('gemini');
+        if (keys.length === 0) throw new Error("Missing Gemini key");
+        
+        generatedTitle = await withFallback(keys, async (apiKey) => {
+          const ai = new GoogleGenAI({ apiKey });
+          const response = await ai.models.generateContent({
+            model: 'gemini-3-flash-preview',
+            contents: prompt
+          });
+          return response.text || '';
         });
-        generatedTitle = response.text || '';
       } catch (e) {
         console.warn("Gemini title generation failed, falling back to Cerebras:", e);
-        generatedTitle = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }]);
+        try {
+          generatedTitle = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }]);
+        } catch (fallbackErr) {
+          console.error("Fallback title generation failed", fallbackErr);
+        }
       }
       
       if (generatedTitle && !generatedTitle.includes("Title already generated")) {
@@ -942,13 +972,6 @@ Return ONLY the JSON array.`;
 
     let fullResponse = '';
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is missing. Please add it to your environment variables.");
-      }
-      
-      const ai = new GoogleGenAI({ apiKey });
-      
       const contents: any[] = [];
       
       // Add previous messages for context, ensuring alternating roles
@@ -966,9 +989,14 @@ Return ONLY the JSON array.`;
             summary = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: summaryPrompt }]);
           } catch (e) {
             console.warn("Cerebras summarization failed, falling back to Gemini 2.5 Pro:", e);
-            const aiFallback = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
-            const response = await aiFallback.models.generateContent({ model: 'gemini-2.5-pro', contents: summaryPrompt });
-            summary = response.text || '';
+            const keys = getApiKeys('gemini');
+            if (keys.length > 0) {
+              summary = await withFallback(keys, async (apiKey) => {
+                const aiFallback = new GoogleGenAI({ apiKey });
+                const response = await aiFallback.models.generateContent({ model: 'gemini-2.5-pro', contents: summaryPrompt });
+                return response.text || '';
+              });
+            }
           }
           contextText = `[Summary of older conversation: ${summary}]\n\n`;
         } catch (e) {
@@ -1049,8 +1077,9 @@ Return ONLY the JSON array.`;
         tools.push(searchWebTool);
       }
 
-      const systemInstruction = `You are Q1, a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
+      const systemInstruction = `You are a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
            CRITICAL: You MUST use the search_web tool for any relevant queries requiring up-to-date, real-world, or specific factual information. When you use the search_web tool, you MUST cite your sources by appending [link] to the facts you provide.
+           IMPORTANT: NEVER mention internal tools (like search_web), internal search mechanisms, or hidden implementation details in your responses to the user. Do not include the name 'Q1' unless explicitly requested by the user.
            
            MATH FORMATTING GUIDELINES:
            When answering math problems, produce clean, structured, and highly readable outputs that mirror professional mathematical presentation.
@@ -1163,36 +1192,42 @@ Return ONLY the JSON array.`;
       let searchWebCallId: string | null = null;
 
       const runGeminiStream = async (model: string) => {
-        const res = await ai.models.generateContentStream({ model, contents, config });
-        for await (const chunk of res) {
-          if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
-          if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-            const call = chunk.functionCalls[0];
-            if (call.name === 'search_web') {
-              searchWebCallArgs = call.args;
-              searchWebCallId = call.id || null;
+        const keys = getApiKeys('gemini');
+        if (keys.length === 0) throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is missing.");
+
+        return withFallback(keys, async (apiKey) => {
+          const aiFallback = new GoogleGenAI({ apiKey });
+          const res = await aiFallback.models.generateContentStream({ model, contents, config });
+          for await (const chunk of res) {
+            if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+            if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+              const call = chunk.functionCalls[0];
+              if (call.name === 'search_web') {
+                searchWebCallArgs = call.args;
+                searchWebCallId = call.id || null;
+              }
             }
+            if (chunk.text) handleChunk(chunk.text);
           }
-          if (chunk.text) handleChunk(chunk.text);
-        }
+        });
       };
 
       try {
         if (currentImage) {
           // Image Analysis
-          const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, controller.signal);
+          const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, controller.signal);
           await executeWithTimeoutAndFallback(runPrimary, () => runGeminiStream('gemini-3-flash-preview'), 8000);
         } else if (classification === 'pro') {
           // Pro Mode
-          const runPrimary = () => callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', CEREBRAS_API_KEY, 'qwen-3-235b-a22b-instruct-2507', openAIMessages, handleChunk, controller.signal);
-          const runFallback = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama-3.3-70b-versatile', openAIMessages, handleChunk, controller.signal);
+          const runPrimary = () => callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'qwen-3-235b-a22b-instruct-2507', openAIMessages, handleChunk, controller.signal);
+          const runFallback = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, controller.signal);
           await executeWithTimeoutAndFallback(runPrimary, runFallback, 6000);
         } else if (classification === 'search') {
           // Search Mode: groq/compound -> groq/compound-mini -> Gemini (with Tavily tool)
-          const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'groq/compound', openAIMessages, handleChunk, controller.signal);
+          const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound', openAIMessages, handleChunk, controller.signal);
           const runFallback = async () => {
             try {
-              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'groq/compound-mini', openAIMessages, handleChunk, controller.signal);
+              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound-mini', openAIMessages, handleChunk, controller.signal);
             } catch (err) {
               console.warn("groq/compound-mini failed, falling back to Gemini with search tool", err);
               await runGeminiStream('gemini-3-flash-preview');
@@ -1203,7 +1238,7 @@ Return ONLY the JSON array.`;
           // Fast Mode (with Load Distribution)
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
           if (useLlama) {
-            const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', GROQ_API_KEY, 'llama-3.1-8b-instant', openAIMessages, handleChunk, controller.signal);
+            const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, controller.signal);
             const runFallback = () => runGeminiStream('gemini-3-flash-preview');
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000);
           } else {
@@ -1258,9 +1293,16 @@ Return ONLY the JSON array.`;
                 
                 let formattedSearch = "";
                 try {
-                  const aiFormat = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY! });
-                  const response = await aiFormat.models.generateContent({ model: 'gemini-2.5-flash', contents: formatPrompt });
-                  formattedSearch = response.text || rawSearchText;
+                  const keys = getApiKeys('gemini');
+                  if (keys.length > 0) {
+                    formattedSearch = await withFallback(keys, async (apiKey) => {
+                      const aiFormat = new GoogleGenAI({ apiKey });
+                      const response = await aiFormat.models.generateContent({ model: 'gemini-2.5-flash', contents: formatPrompt });
+                      return response.text || rawSearchText;
+                    });
+                  } else {
+                    formattedSearch = rawSearchText;
+                  }
                 } catch (e: any) {
                   if (e.name !== 'AbortError') {
                     console.warn("Gemini search formatting failed, falling back to Cerebras:", e);

@@ -1,37 +1,42 @@
 import { NextResponse } from 'next/server';
-
-const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || '2215383dfc48baa1df7666821342db26';
-const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN || 'cfut_0IxFXq61q0R2HHpsQ2DBoCC8M19ilcDvae9nnEZn53ed73dd';
+import { getApiKeys, withFallback } from '../../../lib/apiFallback';
 
 async function generateWithModel(model: string, prompt: string) {
-  const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/run/${model}`;
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${CF_API_TOKEN}`,
-      'Content-Type': 'application/json',
-      'Accept': 'image/png'
-    },
-    body: JSON.stringify({ prompt })
-  });
-
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Cloudflare API error (${response.status}): ${err}`);
+  const keys = getApiKeys('cloudflare');
+  if (keys.length === 0) {
+    keys.push({ accountId: '2215383dfc48baa1df7666821342db26', token: 'cfut_0IxFXq61q0R2HHpsQ2DBoCC8M19ilcDvae9nnEZn53ed73dd' });
   }
 
-  const contentType = response.headers.get('content-type') || '';
-  if (contentType.includes('application/json')) {
-    const data = await response.json();
-    if (data.result && data.result.image) {
-      // Convert base64 string to Uint8Array
-      const buffer = Buffer.from(data.result.image, 'base64');
-      return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  return await withFallback(keys, async (keyObj: any) => {
+    const url = `https://api.cloudflare.com/client/v4/accounts/${keyObj.accountId}/ai/run/${model}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${keyObj.token}`,
+        'Content-Type': 'application/json',
+        'Accept': 'image/png'
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Cloudflare API error (${response.status}): ${err}`);
     }
-    throw new Error('Invalid JSON response format from Cloudflare');
-  }
 
-  return await response.arrayBuffer();
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await response.json();
+      if (data.result && data.result.image) {
+        // Convert base64 string to Uint8Array
+        const buffer = Buffer.from(data.result.image, 'base64');
+        return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+      }
+      throw new Error('Invalid JSON response format from Cloudflare');
+    }
+
+    return await response.arrayBuffer();
+  });
 }
 
 export async function POST(req: Request) {

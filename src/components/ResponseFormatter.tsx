@@ -15,48 +15,6 @@ interface ResponseFormatterProps {
   isStreaming?: boolean;
 }
 
-const useSmoothTyping = (text: string, isStreaming: boolean) => {
-  const [displayedText, setDisplayedText] = useState(isStreaming ? '' : text);
-  const textRef = useRef(text);
-  const displayedTextRef = useRef(isStreaming ? '' : text);
-
-  useEffect(() => {
-    textRef.current = text;
-    if (!isStreaming) {
-      setDisplayedText(text);
-      displayedTextRef.current = text;
-    }
-  }, [text, isStreaming]);
-
-  useEffect(() => {
-    if (!isStreaming) return;
-
-    const interval = setInterval(() => {
-      const target = textRef.current;
-      const current = displayedTextRef.current;
-      
-      if (current !== target) {
-        if (target.length < current.length || !target.startsWith(current)) {
-          // If target was reset or changed completely
-          displayedTextRef.current = target;
-          setDisplayedText(target);
-        } else {
-          const diff = target.length - current.length;
-          // Even slower, more natural typing speed - adding 1-2 chars at a time
-          const charsToAdd = Math.max(1, Math.floor(diff / 30)); 
-          const nextText = target.slice(0, current.length + charsToAdd);
-          displayedTextRef.current = nextText;
-          setDisplayedText(nextText);
-        }
-      }
-    }, 60); // Slightly slower interval for more natural feel
-
-    return () => clearInterval(interval);
-  }, [isStreaming]);
-
-  return displayedText;
-};
-
 const CodeBlock = ({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
   const { theme, resolvedTheme } = useTheme();
@@ -316,7 +274,7 @@ interface ResponseFormatterProps {
 }
 
 export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({ content, isStreaming = false, onImageClick }) => {
-  const displayedContent = useSmoothTyping(content, isStreaming);
+  const displayedContent = content;
   const onImageClickRef = React.useRef(onImageClick);
 
   React.useEffect(() => {

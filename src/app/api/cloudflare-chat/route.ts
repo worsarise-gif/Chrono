@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const CF_ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID || '2215383dfc48baa1df7666821342db26';
-const CF_API_TOKEN = process.env.CLOUDFLARE_API_TOKEN || 'cfut_0IxFXq61q0R2HHpsQ2DBoCC8M19ilcDvae9nnEZn53ed73dd';
+import { getApiKeys, withFallback } from '../../../lib/apiFallback';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,40 +10,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
 
-    const url = `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT_ID}/ai/v1/chat/completions`;
-
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${CF_API_TOKEN}`
-      },
-      body: JSON.stringify({
-        model,
-        messages,
-        stream: !!stream,
-        ...rest
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json({ error: `Cloudflare API Error ${response.status}: ${errorText}` }, { status: response.status });
+    const keys = getApiKeys('cloudflare');
+    if (keys.length === 0) {
+      keys.push({ accountId: '2215383dfc48baa1df7666821342db26', token: 'cfut_0IxFXq61q0R2HHpsQ2DBoCC8M19ilcDvae9nnEZn53ed73dd' });
     }
 
-    if (stream) {
-      // Return the stream directly
-      return new NextResponse(response.body, {
+    return await withFallback(keys, async (keyObj: any) => {
+      const url = `https://api.cloudflare.com/client/v4/accounts/${keyObj.accountId}/ai/v1/chat/completions`;
+
+      const response = await fetch(url, {
+        method: 'POST',
         headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          'Connection': 'keep-alive',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${keyObj.token}`
         },
+        body: JSON.stringify({
+          model,
+          messages,
+          stream: !!stream,
+          ...rest
+        })
       });
-    } else {
-      const data = await response.json();
-      return NextResponse.json(data);
-    }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Cloudflare API Error ${response.status}: ${errorText}`);
+      }
+
+      if (stream) {
+        // Return the stream directly
+        return new NextResponse(response.body, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          },
+        });
+      } else {
+        const data = await response.json();
+        return NextResponse.json(data);
+      }
+    });
   } catch (error: any) {
     console.error('Cloudflare Proxy error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });

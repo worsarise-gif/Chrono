@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { tavily } from '@tavily/core';
 import firebaseConfigJson from '../../../firebase-applet-config.json';
+import { getApiKeys, withFallback } from '../apiFallback';
 
 // Firebase configuration: Prefer environment variables, fallback to JSON for AI Studio
 const firebaseConfig = {
@@ -93,11 +94,13 @@ export async function webSearch(query: string): Promise<string> {
     let tavilyFailed = false;
 
     // 2. Primary Search: Tavily API
-    // Use the provided key as a fallback if the environment variable is missing
-    const tavilyApiKey = process.env.TAVILY_API_KEY || process.env.NEXT_PUBLIC_TAVILY_API_KEY || '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';
+    const tavilyKeys = getApiKeys('tavily');
+    if (tavilyKeys.length === 0) {
+      tavilyKeys.push('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');
+    }
     
-    if (tavilyApiKey) {
-      try {
+    try {
+      results = await withFallback(tavilyKeys, async (tavilyApiKey) => {
         const client = tavily({ apiKey: tavilyApiKey });
         const tavilyData = await client.search(query, {
           searchDepth: "basic",
@@ -105,44 +108,47 @@ export async function webSearch(query: string): Promise<string> {
         });
 
         if (tavilyData && tavilyData.results && tavilyData.results.length > 0) {
-          results = tavilyData.results.map((item: any) => ({
+          return tavilyData.results.map((item: any) => ({
             title: item.title,
             link: item.url,
             snippet: cleanSnippet(item.content),
           }));
         } else {
-          tavilyFailed = true;
+          throw new Error("No results from Tavily");
         }
-      } catch (err) {
-        console.warn('Tavily primary search failed:', err);
-        tavilyFailed = true;
-      }
-    } else {
+      });
+    } catch (err) {
+      console.warn('Tavily search failed across all keys:', err);
       tavilyFailed = true;
     }
 
     // 3. Fallback Search: Google Custom Search API
     if (tavilyFailed || results.length === 0) {
-      const googleApiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-      const googleCx = process.env.GOOGLE_CX || process.env.NEXT_PUBLIC_GOOGLE_CX;
-
-      if (googleApiKey && googleCx) {
+      const googleKeys = getApiKeys('googleSearch');
+      
+      if (googleKeys.length > 0) {
         try {
-          const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${googleCx}&q=${encodeURIComponent(query)}&num=5`;
-          const googleRes = await fetch(googleUrl);
-          
-          if (googleRes.ok) {
+          results = await withFallback(googleKeys, async (keyObj: any) => {
+            const googleUrl = `https://www.googleapis.com/customsearch/v1?key=${keyObj.key}&cx=${keyObj.cx}&q=${encodeURIComponent(query)}&num=5`;
+            const googleRes = await fetch(googleUrl);
+            
+            if (!googleRes.ok) {
+              throw new Error(`Google CSE failed with status: ${googleRes.status}`);
+            }
+
             const googleData = await googleRes.json();
             if (googleData.items && googleData.items.length > 0) {
-              results = googleData.items.slice(0, 5).map((item: any) => ({
+              return googleData.items.slice(0, 5).map((item: any) => ({
                 title: item.title,
                 link: item.link,
                 snippet: cleanSnippet(item.snippet),
               }));
+            } else {
+              throw new Error("No results from Google CSE");
             }
-          }
+          });
         } catch (err) {
-          console.warn('Google CSE fallback failed:', err);
+          console.warn('Google CSE fallback failed across all keys:', err);
         }
       }
     }
