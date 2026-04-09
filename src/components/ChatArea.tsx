@@ -340,6 +340,24 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [guestRequestCount, setGuestRequestCount] = useState<number>(0);
   const [showSignInModal, setShowSignInModal] = useState(false);
+  const [userMenuState, setUserMenuState] = useState<{messageId: string, content: string, x: number, y: number} | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent, msgId: string, content: string) => {
+    const touch = e.touches[0];
+    const x = touch.clientX;
+    const y = touch.clientY;
+    longPressTimerRef.current = setTimeout(() => {
+      setUserMenuState({ messageId: msgId, content, x, y });
+    }, 500);
+  };
+
+  const clearLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -1548,8 +1566,43 @@ Return ONLY the JSON array.`;
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
+        onClick={() => {
+          if (userMenuState) setUserMenuState(null);
+        }}
         className="flex-1 overflow-y-auto scroll-smooth relative flex flex-col"
       >
+        {userMenuState && (
+          <div 
+            className="fixed z-50 bg-surface border border-border rounded-xl shadow-xl overflow-hidden py-1 min-w-[120px]"
+            style={{ 
+              top: Math.min(userMenuState.y, window.innerHeight - 100), 
+              left: Math.min(userMenuState.x, window.innerWidth - 130) 
+            }}
+          >
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEditMessage(userMenuState.messageId, userMenuState.content);
+                setUserMenuState(null);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors text-foreground text-sm"
+            >
+              <Edit2 size={16} />
+              Edit
+            </button>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCopyMessage(userMenuState.messageId, userMenuState.content);
+                setUserMenuState(null);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors text-foreground text-sm"
+            >
+              <Copy size={16} />
+              Copy
+            </button>
+          </div>
+        )}
         {/* Sticky Floating Actions */}
         <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
           {!user ? (
@@ -1641,7 +1694,7 @@ Return ONLY the JSON array.`;
                           {!msg.isStreaming && (
                             <>
                               {/* Action Row */}
-                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-foreground/40">
+                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 transition-opacity text-foreground/40">
                                 {[
                                   { icon: <RefreshCcw size={14} />, title: "Regenerate", onClick: () => handleRegenerate(index) },
                                   { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
@@ -1681,28 +1734,23 @@ Return ONLY the JSON array.`;
                                   const sources = getSourcesFromContent(msg.content);
                                   if (sources.length > 0) {
                                     return (
-                                      <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border/50">
-                                        <span className="text-[10px] uppercase tracking-wider font-semibold mr-1">Sources</span>
-                                        {sources.slice(0, 3).map((source, i) => {
-                                          let hostname = source.link;
-                                          try { hostname = new URL(source.link).hostname.replace('www.', ''); } catch (e) {}
-                                          return (
-                                            <a 
-                                              key={i} 
-                                              href={source.link} 
-                                              target="_blank" 
-                                              rel="noopener noreferrer"
-                                              className="flex items-center gap-1 px-2 py-1 rounded-md bg-surface-hover hover:bg-surface border border-border/50 transition-colors text-[11px] font-medium text-foreground/80 hover:text-foreground no-underline"
-                                              title={source.title}
-                                            >
-                                              <Globe size={10} className="text-blue-500" />
-                                              <span className="max-w-[80px] truncate">{hostname}</span>
-                                            </a>
-                                          );
-                                        })}
-                                        {sources.length > 3 && (
-                                          <span className="text-[11px] font-medium px-1">+{sources.length - 3}</span>
-                                        )}
+                                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-hover/80 hover:bg-surface-hover border border-border/30 transition-colors cursor-pointer ml-auto">
+                                        <div className="flex items-center -space-x-1.5">
+                                          {sources.slice(0, 3).map((source, i) => {
+                                            let hostname = source.link;
+                                            try { hostname = new URL(source.link).hostname; } catch (e) {}
+                                            return (
+                                              <img 
+                                                key={i}
+                                                src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
+                                                alt={hostname}
+                                                className="w-[18px] h-[18px] rounded-full bg-background border border-border/50 object-cover"
+                                                style={{ zIndex: 10 - i }}
+                                              />
+                                            );
+                                          })}
+                                        </div>
+                                        <span className="text-sm font-semibold text-foreground">Sources</span>
                                       </div>
                                     );
                                   }
@@ -1751,8 +1799,15 @@ Return ONLY the JSON array.`;
                             </div>
                           ) : (
                             <>
-                              <p className="whitespace-pre-wrap leading-relaxed break-words font-normal">{msg.content}</p>
-                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 opacity-0 group-hover/user:opacity-100 transition-opacity">
+                              <p 
+                                className="whitespace-pre-wrap leading-relaxed break-words font-normal"
+                                onTouchStart={(e) => handleTouchStart(e, msg.id, msg.content)}
+                                onTouchEnd={clearLongPress}
+                                onTouchMove={clearLongPress}
+                              >
+                                {msg.content}
+                              </p>
+                              <div className="absolute -bottom-10 right-0 hidden md:flex items-center gap-1 opacity-100 transition-opacity">
                                 <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
@@ -2138,7 +2193,7 @@ Return ONLY the JSON array.`;
                     
                     {showModeDropdown && (
                       <div className="absolute bottom-full mb-2 right-0 md:left-0 w-[240px] md:w-64 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
-                        {(Object.keys(modeLabels) as ChatMode[]).filter(m => m !== 'flash').map((m) => (
+                        {(Object.keys(modeLabels) as ChatMode[]).filter(m => m !== 'flash' && m !== 'search').map((m) => (
                           <button
                             key={m}
                             type="button"
