@@ -457,19 +457,21 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   };
 
   const scrollToBottom = (force = false) => {
-    if (scrollContainerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
-      
-      if (isNearBottom || force) {
-        scrollContainerRef.current.scrollTo({
-          top: scrollContainerRef.current.scrollHeight,
-          behavior: force ? 'smooth' : 'auto'
-        });
+    setTimeout(() => {
+      if (scrollContainerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+        
+        if (isNearBottom || force) {
+          scrollContainerRef.current.scrollTo({
+            top: scrollContainerRef.current.scrollHeight,
+            behavior: 'auto'
+          });
+        }
+      } else if (force) {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
       }
-    } else if (force) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    }, 10);
   };
 
   useEffect(() => {
@@ -1879,8 +1881,8 @@ Return ONLY the JSON array.`;
               {isLoading && !streamingMessage && !isGeneratingImage && (
                 <motion.div 
                   key="loading-indicator"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0, transition: { duration: 0.2 } }}
                   className="flex justify-start group w-full"
                 >
