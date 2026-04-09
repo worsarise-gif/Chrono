@@ -438,23 +438,25 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   };
 
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const isUserScrolledUpRef = useRef(false);
 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
       // Show button if we are more than 200px from the bottom and have scrolled down a bit
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
+      isUserScrolledUpRef.current = !isNearBottom;
       setShowScrollButton(!isNearBottom && scrollTop > 300);
     }
   };
 
   const scrollToBottom = (force = false) => {
+    if (force) {
+      isUserScrolledUpRef.current = false;
+    }
     setTimeout(() => {
       if (scrollContainerRef.current) {
-        const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-        const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
-        
-        if (isNearBottom || force) {
+        if (!isUserScrolledUpRef.current || force) {
           scrollContainerRef.current.scrollTo({
             top: scrollContainerRef.current.scrollHeight,
             behavior: 'auto'

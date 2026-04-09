@@ -157,15 +157,8 @@ textarea {
 }
 
 /* Streaming Typing Cursor */
-.streaming-content > *:last-child::after {
-  content: '▋';
-  display: inline-block;
-  vertical-align: baseline;
-  animation: blink 1s step-end infinite;
-  margin-left: 4px;
-  color: var(--color-foreground);
-  opacity: 0.7;
-  font-family: monospace;
+.streaming-content {
+  /* Removed cursor per user request */
 }
 
 @keyframes blink {
