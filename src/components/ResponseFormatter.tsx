@@ -337,6 +337,9 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
         </blockquote>
       );
     },
+    hr({ node, ...props }: any) {
+      return <hr className="border-t border-gray-500/70 my-6" {...props} />;
+    },
     table({ node, children, ...props }: any) {
       return (
         <div className="w-full overflow-x-auto my-8 rounded-xl border border-border/40 shadow-sm bg-surface/10">

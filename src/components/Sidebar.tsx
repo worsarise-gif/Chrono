@@ -29,14 +29,14 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-xl transition-all relative pointer-events-auto h-[40px] ${active ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:text-foreground'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
+        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:text-foreground'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
         {/* Stationary Icon Container */}
         <div className="w-[52px] flex-shrink-0 flex items-center justify-center relative h-full">
           {/* Hover Highlight Background for Collapsed State */}
           {isCollapsed && !active && (
             <div className="absolute inset-0 flex items-center justify-center z-0">
-              <div className="w-10 h-10 rounded-xl bg-transparent group-hover:bg-surface-hover/50 transition-colors duration-200"></div>
+              <div className="w-10 h-10 rounded-full bg-transparent group-hover:bg-surface-hover/50 transition-colors duration-200"></div>
             </div>
           )}
           <div className="relative z-10 flex items-center justify-center">
@@ -323,7 +323,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                               setCurrentChatId(chat.id);
                               setIsMobileOpen?.(false);
                             }}
-                            className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-xl transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:bg-surface-hover/50 hover:text-foreground'}`}
+                            className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:bg-surface-hover/50 hover:text-foreground'}`}
                           >
                             {chat.title}
                             {chat.isPinned && (

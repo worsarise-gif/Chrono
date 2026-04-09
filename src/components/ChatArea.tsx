@@ -456,20 +456,31 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     await handleSubmit(undefined, params.text, params.image);
   };
 
-  const scrollToBottom = () => {
+  const scrollToBottom = (force = false) => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    } else {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+      
+      if (isNearBottom || force) {
+        scrollContainerRef.current.scrollTo({
+          top: scrollContainerRef.current.scrollHeight,
+          behavior: force ? 'smooth' : 'auto'
+        });
+      }
+    } else if (force) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
   useEffect(() => {
-    scrollToBottom();
+    scrollToBottom(false);
   }, [messages, streamingMessage]);
+
+  useEffect(() => {
+    if (isLoading && !streamingMessage) {
+      scrollToBottom(true);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     textareaRef.current?.focus();
@@ -1838,17 +1849,6 @@ Return ONLY the JSON array.`;
                   </div>
                 </motion.div>
               )}
-              {isSearching && (
-                <motion.div 
-                  key="searching"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex justify-start px-1 mb-4"
-                >
-                  <Loader text="Searching..." />
-                </motion.div>
-              )}
               {isGeneratingImage && (
                 <motion.div 
                   key="generating-image"
@@ -1876,15 +1876,15 @@ Return ONLY the JSON array.`;
                   </div>
                 </motion.div>
               )}
-              {isLoading && !streamingMessage && !isSearching && !isGeneratingImage && (
+              {isLoading && !streamingMessage && !isGeneratingImage && (
                 <motion.div 
-                  key="loading"
+                  key="loading-indicator"
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, transition: { duration: 0.2 } }}
                   className="flex justify-start group w-full"
                 >
-                  <Loader text={loadingStatus} />
+                  <Loader text={isSearching ? "Searching..." : loadingStatus} />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -2052,7 +2052,7 @@ Return ONLY the JSON array.`;
               initial={{ opacity: 0, y: 10, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              onClick={scrollToBottom}
+              onClick={() => scrollToBottom(true)}
               className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-foreground/60 hover:text-foreground shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
               title="Scroll to bottom"
             >
