@@ -328,7 +328,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
-  const [lastError, setLastError] = useState<{ message: string, retryParams?: any } | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState('Thinking...');
   const [currentStreamingMessageId, setCurrentStreamingMessageId] = useState<string | null>(null);
@@ -447,13 +446,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
       setShowScrollButton(!isNearBottom && scrollTop > 300);
     }
-  };
-
-  const retryLastMessage = async () => {
-    if (!lastError || !lastError.retryParams) return;
-    const params = lastError.retryParams;
-    setLastError(null);
-    await handleSubmit(undefined, params.text, params.image);
   };
 
   const scrollToBottom = (force = false) => {
@@ -756,7 +748,6 @@ Return ONLY the JSON array.`;
 
   const handleSubmit = async (e?: React.FormEvent, text?: string, image?: { data: string, mimeType: string }) => {
     if (e) e.preventDefault();
-    setLastError(null);
     
     const userMessage = text || input.trim();
     const currentImage = image || selectedImage;
@@ -1447,10 +1438,6 @@ Return ONLY the JSON array.`;
           console.log('Generation aborted by user');
         } else {
           const { message: friendlyMessage } = handleError(error, "Failed to generate AI response");
-          setLastError({ 
-            message: friendlyMessage,
-            retryParams: { text: userMessage, image: currentImage }
-          });
           fullResponse = `Error: ${friendlyMessage}`;
         }
       }
@@ -2081,35 +2068,6 @@ Return ONLY the JSON array.`;
           <motion.div 
             className="relative bg-surface rounded-[24px] md:rounded-[28px] shadow-2xl border border-border/50 focus-within:border-border flex flex-col p-1.5 md:p-2"
           >
-            {lastError && (
-              <div className="mb-4 p-4 bg-surface-hover border border-border rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center text-foreground/60 shrink-0">
-                    <AlertCircle size={18} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Generation Failed</p>
-                    <p className="text-xs text-foreground leading-tight mt-0.5">{lastError.message}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <button 
-                    onClick={() => setLastError(null)}
-                    className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-hover rounded-lg transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                  <button 
-                    onClick={retryLastMessage}
-                    className="flex-1 sm:flex-none px-4 py-1.5 text-xs font-medium bg-foreground text-background hover:opacity-90 rounded-lg transition-all flex items-center justify-center gap-1.5 shadow-sm"
-                  >
-                    <RefreshCw size={12} />
-                    Retry
-                  </button>
-                </div>
-              </div>
-            )}
-
             <AnimatePresence>
               {selectedImage && (
                 <motion.div 
