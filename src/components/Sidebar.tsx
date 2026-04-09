@@ -29,21 +29,21 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center w-full rounded-lg transition-all relative pointer-events-auto h-[44px] ${active ? 'text-foreground' : 'text-foreground/60 hover:text-foreground'} ${!isCollapsed && !active ? 'hover:bg-surface' : ''}`}
+        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-xl transition-all relative pointer-events-auto h-[40px] ${active ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:text-foreground'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
         {/* Stationary Icon Container */}
-        <div className="w-[68px] flex-shrink-0 flex items-center justify-center relative">
+        <div className="w-[52px] flex-shrink-0 flex items-center justify-center relative h-full">
           {/* Hover Highlight Background for Collapsed State */}
-          {isCollapsed && (
+          {isCollapsed && !active && (
             <div className="absolute inset-0 flex items-center justify-center z-0">
-              <div className="w-10 h-10 rounded-[12px] bg-transparent group-hover:bg-surface-hover transition-colors duration-200"></div>
+              <div className="w-10 h-10 rounded-xl bg-transparent group-hover:bg-surface-hover/50 transition-colors duration-200"></div>
             </div>
           )}
           <div className="relative z-10 flex items-center justify-center">
             {icon}
           </div>
           {hasDot && (
-            <div className={`absolute top-3 right-6 w-2 h-2 rounded-full bg-[#5c6ad2] border-2 border-background transition-opacity duration-300 z-20 ${isCollapsed ? 'opacity-100' : 'opacity-0'}`}></div>
+            <div className={`absolute top-2 right-2 w-2 h-2 rounded-full bg-[#5c6ad2] border-2 border-background transition-opacity duration-300 z-20 ${isCollapsed ? 'opacity-100' : 'opacity-0'}`}></div>
           )}
         </div>
 
@@ -63,7 +63,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
         <div 
           className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0"
           style={{ 
-            top: `${60 + index * 44.5 + 22}px`,
+            top: `${60 + index * 42 + 20}px`,
             transform: 'translateY(-50%)'
           }}
         >
@@ -323,7 +323,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                               setCurrentChatId(chat.id);
                               setIsMobileOpen?.(false);
                             }}
-                            className={`w-full text-left block px-3 py-2 rounded-lg transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface' : 'text-foreground/60 hover:bg-surface hover:text-foreground'}`}
+                            className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-xl transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:bg-surface-hover/50 hover:text-foreground'}`}
                           >
                             {chat.title}
                             {chat.isPinned && (
@@ -332,8 +332,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                           </button>
                           
                           {/* Chat Title Full Visibility on Hover */}
-                          <div className="absolute left-0 top-0 w-full h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-[50]">
-                            <div className="absolute left-0 top-0 min-w-full bg-surface border border-border rounded-lg px-3 py-2 text-[13px] text-foreground shadow-xl whitespace-normal break-words z-[51]">
+                          <div className="absolute left-2 top-0 w-[calc(100%-16px)] h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-[50]">
+                            <div className="absolute left-0 top-0 min-w-full bg-surface-hover border border-border rounded-xl px-3 py-2 text-[13px] text-foreground shadow-xl whitespace-normal break-words z-[51]">
                               {chat.title}
                             </div>
                           </div>
@@ -343,7 +343,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                               e.stopPropagation();
                               setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
                             }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all z-[60]"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface text-foreground/60 hover:text-foreground transition-all z-[60]"
                             title="More options"
                           >
                             <MoreVertical size={14} />
