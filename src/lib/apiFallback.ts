@@ -59,6 +59,19 @@ export const isFallbackError = (error: any) => {
   );
 };
 
+// Circuit Breaker State
+const keyBans = new Map<string, number>();
+const BAN_DURATION_MS = 60 * 1000; // 60 seconds
+
+const getKeyId = (key: any): string => {
+  if (typeof key === 'string') return key;
+  try {
+    return JSON.stringify(key);
+  } catch {
+    return String(key);
+  }
+};
+
 export const withFallback = async <T>(
   keys: any[],
   operation: (key: any) => Promise<T>
@@ -67,24 +80,47 @@ export const withFallback = async <T>(
     throw new Error("No API keys available for this provider.");
   }
 
+  const now = Date.now();
+  
+  // Filter out keys that are currently banned
+  let availableKeys = keys.filter(k => {
+    const banExpiry = keyBans.get(getKeyId(k));
+    return !banExpiry || banExpiry < now;
+  });
+
+  // If all keys are banned, fail-open and try them all anyway
+  if (availableKeys.length === 0) {
+    console.warn("All keys are currently circuit-broken. Failing open to try anyway.");
+    availableKeys = keys;
+  }
+
   let lastError: any;
-  for (let i = 0; i < keys.length; i++) {
+  for (let i = 0; i < availableKeys.length; i++) {
+    const currentKey = availableKeys[i];
     try {
-      return await operation(keys[i]);
+      return await operation(currentKey);
     } catch (error: any) {
       lastError = error;
       console.warn(`API call failed with key index ${i}. Error:`, error?.message || error);
       
-      // If it's the last key, don't bother checking if it's a fallback error, just throw
-      if (i === keys.length - 1) {
-        break;
-      }
-
       if (isFallbackError(error)) {
-        console.warn(`Falling back to key index ${i + 1}...`);
+        // Break the circuit for this key
+        const keyId = getKeyId(currentKey);
+        keyBans.set(keyId, Date.now() + BAN_DURATION_MS);
+        console.warn(`Circuit broken for key. Banned for 60s.`);
+
+        // If it's the last available key, don't bother continuing
+        if (i === availableKeys.length - 1) {
+          break;
+        }
+
+        console.warn(`Falling back to next available key...`);
         continue;
       } else {
         // If it's a generic error like bad request (400), falling back won't help
+        if (i === availableKeys.length - 1) {
+          break;
+        }
         console.warn(`Error is not quota/limit related, but falling back anyway to be safe...`);
         continue;
       }

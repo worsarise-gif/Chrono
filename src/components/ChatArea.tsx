@@ -1120,14 +1120,30 @@ Return ONLY the JSON array.`;
       let classification = 'fast';
 
       if (mode === 'auto') {
-        const text = lastMessage.toLowerCase();
-        const isProRule = /\b(function|class|def|const|let|var|import|export|npm|pip|code|debug|error|exception|api|endpoint|script|query|math|calculate|solve|equation|integral|derivative|sum|multiply|divide)\b/i.test(text) || 
-                           /(?:=>|\{|\}|\[|\]|<html>|<script>)/.test(text);
-        
-        if (isProRule) {
-          classification = 'pro';
-          setLoadingStatus('Crafting Code...');
-        } else {
+        setLoadingStatus('Routing...');
+        try {
+          const routingMessages = [
+            { role: 'system', content: 'Classify this message as either: CHAT/FAST, CODE/REASONING/PRO, SEARCH, or IMAGE. Reply with only one word.' },
+            { role: 'user', content: lastMessage }
+          ];
+          const routingResponse = await callGroqChatNonStream('llama-3.1-8b-instant', routingMessages, 'llama-3.1-8b-instant', controller.signal);
+          const route = (routingResponse?.choices?.[0]?.message?.content || '').toUpperCase();
+          
+          if (route.includes('CODE') || route.includes('REASONING') || route.includes('PRO')) {
+            classification = 'pro';
+            setLoadingStatus('Crafting Code...');
+          } else if (route.includes('SEARCH')) {
+            classification = 'search';
+            setLoadingStatus('Searching...');
+          } else if (route.includes('IMAGE')) {
+            classification = 'image';
+            setLoadingStatus('Analyzing Image...');
+          } else {
+            classification = 'fast';
+            setLoadingStatus('Thinking...');
+          }
+        } catch (err) {
+          console.warn("Semantic routing failed, falling back to fast mode", err);
           classification = 'fast';
           setLoadingStatus('Thinking...');
         }
@@ -1180,7 +1196,13 @@ Return ONLY the JSON array.`;
       }
 
       let lastUpdateTime = Date.now();
+      let lastTokenTime = Date.now();
+      let firstTokenReceived = false;
+
       const handleChunk = (text: string) => {
+        if (!firstTokenReceived) firstTokenReceived = true;
+        lastTokenTime = Date.now();
+        
         fullResponse += text;
         setStreamingMessage(fullResponse);
         
@@ -1190,20 +1212,58 @@ Return ONLY the JSON array.`;
         }
       };
 
-      const executeWithTimeoutAndFallback = async (primaryFn: () => Promise<void>, fallbackFn: () => Promise<void>, timeoutMs: number = 6000) => {
+      const executeWithTimeoutAndFallback = async (
+        primaryFn: (signal: AbortSignal) => Promise<void>, 
+        fallbackFn: (signal: AbortSignal) => Promise<void>, 
+        ttftMs: number = 3000,
+        stallMs: number = 4000,
+        maxTotalMs: number = 20000
+      ) => {
+        const primaryController = new AbortController();
+        const globalAbortHandler = () => primaryController.abort();
+        controller.signal.addEventListener('abort', globalAbortHandler);
+
+        firstTokenReceived = false;
+        lastTokenTime = Date.now();
+        const startTime = Date.now();
+
+        const monitor = new Promise<void>((_, reject) => {
+          const interval = setInterval(() => {
+            if (primaryController.signal.aborted) {
+              clearInterval(interval);
+              return;
+            }
+            const now = Date.now();
+            if (!firstTokenReceived && now - startTime > ttftMs) {
+              clearInterval(interval);
+              reject(new Error(`TTFT Timeout (${ttftMs}ms)`));
+            } else if (firstTokenReceived && now - lastTokenTime > stallMs) {
+              clearInterval(interval);
+              reject(new Error(`Stream Stall Timeout (${stallMs}ms)`));
+            } else if (now - startTime > maxTotalMs) {
+              clearInterval(interval);
+              reject(new Error(`Max Duration Timeout (${maxTotalMs}ms)`));
+            }
+          }, 100);
+        });
+
         try {
-          const timeoutPromise = new Promise<void>((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs));
-          await Promise.race([primaryFn(), timeoutPromise]);
+          await Promise.race([primaryFn(primaryController.signal), monitor]);
         } catch (error: any) {
-          console.warn(`Primary failed (${error.message}). Triggering fallback (1 level max)...`);
-          await fallbackFn();
+          primaryController.abort();
+          console.warn(`Primary failed (${error.message}). Triggering fallback...`);
+          firstTokenReceived = false;
+          lastTokenTime = Date.now();
+          await fallbackFn(controller.signal);
+        } finally {
+          controller.signal.removeEventListener('abort', globalAbortHandler);
         }
       };
 
       let searchWebCallArgs: any = null;
       let searchWebCallId: string | null = null;
 
-      const runGeminiStream = async (model: string) => {
+      const runGeminiStream = async (model: string, signal: AbortSignal) => {
         const keys = getApiKeys('gemini');
         if (keys.length === 0) throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is missing.");
 
@@ -1211,7 +1271,7 @@ Return ONLY the JSON array.`;
           const aiFallback = new GoogleGenAI({ apiKey });
           const res = await aiFallback.models.generateContentStream({ model, contents, config });
           for await (const chunk of res) {
-            if (controller.signal.aborted) throw new DOMException('Aborted', 'AbortError');
+            if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
             if (chunk.functionCalls && chunk.functionCalls.length > 0) {
               const call = chunk.functionCalls[0];
               if (call.name === 'search_web') {
@@ -1227,36 +1287,43 @@ Return ONLY the JSON array.`;
       try {
         if (currentImage) {
           // Image Analysis
-          const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, controller.signal);
-          await executeWithTimeoutAndFallback(runPrimary, () => runGeminiStream('gemini-3-flash-preview'), 8000);
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, signal);
+          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 3000, 4000, 15000);
         } else if (classification === 'pro') {
           // Pro Mode
-          const runPrimary = () => callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'qwen-3-235b-a22b-instruct-2507', openAIMessages, handleChunk, controller.signal);
-          const runFallback = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, controller.signal);
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 6000);
-        } else if (classification === 'search') {
-          // Search Mode: groq/compound -> groq/compound-mini -> Gemini (with Tavily tool)
-          const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound', openAIMessages, handleChunk, controller.signal);
-          const runFallback = async () => {
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'moonshotai/kimi-k2-instruct-0905', openAIMessages, handleChunk, signal);
+          const runFallback = async (signal: AbortSignal) => {
             try {
-              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound-mini', openAIMessages, handleChunk, controller.signal);
+              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'moonshotai/kimi-k2-instruct', openAIMessages, handleChunk, signal);
             } catch (err) {
-              console.warn("groq/compound-mini failed, falling back to Gemini with search tool", err);
-              await runGeminiStream('gemini-3-flash-preview');
+              console.warn("1st fallback failed, falling back to 2nd fallback (Cerebras)", err);
+              await callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'qwen-3-235b-a22b-instruct-2507', openAIMessages, handleChunk, signal);
             }
           };
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000);
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 3000, 4000, 20000);
+        } else if (classification === 'search') {
+          // Search Mode: groq/compound -> groq/compound-mini -> Gemini (with Tavily tool)
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound', openAIMessages, handleChunk, signal);
+          const runFallback = async (signal: AbortSignal) => {
+            try {
+              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound-mini', openAIMessages, handleChunk, signal);
+            } catch (err) {
+              console.warn("groq/compound-mini failed, falling back to Gemini with search tool", err);
+              await runGeminiStream('gemini-3-flash-preview', signal);
+            }
+          };
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 3000, 4000, 20000);
         } else {
           // Fast Mode (with Load Distribution)
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
           if (useLlama) {
-            const runPrimary = () => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, controller.signal);
-            const runFallback = () => runGeminiStream('gemini-3-flash-preview');
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000);
+            const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal);
+            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
+            await executeWithTimeoutAndFallback(runPrimary, runFallback, 2500, 3000, 15000);
           } else {
-            const runPrimary = () => runGeminiStream('gemini-3-flash-preview');
-            const runFallback = () => runGeminiStream('gemini-2.5-flash');
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000);
+            const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
+            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-2.5-flash', signal);
+            await executeWithTimeoutAndFallback(runPrimary, runFallback, 2500, 3000, 15000);
           }
         }
 
