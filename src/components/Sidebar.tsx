@@ -327,9 +327,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             title={chat.title}
                           >
                             {chat.title}
-                            {chat.isPinned && (
-                              <Pin size={10} className="text-blue-500 fill-blue-500/20" />
-                            )}
                           </button>
                           
                           <button
@@ -337,10 +334,19 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                               e.stopPropagation();
                               setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
                             }}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-md opacity-100 md:opacity-0 md:group-hover:opacity-100 hover:bg-surface text-foreground/60 hover:text-foreground transition-all z-[60]"
+                            className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-all z-[60] flex items-center justify-center"
                             title="More options"
                           >
-                            <MoreVertical size={14} />
+                            <div className="relative w-3.5 h-3.5 flex items-center justify-center">
+                              <Pin 
+                                size={14} 
+                                className={`absolute transition-all duration-200 ${chat.isPinned ? 'text-blue-500 fill-blue-500/20 opacity-100' : 'opacity-40'} group-hover:opacity-0 group-hover:scale-75`} 
+                              />
+                              <MoreVertical 
+                                size={14} 
+                                className="absolute transition-all duration-200 opacity-0 scale-75 group-hover:opacity-100 group-hover:scale-100" 
+                              />
+                            </div>
                           </button>
 
                           {activeMenuId === chat.id && (
