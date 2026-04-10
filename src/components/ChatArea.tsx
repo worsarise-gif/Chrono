@@ -1908,19 +1908,23 @@ Return ONLY the JSON array.`;
                   </div>
                 </motion.div>
               ))}
-              {streamingMessage && (
+              {(isLoading || streamingMessage) && !isGeneratingImage && (
                 <motion.div 
-                  key="streaming"
+                  key="ai-response-indicator"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.2 }}
                   className="flex justify-start group w-full min-h-[36px]"
                 >
-                  <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
-                    <div className="w-full">
-                      <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
+                  {streamingMessage ? (
+                    <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
+                      <div className="w-full">
+                        <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <Loader text={isSearching ? "Searching..." : loadingStatus} />
+                  )}
                 </motion.div>
               )}
               {isGeneratingImage && (
@@ -1947,16 +1951,6 @@ Return ONLY the JSON array.`;
                       </div>
                     </div>
                   </div>
-                </motion.div>
-              )}
-              {isLoading && !streamingMessage && !isGeneratingImage && (
-                <motion.div 
-                  key="loading-indicator"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex justify-start group w-full min-h-[36px]"
-                >
-                  <Loader text={isSearching ? "Searching..." : loadingStatus} />
                 </motion.div>
               )}
             </AnimatePresence>
