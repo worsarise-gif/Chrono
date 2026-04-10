@@ -267,7 +267,13 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         {/* Main Nav */}
         <nav className="transition-all duration-300">
           <ul className="space-y-0.5">
-            <NavItem icon={<Search size={18} strokeWidth={2} />} label="Search" onClick={() => {}} isCollapsed={isCollapsed} index={0} />
+            <NavItem 
+              icon={<Search size={18} strokeWidth={2} />} 
+              label="Search" 
+              onClick={() => setIsChatHistoryModalOpen(true)} 
+              isCollapsed={isCollapsed} 
+              index={0} 
+            />
             <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
             <NavItem icon={<AudioLines size={18} strokeWidth={2} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={2} />
             <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={3} />

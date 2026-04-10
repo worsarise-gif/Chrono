@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Search, Trash2, MessageSquare, Calendar, Clock, ArrowRight, Edit2, Check, Pin, PinOff } from 'lucide-react';
 import { format } from 'date-fns';
@@ -36,6 +36,19 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Small delay to ensure the modal animation has started and the element is in the DOM
+      const timer = setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchQuery('');
+    }
+  }, [isOpen]);
 
   const handleStartEdit = (e: React.MouseEvent, chatId: string, currentTitle: string) => {
     e.stopPropagation();
@@ -171,6 +184,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
               <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40 group-focus-within:text-foreground transition-colors" size={18} />
                 <input
+                  ref={searchInputRef}
                   type="text"
                   placeholder="Search your conversations..."
                   value={searchQuery}
