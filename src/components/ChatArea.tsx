@@ -1020,14 +1020,19 @@ Return ONLY the JSON array.`;
           try {
             summary = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: summaryPrompt }]);
           } catch (e) {
-            console.warn("Cerebras summarization failed, falling back to Gemini 3.1 Pro:", e);
-            const keys = getApiKeys('gemini');
-            if (keys.length > 0) {
-              summary = await withFallback(keys, async (apiKey) => {
-                const aiFallback = new GoogleGenAI({ apiKey });
-                const response = await aiFallback.models.generateContent({ model: 'gemini-3.1-pro-preview', contents: summaryPrompt });
-                return response.text || '';
-              });
+            console.warn("Cerebras summarization failed, falling back to Kimi Pro:", e);
+            try {
+              summary = await callGroqChatNonStream('moonshotai/kimi-k2-instruct-0905', [{ role: 'user', content: summaryPrompt }]);
+            } catch (fallbackErr) {
+              console.warn("Kimi summarization failed, falling back to Gemini 3.1 Pro:", fallbackErr);
+              const keys = getApiKeys('gemini');
+              if (keys.length > 0) {
+                summary = await withFallback(keys, async (apiKey) => {
+                  const aiFallback = new GoogleGenAI({ apiKey });
+                  const response = await aiFallback.models.generateContent({ model: 'gemini-3.1-pro-preview', contents: summaryPrompt });
+                  return response.text || '';
+                });
+              }
             }
           }
           contextText = `[Summary of older conversation: ${summary}]\n\n`;
@@ -1137,7 +1142,7 @@ Return ONLY the JSON array.`;
       if (mode === 'pro' && !user) {
         modelName = 'gemini-3.1-flash-lite-preview';
       } else if (mode === 'pro' && user) {
-        modelName = 'gemini-3.1-pro-preview';
+        modelName = 'moonshotai/kimi-k2-instruct-0905';
       }
       
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
