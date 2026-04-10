@@ -1395,7 +1395,7 @@ Return ONLY the JSON array.`;
         if (currentImage) {
           // Image Analysis
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, signal);
-          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 15000, 15000, 60000);
+          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 45000, 15000, 90000);
         } else if (classification === 'pro') {
           // Pro Mode
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'moonshotai/kimi-k2-instruct-0905', openAIMessages, handleChunk, signal);
