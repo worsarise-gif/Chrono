@@ -8,7 +8,7 @@ export default function StarryBackground() {
       style={{
         backgroundColor: 'var(--color-chat-bg)',
         backgroundImage: 'radial-gradient(var(--color-stars) 1px, transparent 1px)',
-        backgroundSize: '24px 24px'
+        backgroundSize: '40px 40px'
       }}
     />
   );

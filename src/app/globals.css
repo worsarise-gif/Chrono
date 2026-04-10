@@ -16,15 +16,15 @@
 }
 
 .dark {
-  --color-background: #000000;
-  --color-sidebar-bg: #000000;
-  --color-chat-bg: #000000;
-  --color-foreground: #ffffff;
-  --color-surface: #171717;
-  --color-surface-hover: #262626;
-  --color-border: #262626;
-  --color-muted: #9ca3af;
-  --color-stars: rgba(255, 255, 255, 0.08);
+  --color-background: #0f0f11;
+  --color-sidebar-bg: #131316;
+  --color-chat-bg: #18181b;
+  --color-foreground: #f4f4f5;
+  --color-surface: #27272a;
+  --color-surface-hover: #3f3f46;
+  --color-border: #333338;
+  --color-muted: #a1a1aa;
+  --color-stars: rgba(255, 255, 255, 0.03);
 }
 
 /* Custom Scrollbar for all elements */
