@@ -1253,17 +1253,25 @@ Return ONLY the JSON array.`;
 
       let lastUpdateTime = Date.now();
       let lastTokenTime = Date.now();
+      let lastUIUpdateTime = 0;
       let firstTokenReceived = false;
 
       const handleChunk = (text: string) => {
         if (!firstTokenReceived) firstTokenReceived = true;
-        lastTokenTime = Date.now();
+        
+        const now = Date.now();
+        lastTokenTime = now;
         
         fullResponse += text;
-        setStreamingMessage(fullResponse);
         
-        if (user && aiMessageRef && Date.now() - lastUpdateTime > 1500) {
-          lastUpdateTime = Date.now();
+        // Throttle UI updates to ~30fps (33ms) to prevent layout thrashing
+        if (now - lastUIUpdateTime > 33) {
+          setStreamingMessage(fullResponse);
+          lastUIUpdateTime = now;
+        }
+        
+        if (user && aiMessageRef && now - lastUpdateTime > 1500) {
+          lastUpdateTime = now;
           updateDoc(aiMessageRef, { content: fullResponse }).catch(e => console.error("Failed to sync chunk", e));
         }
       };
@@ -1903,10 +1911,10 @@ Return ONLY the JSON array.`;
               {streamingMessage && (
                 <motion.div 
                   key="streaming"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="flex justify-start group w-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex justify-start group w-full min-h-[36px]"
                 >
                   <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
                     <div className="w-full">
@@ -1946,7 +1954,7 @@ Return ONLY the JSON array.`;
                   key="loading-indicator"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="flex justify-start group w-full"
+                  className="flex justify-start group w-full min-h-[36px]"
                 >
                   <Loader text={isSearching ? "Searching..." : loadingStatus} />
                 </motion.div>

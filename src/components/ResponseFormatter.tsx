@@ -15,12 +15,15 @@ interface ResponseFormatterProps {
   isStreaming?: boolean;
 }
 
+let globalMounted = false;
+
 const CodeBlock = ({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
   const { theme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const [mounted, setMounted] = useState(globalMounted);
 
   useEffect(() => {
+    globalMounted = true;
     setMounted(true);
   }, []);
 
@@ -134,9 +137,11 @@ const ThinkingProcess = ({ content }: { content: string }) => {
   );
 };
 
+const loadedImages = new Set<string>();
+
 const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!loadedImages.has(src));
 
   const handleImageClick = () => {
     if (onImageClick) {
@@ -144,6 +149,11 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
     } else {
       setIsOpen(true);
     }
+  };
+
+  const handleLoad = () => {
+    setIsLoading(false);
+    loadedImages.add(src);
   };
 
   const handleDownload = async (e: React.MouseEvent) => {
@@ -209,7 +219,7 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
           alt={alt || 'Generated Image'} 
           className={`max-w-full h-auto block rounded-2xl transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`} 
           loading="lazy" 
-          onLoad={() => setIsLoading(false)}
+          onLoad={handleLoad}
           {...props} 
         />
         <div className="absolute inset-0 rounded-2xl bg-transparent transition-colors flex items-center justify-center">
