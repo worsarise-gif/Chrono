@@ -340,7 +340,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             <div className="relative w-3.5 h-3.5 flex items-center justify-center">
                               <Pin 
                                 size={14} 
-                                className={`absolute transition-all duration-200 ${chat.isPinned ? 'text-blue-500 fill-blue-500/20 opacity-100' : 'opacity-40'} group-hover:opacity-0 group-hover:scale-75`} 
+                                className={`absolute transition-all duration-200 ${chat.isPinned ? 'text-blue-500 fill-blue-500/20 opacity-100' : 'opacity-0'} group-hover:opacity-0 group-hover:scale-75`} 
                               />
                               <MoreVertical 
                                 size={14} 
