@@ -2138,7 +2138,7 @@ Return ONLY the JSON array.`;
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
           <motion.div 
-            className="relative bg-surface rounded-[24px] md:rounded-[28px] shadow-xl border border-border focus-within:border-muted/60 focus-within:bg-surface-hover/30 transition-colors duration-300 flex flex-col p-1.5 md:p-2"
+            className="relative bg-surface rounded-[24px] md:rounded-[28px] shadow-xl border border-border focus-within:border-muted/60 focus-within:bg-surface-hover transition-colors duration-300 flex flex-col p-1.5 md:p-2"
           >
             <AnimatePresence>
               {selectedImage && (
