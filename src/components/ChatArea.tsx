@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
@@ -454,7 +454,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     if (force) {
       isUserScrolledUpRef.current = false;
     }
-    setTimeout(() => {
+    
+    const doScroll = () => {
       if (scrollContainerRef.current) {
         if (!isUserScrolledUpRef.current || force) {
           scrollContainerRef.current.scrollTo({
@@ -465,14 +466,22 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       } else if (force) {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
       }
-    }, 10);
+    };
+
+    // Execute synchronously for immediate layout updates
+    doScroll();
+    
+    // Also schedule a frame later to catch any delayed image loads or layout shifts
+    requestAnimationFrame(() => {
+      requestAnimationFrame(doScroll);
+    });
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     scrollToBottom(false);
   }, [messages, streamingMessage]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isLoading && !streamingMessage) {
       scrollToBottom(true);
     }
@@ -486,7 +495,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     setInput(e.target.value);
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (textareaRef.current) {
       const textarea = textareaRef.current;
       textarea.style.height = 'auto';
@@ -511,7 +520,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   };
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (input === '' && textareaRef.current) {
       textareaRef.current.style.height = '24px';
       textareaRef.current.scrollTop = 0;
@@ -1911,7 +1920,6 @@ Return ONLY the JSON array.`;
                   key="generating-image"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
                   className="flex justify-start group w-full"
                 >
                   <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square border border-border bg-surface">
@@ -1938,7 +1946,6 @@ Return ONLY the JSON array.`;
                   key="loading-indicator"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, transition: { duration: 0.2 } }}
                   className="flex justify-start group w-full"
                 >
                   <Loader text={isSearching ? "Searching..." : loadingStatus} />
