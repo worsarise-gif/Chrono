@@ -1020,12 +1020,12 @@ Return ONLY the JSON array.`;
           try {
             summary = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: summaryPrompt }]);
           } catch (e) {
-            console.warn("Cerebras summarization failed, falling back to Gemini 2.5 Pro:", e);
+            console.warn("Cerebras summarization failed, falling back to Gemini 3.1 Pro:", e);
             const keys = getApiKeys('gemini');
             if (keys.length > 0) {
               summary = await withFallback(keys, async (apiKey) => {
                 const aiFallback = new GoogleGenAI({ apiKey });
-                const response = await aiFallback.models.generateContent({ model: 'gemini-2.5-pro', contents: summaryPrompt });
+                const response = await aiFallback.models.generateContent({ model: 'gemini-3.1-pro-preview', contents: summaryPrompt });
                 return response.text || '';
               });
             }
@@ -1183,20 +1183,38 @@ Return ONLY the JSON array.`;
 
       config.systemInstruction = dynamicSystemInstruction;
 
-      const openAIMessages = [
-        { role: 'system', content: dynamicSystemInstruction },
-        ...(contextText ? [{ role: 'system', content: contextText }] : []),
-        ...recentMessages.map(m => ({
-          role: m.role === 'model' ? 'assistant' : 'user',
-          content: m.content || (m.hasImage ? "[Image uploaded]" : " ")
-        })),
-        { 
-          role: 'user', 
-          content: currentImage ? [
-            { type: 'text', text: userMessage || "Describe this image." },
-            { type: 'image_url', image_url: { url: `data:${currentImage.mimeType};base64,${currentImage.data}` } }
-          ] : (userMessage || " ")
+      const mergedRecentMessages: any[] = [];
+      for (const m of recentMessages) {
+        const role = m.role === 'model' ? 'assistant' : 'user';
+        const content = m.content || (m.hasImage ? "[Image uploaded]" : " ");
+        if (mergedRecentMessages.length > 0 && mergedRecentMessages[mergedRecentMessages.length - 1].role === role) {
+          mergedRecentMessages[mergedRecentMessages.length - 1].content += "\n\n" + content;
+        } else {
+          mergedRecentMessages.push({ role, content });
         }
+      }
+
+      const finalUserContent = currentImage ? [
+        { type: 'text', text: userMessage || "Describe this image." },
+        { type: 'image_url', image_url: { url: `data:${currentImage.mimeType};base64,${currentImage.data}` } }
+      ] : (userMessage || " ");
+
+      if (mergedRecentMessages.length > 0 && mergedRecentMessages[mergedRecentMessages.length - 1].role === 'user') {
+        const lastMsg = mergedRecentMessages[mergedRecentMessages.length - 1];
+        if (typeof lastMsg.content === 'string' && typeof finalUserContent === 'string') {
+          lastMsg.content += "\n\n" + finalUserContent;
+        } else {
+          const lastContentArray = Array.isArray(lastMsg.content) ? lastMsg.content : [{ type: 'text', text: lastMsg.content }];
+          const finalContentArray = Array.isArray(finalUserContent) ? finalUserContent : [{ type: 'text', text: finalUserContent }];
+          lastMsg.content = [...lastContentArray, ...finalContentArray];
+        }
+      } else {
+        mergedRecentMessages.push({ role: 'user', content: finalUserContent });
+      }
+
+      const openAIMessages = [
+        { role: 'system', content: dynamicSystemInstruction + (contextText ? `\n\n${contextText}` : '') },
+        ...mergedRecentMessages
       ];
 
       let aiMessageRef: any = null;
@@ -1239,9 +1257,9 @@ Return ONLY the JSON array.`;
       const executeWithTimeoutAndFallback = async (
         primaryFn: (signal: AbortSignal) => Promise<void>, 
         fallbackFn: (signal: AbortSignal) => Promise<void>, 
-        ttftMs: number = 3000,
-        stallMs: number = 4000,
-        maxTotalMs: number = 20000
+        ttftMs: number = 8000,
+        stallMs: number = 8000,
+        maxTotalMs: number = 60000
       ) => {
         const primaryController = new AbortController();
         const globalAbortHandler = () => primaryController.abort();
@@ -1278,7 +1296,40 @@ Return ONLY the JSON array.`;
           console.warn(`Primary failed (${error.message}). Triggering fallback...`);
           firstTokenReceived = false;
           lastTokenTime = Date.now();
-          await fallbackFn(controller.signal);
+          
+          const fallbackController = new AbortController();
+          const fallbackGlobalHandler = () => fallbackController.abort();
+          controller.signal.addEventListener('abort', fallbackGlobalHandler);
+          
+          const fallbackStartTime = Date.now();
+          const fallbackMonitor = new Promise<void>((_, reject) => {
+            const interval = setInterval(() => {
+              if (fallbackController.signal.aborted) {
+                clearInterval(interval);
+                return;
+              }
+              const now = Date.now();
+              if (!firstTokenReceived && now - fallbackStartTime > ttftMs) {
+                clearInterval(interval);
+                reject(new Error(`Fallback TTFT Timeout (${ttftMs}ms)`));
+              } else if (firstTokenReceived && now - lastTokenTime > stallMs) {
+                clearInterval(interval);
+                reject(new Error(`Fallback Stream Stall Timeout (${stallMs}ms)`));
+              } else if (now - fallbackStartTime > maxTotalMs) {
+                clearInterval(interval);
+                reject(new Error(`Fallback Max Duration Timeout (${maxTotalMs}ms)`));
+              }
+            }, 100);
+          });
+
+          try {
+            await Promise.race([fallbackFn(fallbackController.signal), fallbackMonitor]);
+          } catch (fallbackError: any) {
+            fallbackController.abort();
+            throw fallbackError;
+          } finally {
+            controller.signal.removeEventListener('abort', fallbackGlobalHandler);
+          }
         } finally {
           controller.signal.removeEventListener('abort', globalAbortHandler);
         }
@@ -1312,7 +1363,7 @@ Return ONLY the JSON array.`;
         if (currentImage) {
           // Image Analysis
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, signal);
-          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 3000, 4000, 15000);
+          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 8000, 8000, 45000);
         } else if (classification === 'pro') {
           // Pro Mode
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'moonshotai/kimi-k2-instruct-0905', openAIMessages, handleChunk, signal);
@@ -1324,7 +1375,7 @@ Return ONLY the JSON array.`;
               await callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'qwen-3-235b-a22b-instruct-2507', openAIMessages, handleChunk, signal);
             }
           };
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 3000, 4000, 20000);
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 60000);
         } else if (classification === 'search') {
           // Search Mode: groq/compound -> groq/compound-mini -> Gemini (with Tavily tool)
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound', openAIMessages, handleChunk, signal);
@@ -1336,18 +1387,18 @@ Return ONLY the JSON array.`;
               await runGeminiStream('gemini-3-flash-preview', signal);
             }
           };
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 3000, 4000, 20000);
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 8000, 8000, 45000);
         } else {
           // Fast Mode (with Load Distribution)
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
           if (useLlama) {
             const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal);
             const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 2500, 3000, 15000);
+            await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000, 5000, 30000);
           } else {
             const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-2.5-flash', signal);
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 2500, 3000, 15000);
+            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3.1-flash-lite-preview', signal);
+            await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000, 5000, 30000);
           }
         }
 
@@ -1400,7 +1451,7 @@ Return ONLY the JSON array.`;
                   if (keys.length > 0) {
                     formattedSearch = await withFallback(keys, async (apiKey) => {
                       const aiFormat = new GoogleGenAI({ apiKey });
-                      const response = await aiFormat.models.generateContent({ model: 'gemini-2.5-flash', contents: formatPrompt });
+                      const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
                       return response.text || rawSearchText;
                     });
                   } else {
