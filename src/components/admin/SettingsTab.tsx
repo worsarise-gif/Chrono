@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
-import { Settings, Save, AlertTriangle, CheckCircle2, RefreshCw, Sliders, ShieldAlert, Bot } from 'lucide-react';
+import { Settings, Save, AlertTriangle, CheckCircle2, RefreshCw, Sliders, ShieldAlert, Bot, Trash2 } from 'lucide-react';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { ref, listAll, deleteObject } from 'firebase/storage';
+import { db, storage, auth } from '../../firebase';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function SettingsTab() {
+  const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const [clearingData, setClearingData] = useState(false);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   
   const [settings, setSettings] = useState({
@@ -24,6 +31,75 @@ export default function SettingsTab() {
       setTimeout(() => setToast(null), 3000);
     }, 1000);
   };
+
+  const deleteStorageFolder = async (folderRef: any) => {
+    try {
+      const listResult = await listAll(folderRef);
+      const deletePromises = listResult.items.map((itemRef) => deleteObject(itemRef));
+      await Promise.all(deletePromises);
+      
+      for (const prefixRef of listResult.prefixes) {
+        await deleteStorageFolder(prefixRef);
+      }
+    } catch (error: any) {
+      if (error.code !== 'storage/object-not-found') {
+        console.error("Error deleting storage folder:", error);
+      }
+    }
+  };
+
+  const handleClearAllData = async () => {
+    if (user?.email !== 'johnkerveelayese@gmail.com') {
+      setToast('Unauthorized action.');
+      setTimeout(() => setToast(null), 3000);
+      return;
+    }
+
+    setClearingData(true);
+    try {
+      const usersSnapshot = await getDocs(collection(db, 'users'));
+      
+      for (const userDoc of usersSnapshot.docs) {
+        const uid = userDoc.id;
+        
+        // Delete generated_images
+        const imagesSnapshot = await getDocs(collection(db, `users/${uid}/generated_images`));
+        for (const imgDoc of imagesSnapshot.docs) {
+          await deleteDoc(doc(db, `users/${uid}/generated_images`, imgDoc.id));
+        }
+        
+        // Delete chats and messages
+        const chatsSnapshot = await getDocs(collection(db, `users/${uid}/chats`));
+        for (const chatDoc of chatsSnapshot.docs) {
+          const messagesSnapshot = await getDocs(collection(db, `users/${uid}/chats/${chatDoc.id}/messages`));
+          for (const msgDoc of messagesSnapshot.docs) {
+            await deleteDoc(doc(db, `users/${uid}/chats/${chatDoc.id}/messages`, msgDoc.id));
+          }
+          await deleteDoc(doc(db, `users/${uid}/chats`, chatDoc.id));
+        }
+        
+        // Delete user document, except for the super admin
+        if (uid !== auth.currentUser?.uid) {
+          await deleteDoc(doc(db, 'users', uid));
+        }
+      }
+      
+      // Delete Storage data
+      await deleteStorageFolder(ref(storage, 'profiles'));
+      await deleteStorageFolder(ref(storage, 'users'));
+      
+      setToast('All data cleared successfully.');
+    } catch (error) {
+      console.error("Error clearing data:", error);
+      setToast('Failed to clear data.');
+    } finally {
+      setClearingData(false);
+      setShowClearConfirm(false);
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
+
+  const isSuperAdmin = user?.email === 'johnkerveelayese@gmail.com';
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">
@@ -202,6 +278,58 @@ export default function SettingsTab() {
             Save All Settings
           </button>
         </div>
+
+        {/* Danger Zone - Super Admin Only */}
+        {isSuperAdmin && (
+          <div className="mt-12 border-t border-border pt-8">
+            <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-red-500/10 text-red-500 rounded-lg">
+                  <AlertTriangle size={20} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-red-500">Danger Zone</h3>
+                  <p className="text-sm text-red-500/80">Irreversible, destructive actions for the system.</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-red-500/20 rounded-lg bg-background/50">
+                <div>
+                  <span className="font-medium text-foreground block">Clear All System Data</span>
+                  <span className="text-xs text-muted-foreground">Permanently deletes all users, chats, messages, and uploaded images. Your super admin account will be preserved.</span>
+                </div>
+                
+                {!showClearConfirm ? (
+                  <button 
+                    onClick={() => setShowClearConfirm(true)}
+                    className="flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors whitespace-nowrap"
+                  >
+                    <Trash2 size={16} />
+                    Clear All Data
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setShowClearConfirm(false)}
+                      disabled={clearingData}
+                      className="px-4 py-2 rounded-lg text-sm font-medium bg-surface border border-border hover:bg-background transition-colors disabled:opacity-70"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={handleClearAllData}
+                      disabled={clearingData}
+                      className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors whitespace-nowrap disabled:opacity-70"
+                    >
+                      {clearingData ? <RefreshCw size={16} className="animate-spin" /> : <AlertTriangle size={16} />}
+                      Confirm Deletion
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
