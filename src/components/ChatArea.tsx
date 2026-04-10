@@ -1262,9 +1262,9 @@ Return ONLY the JSON array.`;
       const executeWithTimeoutAndFallback = async (
         primaryFn: (signal: AbortSignal) => Promise<void>, 
         fallbackFn: (signal: AbortSignal) => Promise<void>, 
-        ttftMs: number = 8000,
-        stallMs: number = 8000,
-        maxTotalMs: number = 60000
+        ttftMs: number = 20000,
+        stallMs: number = 15000,
+        maxTotalMs: number = 90000
       ) => {
         const primaryController = new AbortController();
         const globalAbortHandler = () => primaryController.abort();
@@ -1274,29 +1274,34 @@ Return ONLY the JSON array.`;
         lastTokenTime = Date.now();
         const startTime = Date.now();
 
+        let primaryInterval: NodeJS.Timeout;
         const monitor = new Promise<void>((_, reject) => {
-          const interval = setInterval(() => {
+          primaryInterval = setInterval(() => {
             if (primaryController.signal.aborted) {
-              clearInterval(interval);
+              clearInterval(primaryInterval);
               return;
             }
             const now = Date.now();
             if (!firstTokenReceived && now - startTime > ttftMs) {
-              clearInterval(interval);
+              clearInterval(primaryInterval);
               reject(new Error(`TTFT Timeout (${ttftMs}ms)`));
             } else if (firstTokenReceived && now - lastTokenTime > stallMs) {
-              clearInterval(interval);
+              clearInterval(primaryInterval);
               reject(new Error(`Stream Stall Timeout (${stallMs}ms)`));
             } else if (now - startTime > maxTotalMs) {
-              clearInterval(interval);
+              clearInterval(primaryInterval);
               reject(new Error(`Max Duration Timeout (${maxTotalMs}ms)`));
             }
           }, 100);
         });
 
         try {
-          await Promise.race([primaryFn(primaryController.signal), monitor]);
+          await Promise.race([
+            primaryFn(primaryController.signal).then(() => { clearInterval(primaryInterval); }), 
+            monitor
+          ]);
         } catch (error: any) {
+          clearInterval(primaryInterval);
           primaryController.abort();
           console.warn(`Primary failed (${error.message}). Triggering fallback...`);
           firstTokenReceived = false;
@@ -1307,29 +1312,34 @@ Return ONLY the JSON array.`;
           controller.signal.addEventListener('abort', fallbackGlobalHandler);
           
           const fallbackStartTime = Date.now();
+          let fallbackInterval: NodeJS.Timeout;
           const fallbackMonitor = new Promise<void>((_, reject) => {
-            const interval = setInterval(() => {
+            fallbackInterval = setInterval(() => {
               if (fallbackController.signal.aborted) {
-                clearInterval(interval);
+                clearInterval(fallbackInterval);
                 return;
               }
               const now = Date.now();
               if (!firstTokenReceived && now - fallbackStartTime > ttftMs) {
-                clearInterval(interval);
+                clearInterval(fallbackInterval);
                 reject(new Error(`Fallback TTFT Timeout (${ttftMs}ms)`));
               } else if (firstTokenReceived && now - lastTokenTime > stallMs) {
-                clearInterval(interval);
+                clearInterval(fallbackInterval);
                 reject(new Error(`Fallback Stream Stall Timeout (${stallMs}ms)`));
               } else if (now - fallbackStartTime > maxTotalMs) {
-                clearInterval(interval);
+                clearInterval(fallbackInterval);
                 reject(new Error(`Fallback Max Duration Timeout (${maxTotalMs}ms)`));
               }
             }, 100);
           });
 
           try {
-            await Promise.race([fallbackFn(fallbackController.signal), fallbackMonitor]);
+            await Promise.race([
+              fallbackFn(fallbackController.signal).then(() => { clearInterval(fallbackInterval); }), 
+              fallbackMonitor
+            ]);
           } catch (fallbackError: any) {
+            clearInterval(fallbackInterval);
             fallbackController.abort();
             throw fallbackError;
           } finally {
@@ -1368,7 +1378,7 @@ Return ONLY the JSON array.`;
         if (currentImage) {
           // Image Analysis
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, signal);
-          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 8000, 8000, 45000);
+          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 15000, 15000, 60000);
         } else if (classification === 'pro') {
           // Pro Mode
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'moonshotai/kimi-k2-instruct-0905', openAIMessages, handleChunk, signal);
@@ -1380,7 +1390,7 @@ Return ONLY the JSON array.`;
               await callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'qwen-3-235b-a22b-instruct-2507', openAIMessages, handleChunk, signal);
             }
           };
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 60000);
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 20000, 15000, 90000);
         } else if (classification === 'search') {
           // Search Mode: groq/compound -> groq/compound-mini -> Gemini (with Tavily tool)
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound', openAIMessages, handleChunk, signal);
@@ -1392,18 +1402,18 @@ Return ONLY the JSON array.`;
               await runGeminiStream('gemini-3-flash-preview', signal);
             }
           };
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 8000, 8000, 45000);
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 15000, 15000, 60000);
         } else {
           // Fast Mode (with Load Distribution)
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
           if (useLlama) {
             const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal);
             const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000, 5000, 30000);
+            await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           } else {
             const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
             const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3.1-flash-lite-preview', signal);
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 5000, 5000, 30000);
+            await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           }
         }
 
