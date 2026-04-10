@@ -324,6 +324,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                               setIsMobileOpen?.(false);
                             }}
                             className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:bg-surface-hover/50 hover:text-foreground'}`}
+                            title={chat.title}
                           >
                             {chat.title}
                             {chat.isPinned && (
@@ -331,13 +332,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             )}
                           </button>
                           
-                          {/* Chat Title Full Visibility on Hover */}
-                          <div className="absolute left-2 top-0 w-[calc(100%-16px)] h-full pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity z-[50]">
-                            <div className="absolute left-0 top-0 min-w-full bg-surface-hover border border-border rounded-xl px-3 py-2 text-[13px] text-foreground shadow-xl whitespace-normal break-words z-[51]">
-                              {chat.title}
-                            </div>
-                          </div>
-
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

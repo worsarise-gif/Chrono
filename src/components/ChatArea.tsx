@@ -458,10 +458,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     const doScroll = () => {
       if (scrollContainerRef.current) {
         if (!isUserScrolledUpRef.current || force) {
-          scrollContainerRef.current.scrollTo({
-            top: scrollContainerRef.current.scrollHeight,
-            behavior: 'auto'
-          });
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
         }
       } else if (force) {
         messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
@@ -472,9 +469,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     doScroll();
     
     // Also schedule a frame later to catch any delayed image loads or layout shifts
-    requestAnimationFrame(() => {
-      requestAnimationFrame(doScroll);
-    });
+    requestAnimationFrame(doScroll);
   };
 
   useLayoutEffect(() => {
@@ -1291,7 +1286,7 @@ Return ONLY the JSON array.`;
         lastTokenTime = Date.now();
         const startTime = Date.now();
 
-        let primaryInterval: NodeJS.Timeout;
+        let primaryInterval: any = null;
         const monitor = new Promise<void>((_, reject) => {
           primaryInterval = setInterval(() => {
             if (primaryController.signal.aborted) {
@@ -1329,7 +1324,7 @@ Return ONLY the JSON array.`;
           controller.signal.addEventListener('abort', fallbackGlobalHandler);
           
           const fallbackStartTime = Date.now();
-          let fallbackInterval: NodeJS.Timeout;
+          let fallbackInterval: any = null;
           const fallbackMonitor = new Promise<void>((_, reject) => {
             fallbackInterval = setInterval(() => {
               if (fallbackController.signal.aborted) {
@@ -1654,7 +1649,7 @@ Return ONLY the JSON array.`;
         onClick={() => {
           if (userMenuState) setUserMenuState(null);
         }}
-        className="flex-1 overflow-y-auto scroll-smooth relative flex flex-col"
+        className="flex-1 overflow-y-auto relative flex flex-col"
       >
         {userMenuState && (
           <div 
@@ -1737,9 +1732,9 @@ Return ONLY the JSON array.`;
               {messages.filter(msg => msg.id !== currentStreamingMessageId).map((msg, index) => (
                 <motion.div 
                   key={msg.id} 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2 }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group w-full`}
                 >
                   <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[95%] md:max-w-[85%]' : 'items-start w-full'} relative`}>
