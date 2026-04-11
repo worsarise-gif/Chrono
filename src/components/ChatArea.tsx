@@ -417,6 +417,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
   const isCreatingNewChatRef = useRef(false);
+  const previousChatIdRef = useRef<string | null>(null);
 
   const getSourcesFromContent = (content: string) => {
     const sources: { title: string, link: string }[] = [];
@@ -541,17 +542,22 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       return;
     }
     
-    // Clear streaming state when switching chats, but NOT when we just created a new chat
-    if (!isCreatingNewChatRef.current) {
-      setStreamingMessage('');
-      setCurrentStreamingMessageId(null);
-      setIsLoading(false);
-      setAbortController(prev => {
-        if (prev) prev.abort();
-        return null;
-      });
+    // Only run the chat-switching logic if the chat ID actually changed
+    // This prevents React Strict Mode from double-firing and aborting new chats
+    if (previousChatIdRef.current !== currentChatId) {
+      // Clear streaming state when switching chats, but NOT when we just created a new chat
+      if (!isCreatingNewChatRef.current) {
+        setStreamingMessage('');
+        setCurrentStreamingMessageId(null);
+        setIsLoading(false);
+        setAbortController(prev => {
+          if (prev) prev.abort();
+          return null;
+        });
+      }
+      isCreatingNewChatRef.current = false;
+      previousChatIdRef.current = currentChatId;
     }
-    isCreatingNewChatRef.current = false;
 
     if (!currentChatId) {
       setMessages([]);
@@ -1608,12 +1614,14 @@ Return ONLY the JSON array.`;
           handleError(e, "Failed to save AI response");
         }
       } finally {
-        setIsLoading(false);
-        setIsSearching(false);
-        if (!writeSuccessful) {
+        if (writeSuccessful) {
+          setStreamingMessage(fullResponse);
+        } else {
           setStreamingMessage('');
           setCurrentStreamingMessageId(null);
         }
+        setIsLoading(false);
+        setIsSearching(false);
       }
     } catch (error: any) {
       setIsLoading(false);
@@ -1942,7 +1950,7 @@ Return ONLY the JSON array.`;
                   status={isSearching ? "Searching..." : loadingStatus} 
                   isStreaming={streamingMessage.length > 0} 
                 />
-                {streamingMessage.replace(/<think>|<\/think>/g, '').trim().length > 0 && (
+                {streamingMessage.length > 0 && (
                   <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
