@@ -99,8 +99,8 @@ export default function UsersTab() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({
         id: doc.id,
-        ...doc.data(),
-        isBanned: doc.data().isBanned || false,
+        ...doc.data({ serverTimestamps: 'estimate' }),
+        isBanned: doc.data({ serverTimestamps: 'estimate' }).isBanned || false,
       }));
       setUsers(usersData);
       setLoading(false);

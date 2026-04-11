@@ -102,7 +102,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const imgData: GeneratedImage[] = [];
       snapshot.forEach((doc) => {
-        imgData.push({ id: doc.id, ...doc.data() } as GeneratedImage);
+        imgData.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as GeneratedImage);
       });
       setImages(imgData);
       setIsLoading(false);

@@ -190,7 +190,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const chatData: Chat[] = [];
       snapshot.forEach((doc) => {
-        chatData.push({ id: doc.id, ...doc.data() } as Chat);
+        chatData.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Chat);
       });
       
       // Sort by isPinned first, then updatedAt

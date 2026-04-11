@@ -574,7 +574,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const messageData: Message[] = [];
       snapshot.forEach((doc) => {
-        messageData.push({ id: doc.id, ...doc.data() } as Message);
+        messageData.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Message);
       });
       setMessages(messageData);
       setIsLoadingMessages(false);
