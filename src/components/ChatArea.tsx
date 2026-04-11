@@ -1923,28 +1923,22 @@ Return ONLY the JSON array.`;
               ))}
             </AnimatePresence>
 
-            <AnimatePresence>
-              {(isLoading || streamingMessage) && !isGeneratingImage && (
-                <motion.div 
-                  key="ai-response-indicator"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex justify-start group w-full min-h-[36px]"
-                >
-                  {streamingMessage ? (
-                    <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
-                      <div className="w-full">
-                        <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
-                      </div>
+            {(isLoading || streamingMessage) && !isGeneratingImage && (
+              <div 
+                key="ai-response-indicator"
+                className="flex justify-start group w-full min-h-[36px] animate-in fade-in duration-200"
+              >
+                {streamingMessage ? (
+                  <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
+                    <div className="w-full">
+                      <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
                     </div>
-                  ) : (
-                    <Loader text={isSearching ? "Searching..." : loadingStatus} />
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </div>
+                ) : (
+                  <Loader text={isSearching ? "Searching..." : loadingStatus} />
+                )}
+              </div>
+            )}
 
             <AnimatePresence>
               {isGeneratingImage && (
