@@ -415,6 +415,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
+  const isCreatingNewChatRef = useRef(false);
 
   const getSourcesFromContent = (content: string) => {
     const sources: { title: string, link: string }[] = [];
@@ -539,10 +540,17 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       return;
     }
     
-    // Clear streaming state when switching chats
-    setStreamingMessage('');
-    setCurrentStreamingMessageId(null);
-    setIsLoading(false);
+    // Clear streaming state when switching chats, but NOT when we just created a new chat
+    if (!isCreatingNewChatRef.current) {
+      setStreamingMessage('');
+      setCurrentStreamingMessageId(null);
+      setIsLoading(false);
+      setAbortController(prev => {
+        if (prev) prev.abort();
+        return null;
+      });
+    }
+    isCreatingNewChatRef.current = false;
 
     if (!currentChatId) {
       setMessages([]);
@@ -834,6 +842,7 @@ Return ONLY the JSON array.`;
             updatedAt: serverTimestamp()
           });
           chatId = chatRef.id;
+          isCreatingNewChatRef.current = true;
           setCurrentChatId(chatId);
         } catch (error) {
           setIsLoading(false);
