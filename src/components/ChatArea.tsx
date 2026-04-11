@@ -1892,17 +1892,17 @@ Return ONLY the JSON array.`;
                                         >
                                           <div className="flex flex-col p-1">
                                             {/* Mobile Only Items */}
-                                            <div className="md:hidden contents">
+                                            <div className="flex flex-col">
                                               <button 
                                                 onClick={() => { setActiveMoreMenuId(null); }}
-                                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
+                                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-foreground/70 hover:text-foreground transition-colors"
                                               >
                                                 <ThumbsUp size={14} />
                                                 <span>Good response</span>
                                               </button>
                                               <button 
                                                 onClick={() => { setActiveMoreMenuId(null); }}
-                                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
+                                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-foreground/70 hover:text-foreground transition-colors"
                                               >
                                                 <ThumbsDown size={14} />
                                                 <span>Bad response</span>
@@ -1923,36 +1923,13 @@ Return ONLY the JSON array.`;
                                                       window.speechSynthesis.speak(utterance);
                                                     }
                                                   }}
-                                                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
+                                                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-foreground/70 hover:text-foreground transition-colors"
                                                 >
                                                   {speakingMessageId === msg.id ? <Square size={14} /> : <Volume2 size={14} />}
                                                   <span>{speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}</span>
                                                 </button>
                                               )}
-                                              <div className="h-px bg-border my-1" />
                                             </div>
-                                            
-                                            {/* Common Actions */}
-                                            <button 
-                                              onClick={() => {
-                                                handleCopyMessage(msg.id, msg.content);
-                                                setActiveMoreMenuId(null);
-                                              }}
-                                              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
-                                            >
-                                              <Copy size={14} />
-                                              <span>Copy text</span>
-                                            </button>
-                                            <button 
-                                              onClick={() => {
-                                                handleRegenerate(index);
-                                                setActiveMoreMenuId(null);
-                                              }}
-                                              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
-                                            >
-                                              <RefreshCcw size={14} />
-                                              <span>Regenerate</span>
-                                            </button>
                                           </div>
                                         </motion.div>
                                       </>
