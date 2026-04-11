@@ -1928,7 +1928,7 @@ Return ONLY the JSON array.`;
                 key="ai-response-indicator"
                 className="flex justify-start group w-full min-h-[36px]"
               >
-                {streamingMessage ? (
+                {streamingMessage.replace(/<think>|<\/think>/g, '').trim().length > 0 ? (
                   <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />

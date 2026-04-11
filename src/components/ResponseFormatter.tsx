@@ -85,8 +85,14 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   );
 };
 
-const ThinkingProcess = ({ content }: { content: string }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreaming?: boolean }) => {
+  const [isOpen, setIsOpen] = useState(isStreaming || false);
+
+  useEffect(() => {
+    if (isStreaming) {
+      setIsOpen(true);
+    }
+  }, [isStreaming]);
 
   return (
     <div className="my-4 border border-border/50 rounded-2xl overflow-hidden bg-transparent transition-all duration-300">
@@ -427,7 +433,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
           if (!thinkingContent) return null;
-          return <ThinkingProcess key={index} content={thinkingContent} />;
+          return <ThinkingProcess key={index} content={thinkingContent} isStreaming={isStreaming} />;
         }
 
         const normalizedContent = normalizeContent(part);
