@@ -1921,11 +1921,15 @@ Return ONLY the JSON array.`;
                   </div>
                 </motion.div>
               ))}
+            </AnimatePresence>
+
+            <AnimatePresence>
               {(isLoading || streamingMessage) && !isGeneratingImage && (
                 <motion.div 
                   key="ai-response-indicator"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   transition={{ duration: 0.2 }}
                   className="flex justify-start group w-full min-h-[36px]"
                 >
@@ -1940,11 +1944,15 @@ Return ONLY the JSON array.`;
                   )}
                 </motion.div>
               )}
+            </AnimatePresence>
+
+            <AnimatePresence>
               {isGeneratingImage && (
                 <motion.div 
                   key="generating-image"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
                   className="flex justify-start group w-full"
                 >
                   <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square border border-border bg-surface">
