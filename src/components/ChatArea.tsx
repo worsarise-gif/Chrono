@@ -1926,7 +1926,7 @@ Return ONLY the JSON array.`;
             {(isLoading || streamingMessage) && !isGeneratingImage && (
               <div 
                 key="ai-response-indicator"
-                className="flex justify-start group w-full min-h-[36px] animate-in fade-in duration-200"
+                className="flex justify-start group w-full min-h-[36px]"
               >
                 {streamingMessage ? (
                   <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
