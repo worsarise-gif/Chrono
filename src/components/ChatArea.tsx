@@ -14,6 +14,8 @@ import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
 
+import ResponseIconIndicator from './ResponseIconIndicator';
+
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
 
@@ -1934,8 +1936,12 @@ Return ONLY the JSON array.`;
             {(isLoading || streamingMessage) && !isGeneratingImage && (
               <div 
                 key="ai-response-indicator"
-                className="flex justify-start group w-full min-h-[36px]"
+                className="flex flex-col justify-start group w-full min-h-[36px] gap-2"
               >
+                <ResponseIconIndicator 
+                  status={isSearching ? "Searching..." : loadingStatus} 
+                  isStreaming={streamingMessage.length > 0} 
+                />
                 {streamingMessage.replace(/<think>|<\/think>/g, '').trim().length > 0 && (
                   <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
                     <div className="w-full">
