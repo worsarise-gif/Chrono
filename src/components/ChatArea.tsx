@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
-import { Paperclip, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, Share, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download, Edit2 } from 'lucide-react';
+import { Paperclip, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download, Edit2 } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -338,6 +338,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [editContent, setEditContent] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
+  const [activeMoreMenuId, setActiveMoreMenuId] = useState<string | null>(null);
   const [guestRequestCount, setGuestRequestCount] = useState<number>(0);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [userMenuState, setUserMenuState] = useState<{messageId: string, content: string, x: number, y: number} | null>(null);
@@ -659,7 +660,7 @@ Session Title Status: "false"`;
         generatedTitle = await withFallback(keys, async (apiKey) => {
           const ai = new GoogleGenAI({ apiKey });
           const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
+            model: 'gemini-1.5-flash',
             contents: prompt
           });
           return response.text || '';
@@ -1055,18 +1056,18 @@ Return ONLY the JSON array.`;
         try {
           let summary = '';
           try {
-            summary = await callCerebrasNonStream('llama-3.1-8b-instant', [{ role: 'user', content: summaryPrompt }]);
+            summary = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: summaryPrompt }]);
           } catch (e) {
-            console.warn("Cerebras summarization failed, falling back to Kimi Pro:", e);
+            console.warn("Cerebras summarization failed, falling back to Llama 3.3 70B:", e);
             try {
-              summary = await callGroqChatNonStream('moonshotai/kimi-k2-instruct-0905', [{ role: 'user', content: summaryPrompt }]);
+              summary = await callGroqChatNonStream('llama-3.3-70b-versatile', [{ role: 'user', content: summaryPrompt }]);
             } catch (fallbackErr) {
-              console.warn("Kimi summarization failed, falling back to Gemini 3.1 Pro:", fallbackErr);
+              console.warn("Llama summarization failed, falling back to Gemini 1.5 Pro:", fallbackErr);
               const keys = getApiKeys('gemini');
               if (keys.length > 0) {
                 summary = await withFallback(keys, async (apiKey) => {
                   const aiFallback = new GoogleGenAI({ apiKey });
-                  const response = await aiFallback.models.generateContent({ model: 'gemini-3.1-pro-preview', contents: summaryPrompt });
+                  const response = await aiFallback.models.generateContent({ model: 'gemini-1.5-pro', contents: summaryPrompt });
                   return response.text || '';
                 });
               }
@@ -1175,11 +1176,11 @@ Return ONLY the JSON array.`;
         config.tools = tools;
       }
       
-      let modelName = user ? 'gemini-3-flash-preview' : 'gemini-3.1-flash-lite-preview';
+      let modelName = user ? 'gemini-1.5-flash' : 'gemini-1.5-flash';
       if (mode === 'pro' && !user) {
-        modelName = 'gemini-3.1-flash-lite-preview';
+        modelName = 'gemini-1.5-flash';
       } else if (mode === 'pro' && user) {
-        modelName = 'moonshotai/kimi-k2-instruct-0905';
+        modelName = 'llama-3.3-70b-versatile';
       }
       
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
@@ -1413,29 +1414,29 @@ Return ONLY the JSON array.`;
       try {
         if (currentImage) {
           // Image Analysis
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, signal);
-          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 45000, 15000, 90000);
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.2-11b-vision-preview', openAIMessages, handleChunk, signal);
+          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-1.5-flash', signal), 45000, 15000, 90000);
         } else if (classification === 'pro') {
           // Pro Mode
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'moonshotai/kimi-k2-instruct-0905', openAIMessages, handleChunk, signal);
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal);
           const runFallback = async (signal: AbortSignal) => {
             try {
-              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'moonshotai/kimi-k2-instruct', openAIMessages, handleChunk, signal);
+              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-70b-versatile', openAIMessages, handleChunk, signal);
             } catch (err) {
               console.warn("1st fallback failed, falling back to 2nd fallback (Cerebras)", err);
-              await callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'qwen-3-235b-a22b-instruct-2507', openAIMessages, handleChunk, signal);
+              await callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'llama3.1-70b', openAIMessages, handleChunk, signal);
             }
           };
           await executeWithTimeoutAndFallback(runPrimary, runFallback, 20000, 15000, 90000);
         } else if (classification === 'search') {
           // Search Mode: groq/compound -> groq/compound-mini -> Gemini (with Tavily tool)
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound', openAIMessages, handleChunk, signal);
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal);
           const runFallback = async (signal: AbortSignal) => {
             try {
-              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'groq/compound-mini', openAIMessages, handleChunk, signal);
+              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-70b-versatile', openAIMessages, handleChunk, signal);
             } catch (err) {
-              console.warn("groq/compound-mini failed, falling back to Gemini with search tool", err);
-              await runGeminiStream('gemini-3-flash-preview', signal);
+              console.warn("llama-3.1-70b-versatile failed, falling back to Gemini with search tool", err);
+              await runGeminiStream('gemini-1.5-flash', signal);
             }
           };
           await executeWithTimeoutAndFallback(runPrimary, runFallback, 15000, 15000, 60000);
@@ -1444,11 +1445,11 @@ Return ONLY the JSON array.`;
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
           if (useLlama) {
             const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal);
-            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
+            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-1.5-flash', signal);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           } else {
-            const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3.1-flash-lite-preview', signal);
+            const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-1.5-flash', signal);
+            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-1.5-flash', signal);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           }
         }
@@ -1502,7 +1503,7 @@ Return ONLY the JSON array.`;
                   if (keys.length > 0) {
                     formattedSearch = await withFallback(keys, async (apiKey) => {
                       const aiFormat = new GoogleGenAI({ apiKey });
-                      const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
+                      const response = await aiFormat.models.generateContent({ model: 'gemini-1.5-flash', contents: formatPrompt });
                       return response.text || rawSearchText;
                     });
                   } else {
@@ -1810,41 +1811,154 @@ Return ONLY the JSON array.`;
                           {!msg.isStreaming && (
                             <>
                               {/* Action Row */}
-                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 transition-opacity text-foreground/40">
-                                {[
-                                  { icon: <RefreshCcw size={14} />, title: "Regenerate", onClick: () => handleRegenerate(index) },
-                                  { icon: copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />, title: "Copy", onClick: () => handleCopyMessage(msg.id, msg.content) },
-                                  { icon: <ThumbsUp size={14} />, title: "Good response", onClick: () => {} },
-                                  { icon: <ThumbsDown size={14} />, title: "Bad response", onClick: () => {} },
-                                  (!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) ? { 
-                                    icon: speakingMessageId === msg.id ? <Square size={14} className="fill-current" /> : <Volume2 size={14} />, 
-                                    title: speakingMessageId === msg.id ? "Stop reading" : "Read aloud", 
-                                    onClick: () => {
-                                      if (speakingMessageId === msg.id) {
-                                        window.speechSynthesis.cancel();
-                                        setSpeakingMessageId(null);
-                                      } else {
-                                        window.speechSynthesis.cancel();
-                                        const utterance = new SpeechSynthesisUtterance(msg.content);
-                                        utterance.onstart = () => setSpeakingMessageId(msg.id);
-                                        utterance.onend = () => setSpeakingMessageId(null);
-                                        utterance.onerror = () => setSpeakingMessageId(null);
-                                        window.speechSynthesis.speak(utterance);
-                                      }
-                                    } 
-                                  } : null,
-                                  { icon: <Share size={14} />, title: "Share", onClick: () => {} },
-                                  { icon: <MoreHorizontal size={14} />, title: "More options", onClick: () => {} }
-                                ].filter(Boolean).map((btn: any, i) => (
+                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 transition-opacity text-foreground/40 relative">
+                                {/* Primary Actions - Always Visible */}
+                                <button 
+                                  onClick={() => handleRegenerate(index)}
+                                  className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                  title="Regenerate"
+                                >
+                                  <RefreshCcw size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleCopyMessage(msg.id, msg.content)}
+                                  className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                  title="Copy"
+                                >
+                                  {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                </button>
+
+                                {/* Desktop Only Actions */}
+                                <div className="hidden md:flex items-center gap-1">
                                   <button 
-                                    key={i}
-                                    onClick={btn.onClick}
-                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${btn.color || 'hover:text-foreground'}`} 
-                                    title={btn.title}
+                                    onClick={() => {}}
+                                    className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                    title="Good response"
                                   >
-                                    {btn.icon}
+                                    <ThumbsUp size={14} />
                                   </button>
-                                ))}
+                                  <button 
+                                    onClick={() => {}}
+                                    className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                    title="Bad response"
+                                  >
+                                    <ThumbsDown size={14} />
+                                  </button>
+                                  {(!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) && (
+                                    <button 
+                                      onClick={() => {
+                                        if (speakingMessageId === msg.id) {
+                                          window.speechSynthesis.cancel();
+                                          setSpeakingMessageId(null);
+                                        } else {
+                                          window.speechSynthesis.cancel();
+                                          const utterance = new SpeechSynthesisUtterance(msg.content);
+                                          utterance.onstart = () => setSpeakingMessageId(msg.id);
+                                          utterance.onend = () => setSpeakingMessageId(null);
+                                          utterance.onerror = () => setSpeakingMessageId(null);
+                                          window.speechSynthesis.speak(utterance);
+                                        }
+                                      }}
+                                      className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                      title={speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}
+                                    >
+                                      {speakingMessageId === msg.id ? <Square size={14} className="fill-current" /> : <Volume2 size={14} />}
+                                    </button>
+                                  )}
+                                </div>
+
+                                {/* More Options Dropdown */}
+                                <div className="relative">
+                                  <button 
+                                    onClick={() => setActiveMoreMenuId(activeMoreMenuId === msg.id ? null : msg.id)}
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground ${activeMoreMenuId === msg.id ? 'bg-surface-hover text-foreground' : ''}`} 
+                                    title="More options"
+                                  >
+                                    <MoreHorizontal size={14} />
+                                  </button>
+
+                                  <AnimatePresence>
+                                    {activeMoreMenuId === msg.id && (
+                                      <>
+                                        <div 
+                                          className="fixed inset-0 z-40" 
+                                          onClick={() => setActiveMoreMenuId(null)} 
+                                        />
+                                        <motion.div 
+                                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                          className="absolute bottom-full left-0 mb-2 z-50 bg-surface border border-border rounded-xl shadow-xl overflow-hidden min-w-[160px]"
+                                        >
+                                          <div className="flex flex-col p-1">
+                                            {/* Mobile Only Items */}
+                                            <div className="md:hidden contents">
+                                              <button 
+                                                onClick={() => { setActiveMoreMenuId(null); }}
+                                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
+                                              >
+                                                <ThumbsUp size={14} />
+                                                <span>Good response</span>
+                                              </button>
+                                              <button 
+                                                onClick={() => { setActiveMoreMenuId(null); }}
+                                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
+                                              >
+                                                <ThumbsDown size={14} />
+                                                <span>Bad response</span>
+                                              </button>
+                                              {(!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) && (
+                                                <button 
+                                                  onClick={() => {
+                                                    setActiveMoreMenuId(null);
+                                                    if (speakingMessageId === msg.id) {
+                                                      window.speechSynthesis.cancel();
+                                                      setSpeakingMessageId(null);
+                                                    } else {
+                                                      window.speechSynthesis.cancel();
+                                                      const utterance = new SpeechSynthesisUtterance(msg.content);
+                                                      utterance.onstart = () => setSpeakingMessageId(msg.id);
+                                                      utterance.onend = () => setSpeakingMessageId(null);
+                                                      utterance.onerror = () => setSpeakingMessageId(null);
+                                                      window.speechSynthesis.speak(utterance);
+                                                    }
+                                                  }}
+                                                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
+                                                >
+                                                  {speakingMessageId === msg.id ? <Square size={14} /> : <Volume2 size={14} />}
+                                                  <span>{speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}</span>
+                                                </button>
+                                              )}
+                                              <div className="h-px bg-border my-1" />
+                                            </div>
+                                            
+                                            {/* Common Actions */}
+                                            <button 
+                                              onClick={() => {
+                                                handleCopyMessage(msg.id, msg.content);
+                                                setActiveMoreMenuId(null);
+                                              }}
+                                              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
+                                            >
+                                              <Copy size={14} />
+                                              <span>Copy text</span>
+                                            </button>
+                                            <button 
+                                              onClick={() => {
+                                                handleRegenerate(index);
+                                                setActiveMoreMenuId(null);
+                                              }}
+                                              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-sm text-foreground/70 hover:text-foreground transition-colors"
+                                            >
+                                              <RefreshCcw size={14} />
+                                              <span>Regenerate</span>
+                                            </button>
+                                          </div>
+                                        </motion.div>
+                                      </>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
 
                                 {(() => {
                                   const sources = getSourcesFromContent(msg.content);
