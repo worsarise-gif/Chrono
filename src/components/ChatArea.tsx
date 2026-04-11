@@ -9,7 +9,7 @@ import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { db, storage, loginWithGoogle, auth } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
@@ -450,6 +450,17 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   };
 
+  // Clear streaming state once the final message is in the local messages array
+  useEffect(() => {
+    if (currentStreamingMessageId && !isLoading) {
+      const messageExists = messages.some(msg => msg.id === currentStreamingMessageId);
+      if (messageExists) {
+        setStreamingMessage('');
+        setCurrentStreamingMessageId(null);
+      }
+    }
+  }, [messages, currentStreamingMessageId, isLoading]);
+
   const scrollToBottom = (force = false) => {
     if (force) {
       isUserScrolledUpRef.current = false;
@@ -527,6 +538,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       setIsLoadingMessages(false);
       return;
     }
+    
+    // Clear streaming state when switching chats
+    setStreamingMessage('');
+    setCurrentStreamingMessageId(null);
+    setIsLoading(false);
+
     if (!currentChatId) {
       setMessages([]);
       setIsLoadingMessages(false);
@@ -1229,20 +1246,11 @@ Return ONLY the JSON array.`;
       let aiMessageRef: any = null;
       if (user) {
         try {
-          const ref = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), {
-            role: 'model',
-            uid: user.uid,
-            content: '',
-            isStreaming: true,
-            createdAt: serverTimestamp()
-          });
+          const ref = doc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'));
           aiMessageRef = ref;
           setCurrentStreamingMessageId(ref.id);
-          await updateDoc(doc(db, 'users', user.uid), {
-            totalMessages: increment(1)
-          });
         } catch (e) {
-          console.error("Failed to create placeholder message", e);
+          console.error("Failed to create placeholder message ref", e);
         }
       }
 
@@ -1526,14 +1534,20 @@ Return ONLY the JSON array.`;
         fullResponse = "I'm sorry, I couldn't generate a response. Please try again.";
       }
 
+      let writeSuccessful = false;
       try {
         let finalMessageId = aiMessageRef?.id;
         if (user) {
           if (aiMessageRef) {
-            await updateDoc(aiMessageRef, {
-              content: fullResponse,
+            await setDoc(aiMessageRef, {
+              role: 'model',
               uid: user.uid,
-              isStreaming: false
+              content: fullResponse,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, 'users', user.uid), {
+              totalMessages: increment(1)
             });
           } else {
             const messageData: any = {
@@ -1557,6 +1571,7 @@ Return ONLY the JSON array.`;
           if (isNewChat) {
             generateSmartTitle(chatId!, userMessage || (currentImage ? "Image uploaded" : "New Chat"), fullResponse);
           }
+          writeSuccessful = true;
         } else {
           // Guest mode: update local state
           finalMessageId = Date.now().toString();
@@ -1567,6 +1582,7 @@ Return ONLY the JSON array.`;
             createdAt: new Date()
           };
           setMessages(prev => [...prev, newMsg]);
+          writeSuccessful = true;
         }
 
         // Generate prompt recommendations
@@ -1584,8 +1600,10 @@ Return ONLY the JSON array.`;
       } finally {
         setIsLoading(false);
         setIsSearching(false);
-        setStreamingMessage('');
-        setCurrentStreamingMessageId(null);
+        if (!writeSuccessful) {
+          setStreamingMessage('');
+          setCurrentStreamingMessageId(null);
+        }
       }
     } catch (error: any) {
       setIsLoading(false);
