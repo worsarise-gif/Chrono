@@ -1576,7 +1576,13 @@ Return ONLY the JSON array.`;
         }
       }
 
-      if (!controller.signal.aborted && (!fullResponse || fullResponse.trim() === "")) {
+      if (controller.signal.aborted) {
+        if (!fullResponse || fullResponse.trim() === "") {
+          fullResponse = "You stop the response!";
+        } else {
+          fullResponse += "\n\n*You stop the response!*";
+        }
+      } else if (!fullResponse || fullResponse.trim() === "") {
         fullResponse = "I'm sorry, I couldn't generate a response. Please try again.";
       }
 
@@ -1585,21 +1591,17 @@ Return ONLY the JSON array.`;
         let finalMessageId = aiMessageRef?.id;
         if (user) {
           if (aiMessageRef) {
-            if (controller.signal.aborted && fullResponse.trim() === "") {
-              await deleteDoc(aiMessageRef);
-            } else {
-              await setDoc(aiMessageRef, {
-                role: 'model',
-                uid: user.uid,
-                content: fullResponse,
-                createdAt: serverTimestamp(),
-                updatedAt: serverTimestamp()
-              });
-              await updateDoc(doc(db, 'users', user.uid), {
-                totalMessages: increment(1)
-              });
-            }
-          } else if (!controller.signal.aborted || fullResponse.trim() !== "") {
+            await setDoc(aiMessageRef, {
+              role: 'model',
+              uid: user.uid,
+              content: fullResponse,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp()
+            });
+            await updateDoc(doc(db, 'users', user.uid), {
+              totalMessages: increment(1)
+            });
+          } else {
             const messageData: any = {
               role: 'model',
               uid: user.uid,
