@@ -660,7 +660,7 @@ Session Title Status: "false"`;
         generatedTitle = await withFallback(keys, async (apiKey) => {
           const ai = new GoogleGenAI({ apiKey });
           const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-3-flash-preview',
             contents: prompt
           });
           return response.text || '';
@@ -1136,9 +1136,9 @@ Return ONLY the JSON array.`;
             name: "search_web",
             description: "Search the web for up-to-date information.",
             parameters: {
-              type: "OBJECT",
+              type: Type.OBJECT,
               properties: {
-                query: { type: "STRING", description: "The search query" }
+                query: { type: Type.STRING, description: "The search query" }
               },
               required: ["query"]
             }
@@ -1176,9 +1176,9 @@ Return ONLY the JSON array.`;
         config.tools = tools;
       }
       
-      let modelName = user ? 'gemini-1.5-flash' : 'gemini-1.5-flash';
+      let modelName = user ? 'gemini-3-flash-preview' : 'gemini-3-flash-preview';
       if (mode === 'pro' && !user) {
-        modelName = 'gemini-1.5-flash';
+        modelName = 'gemini-3-flash-preview';
       } else if (mode === 'pro' && user) {
         modelName = 'llama-3.3-70b-versatile';
       }
@@ -1186,7 +1186,10 @@ Return ONLY the JSON array.`;
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
       let classification = 'fast';
 
-      if (mode === 'auto') {
+      if (currentImage) {
+        classification = 'image';
+        setLoadingStatus('Analyzing Image...');
+      } else if (mode === 'auto') {
         setLoadingStatus('Routing...');
         try {
           const routingMessages = [
@@ -1194,7 +1197,7 @@ Return ONLY the JSON array.`;
             { role: 'user', content: lastMessage }
           ];
           const routingResponse = await callGroqChatNonStream('llama-3.1-8b-instant', routingMessages, 'llama-3.1-8b-instant', controller.signal);
-          const route = (routingResponse?.choices?.[0]?.message?.content || '').toUpperCase();
+          const route = (typeof routingResponse === 'string' ? routingResponse : (routingResponse as any)?.choices?.[0]?.message?.content || '').toUpperCase();
           
           if (route.includes('CODE') || route.includes('REASONING') || route.includes('PRO')) {
             classification = 'pro';
@@ -1255,10 +1258,23 @@ Return ONLY the JSON array.`;
         mergedRecentMessages.push({ role: 'user', content: finalUserContent });
       }
 
-      const openAIMessages = [
-        { role: 'system', content: dynamicSystemInstruction + (contextText ? `\n\n${contextText}` : '') },
-        ...mergedRecentMessages
-      ];
+      let openAIMessages: any[] = [];
+      if (currentImage) {
+        openAIMessages = [...mergedRecentMessages];
+        if (openAIMessages.length > 0 && openAIMessages[0].role === 'user') {
+          const sysContent = dynamicSystemInstruction + (contextText ? `\n\n${contextText}` : '');
+          if (typeof openAIMessages[0].content === 'string') {
+             openAIMessages[0].content = `[System Instruction: ${sysContent}]\n\n` + openAIMessages[0].content;
+          } else if (Array.isArray(openAIMessages[0].content)) {
+             openAIMessages[0].content = [{ type: 'text', text: `[System Instruction: ${sysContent}]\n\n` }, ...openAIMessages[0].content];
+          }
+        }
+      } else {
+        openAIMessages = [
+          { role: 'system', content: dynamicSystemInstruction + (contextText ? `\n\n${contextText}` : '') },
+          ...mergedRecentMessages
+        ];
+      }
 
       let aiMessageRef: any = null;
       if (user) {
@@ -1415,7 +1431,7 @@ Return ONLY the JSON array.`;
         if (currentImage) {
           // Image Analysis
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.2-11b-vision-preview', openAIMessages, handleChunk, signal);
-          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-1.5-flash', signal), 45000, 15000, 90000);
+          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 45000, 15000, 90000);
         } else if (classification === 'pro') {
           // Pro Mode
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal);
@@ -1429,27 +1445,19 @@ Return ONLY the JSON array.`;
           };
           await executeWithTimeoutAndFallback(runPrimary, runFallback, 20000, 15000, 90000);
         } else if (classification === 'search') {
-          // Search Mode: groq/compound -> groq/compound-mini -> Gemini (with Tavily tool)
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal);
-          const runFallback = async (signal: AbortSignal) => {
-            try {
-              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-70b-versatile', openAIMessages, handleChunk, signal);
-            } catch (err) {
-              console.warn("llama-3.1-70b-versatile failed, falling back to Gemini with search tool", err);
-              await runGeminiStream('gemini-1.5-flash', signal);
-            }
-          };
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 15000, 15000, 60000);
+          // Search Mode: Manually trigger search for reliability
+          setLoadingStatus('Searching the web...');
+          searchWebCallArgs = { query: userMessage || "latest news" };
         } else {
           // Fast Mode (with Load Distribution)
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
           if (useLlama) {
             const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal);
-            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-1.5-flash', signal);
+            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           } else {
-            const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-1.5-flash', signal);
-            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-1.5-flash', signal);
+            const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
+            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           }
         }
@@ -1503,7 +1511,7 @@ Return ONLY the JSON array.`;
                   if (keys.length > 0) {
                     formattedSearch = await withFallback(keys, async (apiKey) => {
                       const aiFormat = new GoogleGenAI({ apiKey });
-                      const response = await aiFormat.models.generateContent({ model: 'gemini-1.5-flash', contents: formatPrompt });
+                      const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
                       return response.text || rawSearchText;
                     });
                   } else {
