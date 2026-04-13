@@ -29,6 +29,7 @@ interface Message {
   createdAt?: any;
   isStreaming?: boolean;
   recommendations?: {title: string, prompt: string}[];
+  feedback?: 'upvote' | 'downvote' | null;
 }
 
 type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
@@ -447,10 +448,10 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const handleScroll = () => {
     if (scrollContainerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-      // Show button if we are more than 200px from the bottom and have scrolled down a bit
+      // Show button if we are more than 200px from the bottom
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 200;
       isUserScrolledUpRef.current = !isNearBottom;
-      setShowScrollButton(!isNearBottom && scrollTop > 300);
+      setShowScrollButton(!isNearBottom);
     }
   };
 
@@ -695,6 +696,21 @@ Session Title Status: "false"`;
     navigator.clipboard.writeText(content);
     setCopiedMessageId(id);
     setTimeout(() => setCopiedMessageId(null), 2000);
+  };
+
+  const handleFeedback = async (messageId: string, type: 'upvote' | 'downvote') => {
+    if (!user || !currentChatId) return;
+    try {
+      const messageRef = doc(db, 'users', user.uid, 'chats', currentChatId, 'messages', messageId);
+      const msg = messages.find(m => m.id === messageId);
+      const newFeedback = msg?.feedback === type ? null : type;
+      
+      await updateDoc(messageRef, {
+        feedback: newFeedback
+      });
+    } catch (error) {
+      console.error("Failed to update feedback", error);
+    }
   };
 
   const handleEditMessage = (id: string, content: string) => {
@@ -1869,18 +1885,18 @@ Return ONLY the JSON array.`;
                                 {/* Desktop Only Actions */}
                                 <div className="hidden md:flex items-center gap-1">
                                   <button 
-                                    onClick={() => {}}
-                                    className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                    onClick={() => handleFeedback(msg.id, 'upvote')}
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'hover:text-foreground'}`} 
                                     title="Good response"
                                   >
-                                    <ThumbsUp size={14} />
+                                    <ThumbsUp size={14} className={msg.feedback === 'upvote' ? 'fill-current' : ''} />
                                   </button>
                                   <button 
-                                    onClick={() => {}}
-                                    className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                    onClick={() => handleFeedback(msg.id, 'downvote')}
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'downvote' ? 'text-red-500' : 'hover:text-foreground'}`} 
                                     title="Bad response"
                                   >
-                                    <ThumbsDown size={14} />
+                                    <ThumbsDown size={14} className={msg.feedback === 'downvote' ? 'fill-current' : ''} />
                                   </button>
                                   {(!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) && (
                                     <button 
@@ -1932,17 +1948,17 @@ Return ONLY the JSON array.`;
                                             {/* Mobile Only Items */}
                                             <div className="flex flex-col">
                                               <button 
-                                                onClick={() => { setActiveMoreMenuId(null); }}
-                                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-foreground/70 hover:text-foreground transition-colors"
+                                                onClick={() => { handleFeedback(msg.id, 'upvote'); setActiveMoreMenuId(null); }}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'text-foreground/70 hover:text-foreground'}`}
                                               >
-                                                <ThumbsUp size={14} />
+                                                <ThumbsUp size={14} className={msg.feedback === 'upvote' ? 'fill-current' : ''} />
                                                 <span>Good response</span>
                                               </button>
                                               <button 
-                                                onClick={() => { setActiveMoreMenuId(null); }}
-                                                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-foreground/70 hover:text-foreground transition-colors"
+                                                onClick={() => { handleFeedback(msg.id, 'downvote'); setActiveMoreMenuId(null); }}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] transition-colors ${msg.feedback === 'downvote' ? 'text-red-500' : 'text-foreground/70 hover:text-foreground'}`}
                                               >
-                                                <ThumbsDown size={14} />
+                                                <ThumbsDown size={14} className={msg.feedback === 'downvote' ? 'fill-current' : ''} />
                                                 <span>Bad response</span>
                                               </button>
                                               {(!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) && (
