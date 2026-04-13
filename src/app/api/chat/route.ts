@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
         messages,
         stream: !!stream,
         ...rest
-      })
+      }),
+      signal: req.signal
     });
 
     if (!response.ok) {

@@ -9,7 +9,7 @@ import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { db, storage, loginWithGoogle, auth } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
@@ -726,20 +726,41 @@ Session Title Status: "false"`;
 
   const handleRegenerate = async (msgIndex: number) => {
     let lastUserMsg = '';
-    let lastUserImage = null;
+    let lastUserImage: { data: string, mimeType: string } | null = null;
+    
     for (let i = msgIndex - 1; i >= 0; i--) {
       if (messages[i].role === 'user') {
         lastUserMsg = messages[i].content;
         if (messages[i].imageUrl) {
-          // We don't have the raw data/mimeType easily available here, 
-          // but we can pass the text. For full regenerate with image, 
-          // we might need to fetch the image blob, but let's just resubmit text for now.
+          try {
+            const url = messages[i].imageUrl!;
+            if (url.startsWith('data:')) {
+              const [header, data] = url.split(',');
+              const mimeType = header.split(':')[1].split(';')[0];
+              lastUserImage = { data, mimeType };
+            } else {
+              const response = await fetch(url);
+              const blob = await response.blob();
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const base64data = reader.result as string;
+                const mimeType = blob.type;
+                const data = base64data.split(',')[1];
+                handleSubmit(undefined, lastUserMsg, { data, mimeType });
+              };
+              reader.readAsDataURL(blob);
+              return; // Exit early since handleSubmit is called in onloadend
+            }
+          } catch (error) {
+            console.error("Failed to fetch image for regeneration", error);
+          }
         }
         break;
       }
     }
-    if (lastUserMsg) {
-      handleSubmit(undefined, lastUserMsg);
+    
+    if (lastUserMsg || lastUserImage) {
+      handleSubmit(undefined, lastUserMsg, lastUserImage || undefined);
     }
   };
 
@@ -1555,7 +1576,7 @@ Return ONLY the JSON array.`;
         }
       }
 
-      if (!fullResponse || fullResponse.trim() === "") {
+      if (!controller.signal.aborted && (!fullResponse || fullResponse.trim() === "")) {
         fullResponse = "I'm sorry, I couldn't generate a response. Please try again.";
       }
 
@@ -1564,17 +1585,21 @@ Return ONLY the JSON array.`;
         let finalMessageId = aiMessageRef?.id;
         if (user) {
           if (aiMessageRef) {
-            await setDoc(aiMessageRef, {
-              role: 'model',
-              uid: user.uid,
-              content: fullResponse,
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp()
-            });
-            await updateDoc(doc(db, 'users', user.uid), {
-              totalMessages: increment(1)
-            });
-          } else {
+            if (controller.signal.aborted && fullResponse.trim() === "") {
+              await deleteDoc(aiMessageRef);
+            } else {
+              await setDoc(aiMessageRef, {
+                role: 'model',
+                uid: user.uid,
+                content: fullResponse,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+              });
+              await updateDoc(doc(db, 'users', user.uid), {
+                totalMessages: increment(1)
+              });
+            }
+          } else if (!controller.signal.aborted || fullResponse.trim() !== "") {
             const messageData: any = {
               role: 'model',
               uid: user.uid,
