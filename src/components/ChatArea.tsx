@@ -769,9 +769,6 @@ Session Title Status: "false"`;
       abortController.abort();
       setAbortController(null);
     }
-    setIsLoading(false);
-    setIsSearching(false);
-    setIsGeneratingImage(false);
   };
 
   const generateRecommendations = async (messageId: string, userMessage: string, chatId: string | null) => {
@@ -959,7 +956,8 @@ Return ONLY the JSON array.`;
         const res = await fetch('/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: userMessage })
+          body: JSON.stringify({ prompt: userMessage }),
+          signal: controller.signal
         });
 
         if (!res.ok) {
@@ -1019,9 +1017,14 @@ Return ONLY the JSON array.`;
           const safeAltText = userMessage.replace(/[\r\n\[\]]/g, ' ').substring(0, 150).trim() || 'Generated Image';
           finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${compressedBase64})`;
         }
-      } catch (err) {
-        console.error("Image generation error:", err);
-        finalImageResponse = "I'm sorry, I encountered a network error while generating the image.";
+      } catch (err: any) {
+        if (err.name === 'AbortError' || controller.signal.aborted) {
+          console.log('Image generation aborted by user');
+          finalImageResponse = "You stop the response!";
+        } else {
+          console.error("Image generation error:", err);
+          finalImageResponse = "I'm sorry, I encountered a network error while generating the image.";
+        }
       }
 
       try {
