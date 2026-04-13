@@ -1396,6 +1396,12 @@ Return ONLY the JSON array.`;
         } catch (error: any) {
           clearInterval(primaryInterval);
           primaryController.abort();
+
+          const status = error?.status || error?.response?.status;
+          if (status === 400 || status === 413) {
+            throw error;
+          }
+
           console.warn(`Primary failed (${error.message}). Triggering fallback...`);
           firstTokenReceived = false;
           lastTokenTime = Date.now();
@@ -1497,7 +1503,7 @@ Return ONLY the JSON array.`;
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           } else {
             const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
+            const runFallback = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           }
         }

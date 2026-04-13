@@ -40,20 +40,29 @@ export const getApiKeys = (provider: 'gemini' | 'groq' | 'cerebras' | 'cloudflar
   return [];
 };
 
-export const isFallbackError = (error: any) => {
+export const isQuotaOrAuthError = (error: any) => {
   const msg = error?.message?.toLowerCase() || '';
   const status = error?.status || error?.response?.status;
   return (
     status === 429 ||
     status === 403 ||
-    status === 500 ||
-    status === 503 ||
-    status === 502 ||
+    status === 401 ||
     msg.includes('quota') ||
     msg.includes('limit') ||
     msg.includes('too many requests') ||
     msg.includes('rate limit') ||
-    msg.includes('exhausted') ||
+    msg.includes('exhausted')
+  );
+};
+
+export const isFallbackError = (error: any) => {
+  const msg = error?.message?.toLowerCase() || '';
+  const status = error?.status || error?.response?.status;
+  return (
+    isQuotaOrAuthError(error) ||
+    status === 500 ||
+    status === 503 ||
+    status === 502 ||
     msg.includes('failed to fetch') ||
     msg.includes('network error')
   );
@@ -88,10 +97,10 @@ export const withFallback = async <T>(
     return !banExpiry || banExpiry < now;
   });
 
-  // If all keys are banned, fail-open and try them all anyway
+  // If all keys are banned, throw immediately to trigger higher-level fallback
   if (availableKeys.length === 0) {
-    console.warn("All keys are currently circuit-broken. Failing open to try anyway.");
-    availableKeys = keys;
+    console.warn("All keys are currently circuit-broken. Throwing to trigger provider fallback.");
+    throw new Error("All API keys for this provider have reached their usage limits or are temporarily blocked.");
   }
 
   let lastError: any;
@@ -104,10 +113,14 @@ export const withFallback = async <T>(
       console.warn(`API call failed with key index ${i}. Error:`, error?.message || error);
       
       if (isFallbackError(error)) {
-        // Break the circuit for this key
-        const keyId = getKeyId(currentKey);
-        keyBans.set(keyId, Date.now() + BAN_DURATION_MS);
-        console.warn(`Circuit broken for key. Banned for 60s.`);
+        // Only break the circuit for this key if it's a quota or auth error
+        if (isQuotaOrAuthError(error)) {
+          const keyId = getKeyId(currentKey);
+          keyBans.set(keyId, Date.now() + BAN_DURATION_MS);
+          console.warn(`Circuit broken for key. Banned for 60s.`);
+        } else {
+          console.warn(`Server error encountered. Trying next key without banning...`);
+        }
 
         // If it's the last available key, don't bother continuing
         if (i === availableKeys.length - 1) {
@@ -117,7 +130,13 @@ export const withFallback = async <T>(
         console.warn(`Falling back to next available key...`);
         continue;
       } else {
-        // If it's a generic error like bad request (400), falling back won't help
+        const status = error?.status || error?.response?.status;
+        if (status === 400 || status === 413) {
+          console.warn(`Client error ${status} encountered. Throwing immediately...`);
+          throw error;
+        }
+
+        // If it's a generic error, falling back won't help
         if (i === availableKeys.length - 1) {
           break;
         }
