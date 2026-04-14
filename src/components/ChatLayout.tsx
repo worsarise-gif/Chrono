@@ -5,6 +5,7 @@ import Sidebar from './Sidebar';
 import ChatArea from './ChatArea';
 import ImagineGallery from './ImagineGallery';
 import StarryBackground from './StarryBackground';
+import AuthPage from './AuthPage';
 import { useAuth } from '../contexts/AuthContext';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
@@ -13,7 +14,7 @@ import { LogOut } from 'lucide-react';
 
 export default function ChatLayout({ children }: { children?: React.ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { user, isBanned } = useAuth();
+  const { user, isBanned, loading } = useAuth();
   const pathname = usePathname();
 
   const handleSwitchAccount = async () => {
@@ -25,6 +26,10 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
   };
 
   const isImaginePage = pathname === '/imagine';
+
+  if (!user) {
+    return <AuthPage />;
+  }
 
   if (isBanned) {
     return (
