@@ -39,8 +39,6 @@ import { getApiKeys, withFallback } from '../lib/apiFallback';
 
 const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal, addLog?: any) => {
   const keys = getApiKeys('cerebras');
-  // Fallback to default if no keys in env
-  if (keys.length === 0) keys.push('csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c');
 
   return withFallback(keys, async (apiKey) => {
     const res = await fetch('/api/chat', {
@@ -74,10 +72,6 @@ const callCerebrasNonStream = async (model: string, messages: any[], signal?: Ab
 
 const callOpenAIStream = async (url: string, provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
   const keys = getApiKeys(provider);
-  if (keys.length === 0) {
-    if (provider === 'groq') keys.push('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');
-    if (provider === 'cerebras') keys.push('csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c');
-  }
 
   return withFallback(keys, async (apiKey) => {
     const response = await fetch('/api/chat', {
@@ -236,7 +230,6 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
 
 const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any) => {
   const keys = getApiKeys('groq');
-  if (keys.length === 0) keys.push('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');
 
   const makeRequest = async (m: string) => {
     return withFallback(keys, async (apiKey) => {
@@ -282,7 +275,6 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
 
 const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string, prompt?: string, addLog?: any) => {
   const keys = getApiKeys('groq');
-  if (keys.length === 0) keys.push('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');
 
   const makeRequest = async (m: string) => {
     return withFallback(keys, async (apiKey) => {
