@@ -971,16 +971,48 @@ Return ONLY the JSON array.`;
 
     if (isImageRequest && !currentImage) {
       setIsGeneratingImage(true);
-      setLoadingStatus('Creating Art...');
+      setLoadingStatus('Determining dimensions...');
       addLog('info', 'Image Gen', 'Starting image generation', { prompt: userMessage });
       
       let finalImageResponse = '';
       let generatedImageBase64 = '';
       try {
+        const aspectPrompt = `Extract the requested aspect ratio from the user's input. 
+Use this keyword mapping:
+"9:16" (Keywords: tall, vertical, mobile, portrait)
+"16:9" (Keywords: wide, landscape, banner, desktop)
+"4:3" or "3:4" (Keywords: standard photo)
+"1:1" (Default fallback, or keywords: square, avatar)
+"2:3" (Keywords: standard portrait)
+"3:2" (Keywords: standard landscape)
+"21:9" (Keywords: ultrawide, cinematic)
+
+User input: "${userMessage}"
+
+Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specified, reply with "1:1".`;
+
+        const aspectResponse = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: aspectPrompt }], 'llama-3.1-8b-instant', controller.signal, addLog);
+        const extractedAspect = (typeof aspectResponse === 'string' ? aspectResponse : (aspectResponse as any)?.choices?.[0]?.message?.content || '1:1').trim();
+
+        const ASPECT_MAP: Record<string, { width: number; height: number }> = {
+          "1:1": { width: 1024, height: 1024 },
+          "16:9": { width: 1344, height: 768 },
+          "9:16": { width: 768, height: 1344 },
+          "4:3": { width: 1152, height: 864 },
+          "3:4": { width: 864, height: 1152 },
+          "2:3": { width: 832, height: 1216 },
+          "3:2": { width: 1216, height: 832 },
+          "21:9": { width: 1536, height: 640 }
+        };
+
+        const dimensions = ASPECT_MAP[extractedAspect] || ASPECT_MAP["1:1"];
+        addLog('info', 'Image Gen', 'Extracted dimensions', { aspect: extractedAspect, dimensions });
+
+        setLoadingStatus('Creating Art...');
         const res = await fetch('/api/generate-image', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: userMessage }),
+          body: JSON.stringify({ prompt: userMessage, width: dimensions.width, height: dimensions.height }),
           signal: controller.signal
         });
 

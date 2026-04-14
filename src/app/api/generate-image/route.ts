@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getApiKeys, withFallback } from '../../../lib/apiFallback';
 
-async function generateWithModel(model: string, prompt: string) {
+async function generateWithModel(model: string, prompt: string, width?: number, height?: number) {
   const keys = getApiKeys('cloudflare');
   if (keys.length === 0) {
     keys.push({ accountId: '2215383dfc48baa1df7666821342db26', token: 'cfut_0IxFXq61q0R2HHpsQ2DBoCC8M19ilcDvae9nnEZn53ed73dd' });
@@ -9,6 +9,10 @@ async function generateWithModel(model: string, prompt: string) {
 
   return await withFallback(keys, async (keyObj: any) => {
     const url = `https://api.cloudflare.com/client/v4/accounts/${keyObj.accountId}/ai/run/${model}`;
+    const payload: any = { prompt };
+    if (width) payload.width = width;
+    if (height) payload.height = height;
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -16,7 +20,7 @@ async function generateWithModel(model: string, prompt: string) {
         'Content-Type': 'application/json',
         'Accept': 'image/png'
       },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
@@ -41,18 +45,18 @@ async function generateWithModel(model: string, prompt: string) {
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, width, height } = await req.json();
     if (!prompt) return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
 
     let imageBuffer;
     try {
       // Primary Model
-      imageBuffer = await generateWithModel('@cf/stabilityai/stable-diffusion-xl-base-1.0', prompt);
+      imageBuffer = await generateWithModel('@cf/stabilityai/stable-diffusion-xl-base-1.0', prompt, width, height);
     } catch (primaryError) {
       console.warn('Primary model failed, trying fallback...', primaryError);
       try {
         // Fallback Model
-        imageBuffer = await generateWithModel('@cf/bytedance/stable-diffusion-xl-lightning', prompt);
+        imageBuffer = await generateWithModel('@cf/bytedance/stable-diffusion-xl-lightning', prompt, width, height);
       } catch (fallbackError: any) {
         console.error('Fallback model also failed:', fallbackError);
         // Check for quota/rate limit
