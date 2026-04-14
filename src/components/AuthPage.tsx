@@ -1,7 +1,7 @@
 import React from 'react';
 import { loginWithGoogle } from '../firebase';
 import { ChevronDown, Mail } from 'lucide-react';
-import {PlanetLogo} from 'PlanetLogo.tsx';
+import {PlanetLogo} from './PlanetLogo';
 export default function AuthPage() {
   return (
     <div className="flex h-[100dvh] w-full bg-white text-black font-sans overflow-hidden">
