@@ -600,43 +600,63 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return () => unsubscribe();
   }, [user?.uid, currentChatId]);
 
+  const processImageFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const maxDim = 1024;
+
+        if (width > height && width > maxDim) {
+          height *= maxDim / width;
+          width = maxDim;
+        } else if (height > maxDim) {
+          width *= maxDim / height;
+          height = maxDim;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const base64String = dataUrl.split(',')[1];
+          setSelectedImage({
+            data: base64String,
+            mimeType: 'image/jpeg'
+          });
+        }
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const maxDim = 1024;
-
-          if (width > height && width > maxDim) {
-            height *= maxDim / width;
-            width = maxDim;
-          } else if (height > maxDim) {
-            width *= maxDim / height;
-            height = maxDim;
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            const base64String = dataUrl.split(',')[1];
-            setSelectedImage({
-              data: base64String,
-              mimeType: 'image/jpeg'
-            });
-          }
-        };
-        img.src = reader.result as string;
-      };
-      reader.readAsDataURL(file);
+      processImageFile(file);
       e.target.value = ''; // Reset to allow re-selection of the same file
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          processImageFile(file);
+          e.preventDefault();
+          break;
+        }
+      }
     }
   };
 
@@ -2515,6 +2535,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
                 value={input}
                 onChange={handleInput}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 placeholder="Ask anything"
                 className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-normal resize-none leading-[24px] break-words"
                 rows={1}

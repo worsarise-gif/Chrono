@@ -332,7 +332,11 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:bg-surface-hover/50 hover:text-foreground'}`}
                             title={chat.title}
                           >
-                            {chat.title}
+                            {chat.title === 'New Chat' ? (
+                              <div className="h-4 bg-foreground/10 animate-pulse rounded w-3/4 my-0.5"></div>
+                            ) : (
+                              chat.title
+                            )}
                           </button>
                           
                           <button
