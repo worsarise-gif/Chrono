@@ -1061,7 +1061,7 @@ User input: "${userMessage}"
 Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specified, reply with "1:1".`;
 
         const aspectResponse = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: aspectPrompt }], 'llama-3.1-8b-instant', controller.signal, addLog);
-        const extractedAspect = (typeof aspectResponse === 'string' ? aspectResponse : (aspectResponse as any)?.choices?.[0]?.message?.content || '1:1').trim();
+        const extractedAspect = (typeof aspectResponse === 'string' ? aspectResponse : (aspectResponse as any)?.choices?.[0]?.message?.content || '1:1').trim().replace(/['"]/g, '');
 
         const ASPECT_MAP: Record<string, { width: number; height: number }> = {
           "1:1": { width: 1024, height: 1024 },
