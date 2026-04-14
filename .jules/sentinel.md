@@ -1,0 +1,4 @@
+## 2025-02-28 - [CRITICAL] Remove Hardcoded Fallback API Keys
+**Vulnerability:** Several production keys, including Cloudflare Account ID and API tokens (`cfut_...`), Groq (`gsk_...`), and Cerebras (`csk-...`), were hardcoded into frontend components (`src/components/ChatArea.tsx`) and backend routes (`src/app/api/generate-image/route.ts`, `src/app/api/cloudflare-chat/route.ts`).
+**Learning:** Hardcoding API keys as a fallback mechanism for when environment variables are missing is a major security risk. It exposes credentials to unauthorized actors if they inspect the bundled frontend code or source code repository. The fallback mechanism should purely depend on centralized credential management relying entirely on `process.env`.
+**Prevention:** Always rely strictly on `getApiKeys` using environment variables. Implement automated secret scanning tools, such as git hooks to search for specific key patterns or generic secrets before pushing code.
