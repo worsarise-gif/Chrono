@@ -333,7 +333,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             title={chat.title}
                           >
                             {chat.title === 'New Chat' ? (
-                              <div className="h-4 bg-foreground/10 animate-pulse rounded w-3/4 my-0.5"></div>
+                              <div className="relative overflow-hidden h-4 bg-foreground/10 rounded-full w-3/4 my-0.5">
+                                <div className="absolute inset-0 -translate-x-full animate-shimmer-skeleton bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
+                              </div>
                             ) : (
                               chat.title
                             )}
@@ -350,7 +352,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             <div className="relative w-3.5 h-3.5 flex items-center justify-center">
                               <Pin 
                                 size={14} 
-                                className={`absolute transition-all duration-200 ${chat.isPinned ? 'text-blue-500 fill-blue-500/20 opacity-100' : 'opacity-0'} group-hover:opacity-0 group-hover:scale-75`} 
+                                className={`absolute transition-all duration-200 ${chat.isPinned ? 'text-foreground fill-foreground opacity-100 rotate-45' : 'opacity-0'} group-hover:opacity-0 group-hover:scale-75`} 
                               />
                               <MoreVertical 
                                 size={14} 
@@ -370,7 +372,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                   onClick={(e) => handleTogglePin(e, chat.id, !!chat.isPinned)}
                                   className="w-full text-left px-3 py-1.5 text-[12px] text-foreground/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
                                 >
-                                  {chat.isPinned ? <PinOff size={12} /> : <Pin size={12} />}
+                                  {chat.isPinned ? <PinOff size={12} className="rotate-45" /> : <Pin size={12} className="rotate-45 fill-foreground" />}
                                   {chat.isPinned ? 'Unpin' : 'Pin'}
                                 </button>
                                 <button

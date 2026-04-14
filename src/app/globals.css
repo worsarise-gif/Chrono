@@ -171,3 +171,7 @@ textarea {
     transform: translateX(100%);
   }
 }
+
+.animate-shimmer-skeleton {
+  animation: shimmer-skeleton 1.5s infinite;
+}
