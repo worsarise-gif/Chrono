@@ -75,46 +75,7 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {/* Right Side - Graphic */}
-      <div className="hidden md:block md:w-1/2 h-full bg-black relative overflow-hidden">
-        {/* Abstract gradient graphic matching the image */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full h-full max-w-3xl max-h-3xl">
-            {/* Base glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-transparent via-[#3b4a5a]/20 to-[#8ba3b8]/40 blur-3xl rounded-full opacity-50"></div>
-            
-            {/* The abstract shape (approximated with SVG) */}
-            <svg viewBox="0 0 1000 1000" className="absolute inset-0 w-full h-full object-cover opacity-80" preserveAspectRatio="xMidYMid slice">
-              <defs>
-                <linearGradient id="shape-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#1a1a1a" />
-                  <stop offset="50%" stopColor="#3a4a5e" />
-                  <stop offset="100%" stopColor="#c4d4e3" />
-                </linearGradient>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="15" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-              
-              {/* Outer faint circle */}
-              <circle cx="450" cy="550" r="350" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="2" />
-              
-              {/* Main swoosh shape */}
-              <path d="M 900 0 C 700 200 550 350 450 450 C 350 550 200 700 0 900 C 150 900 300 850 400 750 C 500 650 650 500 850 300 C 900 250 950 150 1000 0 Z" fill="url(#shape-gradient)" filter="url(#glow)" opacity="0.8" />
-              
-              {/* Inner curve */}
-              <path d="M 850 0 C 650 250 500 400 400 500 C 300 600 150 750 0 850" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="4" />
-            </svg>
-            
-            {/* Right side bright edge */}
-            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-[#dbe6f0] to-transparent opacity-40 blur-2xl mix-blend-screen"></div>
-          </div>
-        </div>
-      </div>
+     
     </div>
   );
 }
