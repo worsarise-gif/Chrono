@@ -1,7 +1,7 @@
 import React from 'react';
 import { loginWithGoogle } from '../firebase';
 import { ChevronDown, Mail } from 'lucide-react';
-
+import {PlanetLogo} from 'PlanetLogo.tsx';
 export default function AuthPage() {
   return (
     <div className="flex h-[100dvh] w-full bg-white text-black font-sans overflow-hidden">
@@ -75,7 +75,21 @@ export default function AuthPage() {
         </div>
       </div>
 
-     
+      {/* Right Side - Graphic */}
+      <div className="hidden md:block md:w-1/2 h-full bg-black relative overflow-hidden">
+        {/* Abstract gradient graphic matching the image */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="relative w-full h-full max-w-3xl max-h-3xl">
+            {/* Base glow */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-to-r from-transparent via-[#3b4a5a]/20 to-[#8ba3b8]/40 blur-3xl rounded-full opacity-50"></div>
+            
+            <PlanetLogo/>
+            
+            {/* Right side bright edge */}
+            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-[#dbe6f0] to-transparent opacity-40 blur-2xl mix-blend-screen"></div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
