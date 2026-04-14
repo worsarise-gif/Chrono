@@ -218,7 +218,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user?.uid]);
 
   const handleNewChat = async () => {
     if (!user) return;

@@ -83,9 +83,11 @@ const getKeyId = (key: any): string => {
 
 export const withFallback = async <T>(
   keys: any[],
-  operation: (key: any) => Promise<T>
+  operation: (key: any) => Promise<T>,
+  addLog?: (type: 'info' | 'error' | 'warning' | 'success', component: string, message: string, details?: any) => void
 ): Promise<T> => {
   if (!keys || keys.length === 0) {
+    if (addLog) addLog('error', 'API Fallback', 'No API keys available');
     throw new Error("No API keys available for this provider.");
   }
 
@@ -99,6 +101,7 @@ export const withFallback = async <T>(
 
   // If all keys are banned, throw immediately to trigger higher-level fallback
   if (availableKeys.length === 0) {
+    if (addLog) addLog('error', 'API Fallback', 'All keys are currently circuit-broken');
     console.warn("All keys are currently circuit-broken. Throwing to trigger provider fallback.");
     throw new Error("All API keys for this provider have reached their usage limits or are temporarily blocked.");
   }
@@ -107,10 +110,14 @@ export const withFallback = async <T>(
   for (let i = 0; i < availableKeys.length; i++) {
     const currentKey = availableKeys[i];
     try {
-      return await operation(currentKey);
+      if (addLog) addLog('info', 'API Fallback', `Attempting API call with key index ${i}`);
+      const result = await operation(currentKey);
+      if (addLog) addLog('success', 'API Fallback', `API call successful with key index ${i}`);
+      return result;
     } catch (error: any) {
       lastError = error;
       console.warn(`API call failed with key index ${i}. Error:`, error?.message || error);
+      if (addLog) addLog('warning', 'API Fallback', `API call failed with key index ${i}`, { error: error?.message || String(error) });
       
       if (isFallbackError(error)) {
         // Only break the circuit for this key if it's a quota or auth error
@@ -118,6 +125,7 @@ export const withFallback = async <T>(
           const keyId = getKeyId(currentKey);
           keyBans.set(keyId, Date.now() + BAN_DURATION_MS);
           console.warn(`Circuit broken for key. Banned for 60s.`);
+          if (addLog) addLog('warning', 'API Fallback', `Circuit broken for key index ${i}. Banned for 60s.`);
         } else {
           console.warn(`Server error encountered. Trying next key without banning...`);
         }
@@ -128,11 +136,13 @@ export const withFallback = async <T>(
         }
 
         console.warn(`Falling back to next available key...`);
+        if (addLog) addLog('info', 'API Fallback', `Falling back to next available key...`);
         continue;
       } else {
         const status = error?.status || error?.response?.status;
         if (status === 400 || status === 413) {
           console.warn(`Client error ${status} encountered. Throwing immediately...`);
+          if (addLog) addLog('error', 'API Fallback', `Client error ${status} encountered. Throwing immediately...`);
           throw error;
         }
 
@@ -141,9 +151,11 @@ export const withFallback = async <T>(
           break;
         }
         console.warn(`Error is not quota/limit related, but falling back anyway to be safe...`);
+        if (addLog) addLog('info', 'API Fallback', `Error is not quota/limit related, but falling back anyway to be safe...`);
         continue;
       }
     }
   }
+  if (addLog) addLog('error', 'API Fallback', 'All fallback attempts failed', { error: lastError?.message || String(lastError) });
   throw lastError;
 };

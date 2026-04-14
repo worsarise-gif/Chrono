@@ -8,6 +8,7 @@ import { Paperclip, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Vol
 import { ResponseFormatter } from './ResponseFormatter';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
+import { useDebug } from '../contexts/DebugContext';
 import { db, storage, loginWithGoogle, auth } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
@@ -36,7 +37,7 @@ type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
 
 import { getApiKeys, withFallback } from '../lib/apiFallback';
 
-const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal) => {
+const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal, addLog?: any) => {
   const keys = getApiKeys('cerebras');
   // Fallback to default if no keys in env
   if (keys.length === 0) keys.push('csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c');
@@ -68,10 +69,10 @@ const callCerebrasNonStream = async (model: string, messages: any[], signal?: Ab
     }
     const data = await res.json();
     return data.choices[0].message.content;
-  });
+  }, addLog);
 };
 
-const callOpenAIStream = async (url: string, provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal) => {
+const callOpenAIStream = async (url: string, provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
   const keys = getApiKeys(provider);
   if (keys.length === 0) {
     if (provider === 'groq') keys.push('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');
@@ -151,10 +152,11 @@ const callOpenAIStream = async (url: string, provider: 'groq' | 'cerebras', mode
         }
       }
     }
-  });
+  }, addLog);
 };
 
-const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal) => {
+const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
+  if (addLog) addLog('info', 'Cloudflare API', `Starting stream call for model ${model}`);
   const res = await fetch('/api/cloudflare-chat', {
     method: 'POST',
     headers: {
@@ -232,7 +234,7 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
   }
 };
 
-const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal) => {
+const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any) => {
   const keys = getApiKeys('groq');
   if (keys.length === 0) keys.push('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');
 
@@ -264,7 +266,7 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
       }
       const data = await res.json();
       return data.choices[0].message.content;
-    });
+    }, addLog);
   };
 
   try {
@@ -278,7 +280,7 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
   }
 };
 
-const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string, prompt?: string) => {
+const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string, prompt?: string, addLog?: any) => {
   const keys = getApiKeys('groq');
   if (keys.length === 0) keys.push('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');
 
@@ -302,7 +304,7 @@ const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackMod
       }
       const data = await res.json();
       return data.text;
-    });
+    }, addLog);
   };
 
   try {
@@ -319,6 +321,7 @@ const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackMod
 export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) {
   const { user } = useAuth();
   const { currentChatId, setCurrentChatId } = useChatContext();
+  const { addLog } = useDebug();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -567,7 +570,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       return;
     }
 
-    setIsLoadingMessages(true);
+    if (!isCreatingNewChatRef.current) {
+      setIsLoadingMessages(true);
+    }
     const q = query(
       collection(db, 'users', user.uid, 'chats', currentChatId, 'messages'),
       orderBy('createdAt', 'asc')
@@ -593,7 +598,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     });
 
     return () => unsubscribe();
-  }, [user, currentChatId]);
+  }, [user?.uid, currentChatId]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -669,7 +674,7 @@ Session Title Status: "false"`;
       } catch (e) {
         console.warn("Gemini title generation failed, falling back to Cerebras:", e);
         try {
-          generatedTitle = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }]);
+          generatedTitle = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }], undefined, addLog);
         } catch (fallbackErr) {
           console.error("Fallback title generation failed", fallbackErr);
         }
@@ -799,7 +804,7 @@ User Input:
 
 Return ONLY the JSON array.`;
       
-      const result = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }]);
+      const result = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }], undefined, addLog);
       const jsonMatch = result.match(/\[.*\]/s);
       if (jsonMatch) {
         const recs = JSON.parse(jsonMatch[0]);
@@ -826,6 +831,8 @@ Return ONLY the JSON array.`;
     const currentImage = image || selectedImage;
     
     if ((!userMessage && !currentImage) || isLoading) return;
+
+    addLog('info', 'Chat', 'handleSubmit started', { userMessage, hasImage: !!currentImage, mode });
 
     const isImageRequest = /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(userMessage.trim());
 
@@ -965,6 +972,7 @@ Return ONLY the JSON array.`;
     if (isImageRequest && !currentImage) {
       setIsGeneratingImage(true);
       setLoadingStatus('Creating Art...');
+      addLog('info', 'Image Gen', 'Starting image generation', { prompt: userMessage });
       
       let finalImageResponse = '';
       let generatedImageBase64 = '';
@@ -978,12 +986,14 @@ Return ONLY the JSON array.`;
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
+          addLog('error', 'Image Gen', 'Image generation failed', { status: res.status, error: errData });
           if (res.status === 429 || errData.error === 'QUOTA_EXCEEDED') {
             finalImageResponse = "I'm sorry, but it looks like we've reached our image generation quota for now. Please try again later!";
           } else {
             finalImageResponse = "I'm sorry, I encountered an error while generating the image. Please try again.";
           }
         } else {
+          addLog('success', 'Image Gen', 'Image generated successfully');
           const blob = await res.blob();
           
           // Compress the image to avoid Firestore's 1MB document limit
@@ -1096,11 +1106,11 @@ Return ONLY the JSON array.`;
         try {
           let summary = '';
           try {
-            summary = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: summaryPrompt }]);
+            summary = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: summaryPrompt }], undefined, addLog);
           } catch (e) {
             console.warn("Cerebras summarization failed, falling back to Llama 3.3 70B:", e);
             try {
-              summary = await callGroqChatNonStream('llama-3.3-70b-versatile', [{ role: 'user', content: summaryPrompt }]);
+              summary = await callGroqChatNonStream('llama-3.3-70b-versatile', [{ role: 'user', content: summaryPrompt }], undefined, undefined, addLog);
             } catch (fallbackErr) {
               console.warn("Llama summarization failed, falling back to Gemini 1.5 Pro:", fallbackErr);
               const keys = getApiKeys('gemini');
@@ -1236,7 +1246,7 @@ Return ONLY the JSON array.`;
             { role: 'system', content: 'Classify this message as either: CHAT/FAST, CODE/REASONING/PRO, SEARCH, or IMAGE. Reply with only one word.' },
             { role: 'user', content: lastMessage }
           ];
-          const routingResponse = await callGroqChatNonStream('llama-3.1-8b-instant', routingMessages, 'llama-3.1-8b-instant', controller.signal);
+          const routingResponse = await callGroqChatNonStream('llama-3.1-8b-instant', routingMessages, 'llama-3.1-8b-instant', controller.signal, addLog);
           const route = (typeof routingResponse === 'string' ? routingResponse : (routingResponse as any)?.choices?.[0]?.message?.content || '').toUpperCase();
           
           if (route.includes('CODE') || route.includes('REASONING') || route.includes('PRO')) {
@@ -1389,20 +1399,24 @@ Return ONLY the JSON array.`;
         });
 
         try {
+          addLog('info', 'Model Routing', 'Starting primary model execution');
           await Promise.race([
             primaryFn(primaryController.signal).then(() => { clearInterval(primaryInterval); }), 
             monitor
           ]);
+          addLog('success', 'Model Routing', 'Primary model execution completed successfully');
         } catch (error: any) {
           clearInterval(primaryInterval);
           primaryController.abort();
 
           const status = error?.status || error?.response?.status;
           if (status === 400 || status === 413) {
+            addLog('error', 'Model Routing', `Client error ${status} from primary model. Aborting fallback.`, error);
             throw error;
           }
 
           console.warn(`Primary failed (${error.message}). Triggering fallback...`);
+          addLog('warning', 'Model Routing', `Primary model failed. Triggering fallback.`, { error: error.message || String(error), status });
           firstTokenReceived = false;
           lastTokenTime = Date.now();
           
@@ -1433,13 +1447,16 @@ Return ONLY the JSON array.`;
           });
 
           try {
+            addLog('info', 'Model Routing', 'Starting fallback model execution');
             await Promise.race([
               fallbackFn(fallbackController.signal).then(() => { clearInterval(fallbackInterval); }), 
               fallbackMonitor
             ]);
+            addLog('success', 'Model Routing', 'Fallback model execution completed successfully');
           } catch (fallbackError: any) {
             clearInterval(fallbackInterval);
             fallbackController.abort();
+            addLog('error', 'Model Routing', 'Fallback model execution failed', { error: fallbackError.message || String(fallbackError) });
             throw fallbackError;
           } finally {
             controller.signal.removeEventListener('abort', fallbackGlobalHandler);
@@ -1470,23 +1487,23 @@ Return ONLY the JSON array.`;
             }
             if (chunk.text) handleChunk(chunk.text);
           }
-        });
+        }, addLog);
       };
 
       try {
         if (currentImage) {
           // Image Analysis
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.2-11b-vision-preview', openAIMessages, handleChunk, signal);
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.2-11b-vision-preview', openAIMessages, handleChunk, signal, addLog);
           await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 45000, 15000, 90000);
         } else if (classification === 'pro') {
           // Pro Mode
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal);
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal, addLog);
           const runFallback = async (signal: AbortSignal) => {
             try {
-              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-70b-versatile', openAIMessages, handleChunk, signal);
+              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-70b-versatile', openAIMessages, handleChunk, signal, addLog);
             } catch (err) {
               console.warn("1st fallback failed, falling back to 2nd fallback (Cerebras)", err);
-              await callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'llama3.1-70b', openAIMessages, handleChunk, signal);
+              await callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'llama3.1-70b', openAIMessages, handleChunk, signal, addLog);
             }
           };
           await executeWithTimeoutAndFallback(runPrimary, runFallback, 20000, 15000, 90000);
@@ -1498,12 +1515,12 @@ Return ONLY the JSON array.`;
           // Fast Mode (with Load Distribution)
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
           if (useLlama) {
-            const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal);
+            const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
             const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           } else {
             const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            const runFallback = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal);
+            const runFallback = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           }
         }
@@ -1567,7 +1584,7 @@ Return ONLY the JSON array.`;
                   if (e.name !== 'AbortError') {
                     console.warn("Gemini search formatting failed, falling back to Cerebras:", e);
                     try {
-                      formattedSearch = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: formatPrompt }], controller.signal);
+                      formattedSearch = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: formatPrompt }], controller.signal, addLog);
                     } catch (fallbackError) {
                       console.error("Search formatting fallback failed", fallbackError);
                       formattedSearch = rawSearchText;
@@ -1683,9 +1700,11 @@ Return ONLY the JSON array.`;
         }
         setIsLoading(false);
         setIsSearching(false);
+        addLog('success', 'Chat', 'Response completed successfully', { length: fullResponse.length });
       }
     } catch (error: any) {
       setIsLoading(false);
+      addLog('error', 'Chat', 'Error in handleSubmit', { error: error.message || String(error), stack: error.stack });
       handleError(error, "Failed to process request");
     }
   };
@@ -2097,10 +2116,12 @@ Return ONLY the JSON array.`;
                 key="ai-response-indicator"
                 className="flex flex-col justify-start group w-full min-h-[36px] gap-2"
               >
-                <ResponseIconIndicator 
-                  status={isSearching ? "Searching..." : loadingStatus} 
-                  isStreaming={streamingMessage.length > 0} 
-                />
+                {isLoading && (
+                  <ResponseIconIndicator 
+                    status={isSearching ? "Searching..." : loadingStatus} 
+                    isStreaming={streamingMessage.length > 0} 
+                  />
+                )}
                 {streamingMessage.length > 0 && (
                   <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
                     <div className="w-full">
