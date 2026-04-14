@@ -697,10 +697,79 @@ Session Title Status: "false"`;
     };
   }, []);
 
-  const handleCopyMessage = (id: string, content: string) => {
-    navigator.clipboard.writeText(content);
-    setCopiedMessageId(id);
-    setTimeout(() => setCopiedMessageId(null), 2000);
+  const handleCopyMessage = async (id: string, content: string) => {
+    try {
+      // Check if content contains a base64 image
+      const imageMatch = content.match(/!\[.*?\]\((data:image\/(png|jpeg|webp);base64,(.*?))\)/);
+      if (imageMatch) {
+        const mimeType = `image/${imageMatch[2]}`;
+        const base64Data = imageMatch[3];
+        
+        // Convert base64 to blob
+        const byteCharacters = atob(base64Data);
+        const byteArrays = [];
+        for (let offset = 0; offset < byteCharacters.length; offset += 512) {
+          const slice = byteCharacters.slice(offset, offset + 512);
+          const byteNumbers = new Array(slice.length);
+          for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          byteArrays.push(byteArray);
+        }
+        const blob = new Blob(byteArrays, { type: mimeType });
+        
+        // ClipboardItem requires image/png for images in most browsers
+        // If it's webp or jpeg, we need to convert it to png using a canvas
+        if (mimeType !== 'image/png') {
+          const img = new Image();
+          img.src = imageMatch[1];
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const pngBlob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+            if (pngBlob) {
+              await navigator.clipboard.write([
+                new ClipboardItem({
+                  [pngBlob.type]: pngBlob
+                })
+              ]);
+            } else {
+              throw new Error("Failed to create PNG blob");
+            }
+          } else {
+            throw new Error("Failed to get canvas context");
+          }
+        } else {
+          await navigator.clipboard.write([
+            new ClipboardItem({
+              [blob.type]: blob
+            })
+          ]);
+        }
+      } else {
+        await navigator.clipboard.writeText(content);
+      }
+      setCopiedMessageId(id);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+      // Fallback to text copy if image copy fails
+      try {
+        await navigator.clipboard.writeText(content);
+        setCopiedMessageId(id);
+        setTimeout(() => setCopiedMessageId(null), 2000);
+      } catch (fallbackErr) {
+        console.error("Fallback text copy failed:", fallbackErr);
+      }
+    }
   };
 
   const handleFeedback = async (messageId: string, type: 'upvote' | 'downvote') => {

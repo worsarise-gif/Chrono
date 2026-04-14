@@ -213,7 +213,7 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
   return (
     <>
       <div 
-        className="relative flex w-fit max-w-full rounded-2xl overflow-hidden cursor-pointer group border-2 border-primary/20 hover:border-primary/50 transition-colors"
+        className="relative flex w-fit max-w-full rounded-2xl overflow-hidden cursor-pointer group border-2 border-transparent transition-colors"
         onClick={handleImageClick}
       >
         {isLoading && (

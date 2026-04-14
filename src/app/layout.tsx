@@ -22,8 +22,8 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
-  title: "Q1",
-  description: "Q1 Chat App",
+  title: "Chris",
+  description: "Chris Chat App",
 };
 
 export const viewport = {
