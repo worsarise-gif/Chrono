@@ -1883,6 +1883,43 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
     };
   }, [showModeDropdown]);
 
+  const sourcesContent = (
+    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {currentSources.map((source, i) => {
+        let hostname = source.link;
+        try { hostname = new URL(source.link).hostname; } catch (e) {}
+        const domainName = hostname.replace(/^www\./, '');
+        
+        return (
+          <a 
+            key={i}
+            href={source.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block group"
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <img 
+                src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
+                alt={hostname}
+                className="w-4 h-4 rounded-full bg-background object-cover"
+              />
+              <span className="text-[13px] font-medium text-foreground/80 group-hover:text-foreground transition-colors truncate">
+                {domainName}
+              </span>
+            </div>
+            <h4 className="text-[14px] font-medium text-foreground leading-snug mb-1.5 group-hover:underline">
+              {source.title}
+            </h4>
+            <span className="text-[13px] text-foreground/60 line-clamp-3 leading-relaxed">
+              {source.snippet || source.link}
+            </span>
+          </a>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="flex flex-row h-full w-full relative">
       <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden font-sans">
@@ -2643,7 +2680,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
       </div>
       </div>
 
-      {/* Sources Panel */}
+      {/* Sources Panel (Desktop) */}
       <AnimatePresence>
         {showSourcesPanel && (
           <motion.div
@@ -2651,7 +2688,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
             animate={{ width: 350, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="h-full border-l border-border bg-background flex flex-col overflow-hidden shrink-0"
+            className="hidden md:flex h-full border-l border-border bg-background flex-col overflow-hidden shrink-0"
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
@@ -2662,41 +2699,41 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
                 <X size={18} />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
-              {currentSources.map((source, i) => {
-                let hostname = source.link;
-                try { hostname = new URL(source.link).hostname; } catch (e) {}
-                const domainName = hostname.replace(/^www\./, '');
-                
-                return (
-                  <a 
-                    key={i}
-                    href={source.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block group"
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <img 
-                        src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
-                        alt={hostname}
-                        className="w-4 h-4 rounded-full bg-background object-cover"
-                      />
-                      <span className="text-[13px] font-medium text-foreground/80 group-hover:text-foreground transition-colors truncate">
-                        {domainName}
-                      </span>
-                    </div>
-                    <h4 className="text-[14px] font-medium text-foreground leading-snug mb-1.5 group-hover:underline">
-                      {source.title}
-                    </h4>
-                    <span className="text-[13px] text-foreground/60 line-clamp-3 leading-relaxed">
-                      {source.snippet || source.link}
-                    </span>
-                  </a>
-                );
-              })}
-            </div>
+            {sourcesContent}
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Sources Panel (Mobile Bottom Sheet) */}
+      <AnimatePresence>
+        {showSourcesPanel && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSourcesPanel(false)}
+              className="fixed inset-0 bg-black/60 z-[100] md:hidden backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed bottom-0 left-0 right-0 h-[80vh] bg-background z-[101] md:hidden rounded-t-[24px] flex flex-col overflow-hidden shadow-2xl"
+            >
+              <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
+                <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
+                <button 
+                  onClick={() => setShowSourcesPanel(false)}
+                  className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              {sourcesContent}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </div>
