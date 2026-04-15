@@ -1362,30 +1362,64 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         setLoadingStatus('Analyzing Image...');
       } else if (mode === 'auto') {
         setLoadingStatus('Routing...');
-        try {
-          const routingMessages = [
-            { role: 'system', content: 'Classify this message as either: CHAT/FAST, CODE/REASONING/PRO, SEARCH, or IMAGE. Reply with only one word.' },
-            { role: 'user', content: lastMessage }
-          ];
-          const routingResponse = await callGroqChatNonStream('llama-3.1-8b-instant', routingMessages, 'llama-3.1-8b-instant', controller.signal, addLog);
-          const route = (typeof routingResponse === 'string' ? routingResponse : (routingResponse as any)?.choices?.[0]?.message?.content || '').toUpperCase();
-          
-          if (route.includes('CODE') || route.includes('REASONING') || route.includes('PRO')) {
-            classification = 'pro';
-            setLoadingStatus('Crafting Code...');
-          } else if (route.includes('SEARCH')) {
-            classification = 'search';
-            setLoadingStatus('Searching...');
-          } else if (route.includes('IMAGE')) {
-            classification = 'image';
-            setLoadingStatus('Analyzing Image...');
-          } else {
-            classification = 'fast';
-            setLoadingStatus('Thinking...');
-          }
-        } catch (err) {
-          console.warn("Semantic routing failed, falling back to fast mode", err);
-          classification = 'fast';
+
+        // Deterministic, scoring-based routing
+        let scores = { pro: 0, search: 0, image: 0, fast: 0 };
+        const textToRoute = lastMessage.toLowerCase();
+
+        // 1. Pro / Code / Reasoning Indicators
+        const proKeywords = ['code', 'function', 'class', 'implement', 'debug', 'error', 'calculate', 'solve', 'math', 'complex', 'explain', 'reason', 'why', 'architecture', 'design pattern', 'algorithm', 'optimize', 'refactor', 'regex'];
+        const proRegex = new RegExp(`\\b(${proKeywords.join('|')})\\b`, 'gi');
+        const proMatches = lastMessage.match(proRegex);
+        if (proMatches) scores.pro += proMatches.length * 2;
+        if (textToRoute.includes('```') || textToRoute.includes('()') || textToRoute.includes('=>') || textToRoute.includes('{}')) scores.pro += 5;
+        if (lastMessage.length > 500) scores.pro += 3; // Long messages often require deeper reasoning
+
+        // 2. Search / Real-time / Factual Indicators
+        const searchKeywords = ['latest', 'news', 'current', 'who is', 'what is', 'today', 'weather', 'price of', 'how many', 'stock', 'update', 'recently', 'happen', 'article'];
+        const searchRegex = new RegExp(`\\b(${searchKeywords.join('|')})\\b`, 'gi');
+        const searchMatches = lastMessage.match(searchRegex);
+        if (searchMatches) scores.search += searchMatches.length * 3;
+        if (textToRoute.startsWith('who') || textToRoute.startsWith('what') || textToRoute.startsWith('when') || textToRoute.startsWith('where')) scores.search += 2;
+
+        // 3. Image Generation Indicators
+        const imageKeywords = ['draw', 'generate image', 'create a picture', 'show me a picture of', 'paint', 'image of', 'illustration', 'sketch', 'render'];
+        const imageRegex = new RegExp(`\\b(${imageKeywords.join('|')})\\b`, 'gi');
+        const imageMatches = lastMessage.match(imageRegex);
+        if (imageMatches) scores.image += imageMatches.length * 5;
+        if (/^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(lastMessage)) {
+            scores.image += 10;
+        }
+
+        // 4. Fast / Chat Indicators
+        scores.fast = 1; // Base score for fast
+        if (lastMessage.length < 50) scores.fast += 2;
+        const greetingKeywords = ['hi', 'hello', 'hey', 'greetings', 'sup', 'morning', 'afternoon', 'evening', 'thanks', 'thank you', 'ok', 'okay', 'yes', 'no'];
+        const greetingRegex = new RegExp(`^(${greetingKeywords.join('|')})\\b`, 'i');
+        if (greetingRegex.test(textToRoute)) scores.fast += 3;
+
+        let highestScore = -1;
+        for (const [route, score] of Object.entries(scores)) {
+            if (score > highestScore) {
+                highestScore = score;
+                classification = route;
+            } else if (score === highestScore) {
+                const priority: Record<string, number> = { image: 4, search: 3, pro: 2, fast: 1 };
+                if (priority[route] > priority[classification]) {
+                    classification = route;
+                }
+            }
+        }
+
+        addLog('info', 'Model Routing', `Routed to ${classification}`, { scores, text: lastMessage.substring(0, 50) });
+
+        if (classification === 'pro') {
+          setLoadingStatus('Crafting Code...');
+        } else if (classification === 'search') {
+          setLoadingStatus('Searching...');
+        } else if (classification === 'image') {
+          setLoadingStatus('Analyzing Image...');
+        } else {
           setLoadingStatus('Thinking...');
         }
       } else {
@@ -1633,17 +1667,11 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
           setLoadingStatus('Searching the web...');
           searchWebCallArgs = { query: userMessage || "latest news" };
         } else {
-          // Fast Mode (with Load Distribution)
-          const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
-          if (useLlama) {
-            const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
-            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
-          } else {
-            const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            const runFallback = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
-          }
+          // Fast Mode (Deterministic)
+          // Defaulting to primary model with a deterministic fallback chain
+          const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
+          const runFallback = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
+          await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
         }
 
         if (searchWebCallArgs && !controller.signal.aborted) {
