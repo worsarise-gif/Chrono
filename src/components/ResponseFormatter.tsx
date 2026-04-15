@@ -312,7 +312,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
       );
     },
     p({ node, children, ...props }: any) {
-      return <p className="text-foreground font-light leading-relaxed mb-3 last:mb-0" {...props}>{children}</p>;
+      return <p className="text-foreground font-light leading-relaxed mb-3 last:mb-0 mt-0" {...props}>{children}</p>;
     },
     strong({ node, children, ...props }: any) {
       return <strong className="font-medium text-foreground" {...props}>{children}</strong>;
@@ -348,7 +348,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
     },
     blockquote({ node, children, ...props }: any) {
       return (
-        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-foreground not-italic shadow-sm" {...props}>
+        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-4 rounded-r-2xl my-5 text-foreground not-italic shadow-sm flex flex-col justify-center" {...props}>
           {children}
         </blockquote>
       );
