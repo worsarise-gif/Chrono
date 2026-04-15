@@ -257,6 +257,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
               onClick={() => setIsCollapsed(true)}
+              aria-label="Collapse Sidebar"
               className="text-foreground/60 hover:text-foreground transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
             >
               <ChevronsLeft size={16} strokeWidth={2} />
@@ -311,12 +312,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                           <button 
                             onClick={() => handleSaveTitle(chat.id)}
                             disabled={isSavingTitle}
+                            aria-label="Save Chat Title"
                             className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors"
                           >
                             <Check size={14} />
                           </button>
                           <button 
                             onClick={handleCancelEdit}
+                            aria-label="Cancel Edit Chat Title"
                             className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
                           >
                             <X size={14} />
@@ -347,6 +350,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                               setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
                             }}
                             className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-all z-[60] flex items-center justify-center"
+                            aria-label={`More options for ${chat.title}`}
                             title="More options"
                           >
                             <div className="relative w-3.5 h-3.5 flex items-center justify-center">
@@ -416,6 +420,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
               onClick={() => setIsCollapsed(false)}
+              aria-label="Expand Sidebar"
               className="text-foreground/60 hover:text-foreground transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
             >
               <ChevronsRight size={20} strokeWidth={1.5} />
@@ -479,7 +484,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               </>
             ) : (
               <>
-                <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
+                <button onClick={loginWithGoogle} aria-label="Login with Google" className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
                   <LogIn size={16} />
                 </button>
                 
