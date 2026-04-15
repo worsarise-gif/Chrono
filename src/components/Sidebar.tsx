@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield, Pin, PinOff } from 'lucide-react';
+import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield, Pin, PinOff, ChevronDown, Plus, Bell } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
@@ -280,8 +280,25 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           </ul>
         </nav>
 
-        {/* Divider */}
-        <div className={`mx-4 h-px bg-border my-3 transition-opacity duration-300 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}></div>
+        {/* Projects Section */}
+        <div className={`mt-4 mb-2 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none hidden' : 'opacity-100'}`}>
+          <div className="flex items-center justify-between px-4 mb-2">
+            <span className="text-[13px] font-semibold text-foreground">Projects</span>
+            <ChevronDown size={14} className="text-foreground/50" />
+          </div>
+          <ul className="space-y-0.5">
+            <NavItem icon={<Plus size={18} strokeWidth={2} className="text-foreground/50" />} label="New Project" onClick={() => {}} isCollapsed={isCollapsed} index={4} />
+            <NavItem icon={<Bell size={18} strokeWidth={2} className="text-orange-500" />} label="Ace" onClick={() => {}} isCollapsed={isCollapsed} index={5} />
+          </ul>
+        </div>
+
+        {/* History Section Header */}
+        <div className={`mt-4 mb-2 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none hidden' : 'opacity-100'}`}>
+          <div className="flex items-center justify-between px-4 mb-2">
+            <span className="text-[13px] font-semibold text-foreground">History</span>
+            <ChevronDown size={14} className="text-foreground/50" />
+          </div>
+        </div>
 
         {/* Chat History (Scrollable) */}
         <div className={`flex-1 overflow-y-auto sidebar-scroll transition-all duration-300 ${isCollapsed ? 'scrollbar-hide' : ''}`}>
@@ -292,9 +309,20 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               </div>
             ) : chats.length > 0 && (
               <>
+                <div className={`flex items-center gap-3 px-3 py-2 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+                  <span className="text-[11px] text-foreground/50 whitespace-nowrap">Yesterday</span>
+                  <div className="h-px bg-border flex-1"></div>
+                </div>
                 <ul className="space-y-0.5 flex-1">
-                  {chats.map(chat => (
-                    <li key={chat.id} className="group relative">
+                  {chats.map((chat, index) => (
+                    <React.Fragment key={chat.id}>
+                      {index === 4 && (
+                        <div className={`flex items-center gap-3 px-3 py-2 mt-2 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 hidden' : 'opacity-100'}`}>
+                          <span className="text-[11px] text-foreground/50 whitespace-nowrap">Earlier</span>
+                          <div className="h-px bg-border flex-1"></div>
+                        </div>
+                      )}
+                      <li className="group relative">
                       {editingChatId === chat.id ? (
                         <div className="flex items-center gap-1 px-2 py-1 bg-surface rounded-lg border border-blue-500/50">
                           <input
@@ -397,6 +425,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                         </>
                       )}
                     </li>
+                    </React.Fragment>
                   ))}
                 </ul>
                 <button 
