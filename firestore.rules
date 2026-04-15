@@ -136,6 +136,10 @@ service cloud.firestore {
     // ===============================================================
     // Rules
     // ===============================================================
+    match /{path=**}/messages/{messageId} {
+      allow read: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isAuthenticated() && isValidUser() && uidUnchanged() && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == 'user')) || isAdmin());

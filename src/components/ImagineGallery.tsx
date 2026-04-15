@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { db } from '../firebase';
-import { collection, query, orderBy, onSnapshot, getDocs, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, getDocs, doc, getDoc, setDoc, addDoc, collectionGroup, where } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 import { Download, Image as ImageIcon, Loader2 } from 'lucide-react';
 
@@ -36,40 +36,37 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
         }
 
         setIsMigrating(true);
-        const chatsSnapshot = await getDocs(collection(db, 'users', user.uid, 'chats'));
+        const messagesQuery = query(collectionGroup(db, 'messages'), where('uid', '==', user.uid));
+        const messagesSnapshot = await getDocs(messagesQuery);
         
-        for (const chatDoc of chatsSnapshot.docs) {
-          const messagesSnapshot = await getDocs(collection(db, 'users', user.uid, 'chats', chatDoc.id, 'messages'));
+        for (const msgDoc of messagesSnapshot.docs) {
+          const data = msgDoc.data();
           
-          for (const msgDoc of messagesSnapshot.docs) {
-            const data = msgDoc.data();
-            
-            // Check for user uploaded images
-            if (data.imageUrl) {
+          // Check for user uploaded images
+          if (data.imageUrl) {
+            await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
+              prompt: data.content || 'Uploaded Image',
+              imageData: data.imageUrl,
+              createdAt: data.createdAt || new Date(),
+              isUploaded: true
+            });
+          }
+
+          // Check if it's a model message containing an image markdown
+          if (data.role === 'model' && data.content && data.content.includes('![')) {
+            // Extract prompt and base64 data or URL
+            const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+            let match;
+            while ((match = imgRegex.exec(data.content)) !== null) {
+              const prompt = match[1] || 'Generated Image';
+              const imageData = match[2];
+
+              // Add to generated_images collection
               await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
-                prompt: data.content || 'Uploaded Image',
-                imageData: data.imageUrl,
-                createdAt: data.createdAt || new Date(),
-                isUploaded: true
+                prompt,
+                imageData,
+                createdAt: data.createdAt || new Date()
               });
-            }
-            
-            // Check if it's a model message containing an image markdown
-            if (data.role === 'model' && data.content && data.content.includes('![')) {
-              // Extract prompt and base64 data or URL
-              const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
-              let match;
-              while ((match = imgRegex.exec(data.content)) !== null) {
-                const prompt = match[1] || 'Generated Image';
-                const imageData = match[2];
-                
-                // Add to generated_images collection
-                await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
-                  prompt,
-                  imageData,
-                  createdAt: data.createdAt || new Date()
-                });
-              }
             }
           }
         }
