@@ -331,6 +331,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string } | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
+  const [showSourcesPanel, setShowSourcesPanel] = useState(false);
+  const [currentSources, setCurrentSources] = useState<{ title: string, link: string, snippet?: string }[]>([]);
   const [streamingMessage, setStreamingMessage] = useState<string>('');
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -425,7 +427,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const previousChatIdRef = useRef<string | null>(null);
 
   const getSourcesFromContent = (content: string) => {
-    const sources: { title: string, link: string }[] = [];
+    const sources: { title: string, link: string, snippet?: string }[] = [];
     const searchResultsMatches = content.match(/```search-results\n([\s\S]*?)\n```/g);
     if (searchResultsMatches) {
       searchResultsMatches.forEach(match => {
@@ -434,7 +436,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           const data = JSON.parse(jsonStr);
           if (data && data.results) {
             data.results.forEach((res: any) => {
-              sources.push({ title: res.title, link: res.link });
+              sources.push({ title: res.title, link: res.link, snippet: res.snippet });
+            });
+          } else if (Array.isArray(data)) {
+            data.forEach((res: any) => {
+              sources.push({ title: res.title, link: res.link, snippet: res.snippet });
             });
           }
         } catch (e) {
@@ -1878,16 +1884,17 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
   }, [showModeDropdown]);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden font-sans">
-      {/* Messages Area */}
-      <div 
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-        onClick={() => {
-          if (userMenuState) setUserMenuState(null);
-        }}
-        className="flex-1 overflow-y-auto relative flex flex-col"
-      >
+    <div className="flex flex-row h-full w-full relative">
+      <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden font-sans">
+        {/* Messages Area */}
+        <div 
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          onClick={() => {
+            if (userMenuState) setUserMenuState(null);
+          }}
+          className="flex-1 overflow-y-auto relative flex flex-col"
+        >
         {userMenuState && (
           <div 
             className="fixed z-50 bg-surface border border-border rounded-xl shadow-xl overflow-hidden py-1 min-w-[120px]"
@@ -2141,7 +2148,13 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
                                   const sources = getSourcesFromContent(msg.content);
                                   if (sources.length > 0) {
                                     return (
-                                      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-hover/80 hover:bg-surface-hover border border-border/30 transition-colors cursor-pointer ml-auto">
+                                      <div 
+                                        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-hover/80 hover:bg-surface-hover border border-border/30 transition-colors cursor-pointer ml-auto"
+                                        onClick={() => {
+                                          setCurrentSources(sources);
+                                          setShowSourcesPanel(true);
+                                        }}
+                                      >
                                         <div className="flex items-center -space-x-1.5">
                                           {sources.slice(0, 3).map((source, i) => {
                                             let hostname = source.link;
@@ -2628,6 +2641,64 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
           </motion.div>
         </form>
       </div>
+      </div>
+
+      {/* Sources Panel */}
+      <AnimatePresence>
+        {showSourcesPanel && (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 350, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="h-full border-l border-border bg-background flex flex-col overflow-hidden shrink-0"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
+              <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
+              <button 
+                onClick={() => setShowSourcesPanel(false)}
+                className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              {currentSources.map((source, i) => {
+                let hostname = source.link;
+                try { hostname = new URL(source.link).hostname; } catch (e) {}
+                const domainName = hostname.replace(/^www\./, '');
+                
+                return (
+                  <a 
+                    key={i}
+                    href={source.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block group"
+                  >
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <img 
+                        src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
+                        alt={hostname}
+                        className="w-4 h-4 rounded-full bg-background object-cover"
+                      />
+                      <span className="text-[13px] font-medium text-foreground/80 group-hover:text-foreground transition-colors truncate">
+                        {domainName}
+                      </span>
+                    </div>
+                    <h4 className="text-[14px] font-medium text-foreground leading-snug mb-1.5 group-hover:underline">
+                      {source.title}
+                    </h4>
+                    <span className="text-[13px] text-foreground/60 line-clamp-3 leading-relaxed">
+                      {source.snippet || source.link}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
