@@ -82,6 +82,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const pathname = usePathname();
   const [chats, setChats] = useState<Chat[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [chatToDelete, setChatToDelete] = useState<{ id: string, title: string } | null>(null);
@@ -322,15 +323,22 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
 
         {/* History Section Header */}
         <div className={`mt-4 mb-2 shrink-0 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-          <div className="flex items-center justify-between px-4 mb-2">
+          <div 
+            className="flex items-center justify-between px-4 mb-2 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+          >
             <span className="text-[13px] font-semibold text-foreground">History</span>
-            <ChevronDown size={14} className="text-foreground/50" />
+            <ChevronDown 
+              size={14} 
+              className={`text-foreground/50 transition-transform duration-300 ${isHistoryExpanded ? 'rotate-180' : ''}`} 
+            />
           </div>
         </div>
 
         {/* Chat History (Scrollable) */}
-        <div className="flex-1 overflow-y-auto sidebar-scroll">
-          <div className="px-2 pb-2 flex flex-col min-h-full">
+        <div className={`flex-1 overflow-y-auto sidebar-scroll transition-all duration-300 ${isHistoryExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          {isHistoryExpanded && (
+            <div className="px-2 pb-2 flex flex-col min-h-full">
             {isLoadingChats ? (
               <div className="flex justify-center py-4">
                 <Helix size="24" speed="2.5" color="var(--color-foreground)" />
@@ -463,6 +471,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               </>
             )}
           </div>
+          )}
         </div>
 
         {/* Bottom Section */}
