@@ -2537,7 +2537,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 placeholder="Ask anything"
-                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-normal resize-none leading-[24px] break-words"
+                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-light resize-none leading-[24px] break-words"
                 rows={1}
                 disabled={isLoading}
                 style={{ minHeight: '24px', maxHeight: '200px' }}

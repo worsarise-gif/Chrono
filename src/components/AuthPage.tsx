@@ -4,7 +4,7 @@ import { ChevronDown, Mail } from 'lucide-react';
 import {PlanetLogo} from './PlanetLogo';
 export default function AuthPage() {
   return (
-    <div className="flex h-[100dvh] w-full bg-white text-black font-sans overflow-hidden">
+    <div className="flex h-[100dvh] w-full bg-white text-black font-sans font-extralight overflow-hidden">
       {/* Left Side - Login Form */}
       <div className="w-full md:w-1/2 h-full flex flex-col relative z-10 bg-white">
         {/* Header */}
