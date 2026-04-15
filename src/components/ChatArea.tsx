@@ -2237,10 +2237,10 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
                 key="ai-response-indicator"
                 className="flex flex-col justify-start group w-full min-h-[36px] gap-2"
               >
-                {isLoading && (
+                {isLoading && streamingMessage.length === 0 && (
                   <ResponseIconIndicator 
                     status={isSearching ? "Searching..." : loadingStatus} 
-                    isStreaming={streamingMessage.length > 0} 
+                    isStreaming={false} 
                   />
                 )}
                 {streamingMessage.length > 0 && (
