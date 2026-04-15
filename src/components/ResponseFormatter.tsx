@@ -17,7 +17,7 @@ interface ResponseFormatterProps {
 
 let globalMounted = false;
 
-const CodeBlock = ({ language, value }: { language: string, value: string }) => {
+const CodeBlock = React.memo(({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(globalMounted);
@@ -45,12 +45,12 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   // Sleek light mode background: very subtle off-white/gray
   // Sleek dark mode background: existing surface/50
   const containerBg = 'bg-transparent';
-  const headerBg = currentTheme === 'dark' ? 'bg-surface/20' : 'bg-surface/10';
+  const headerBg = currentTheme === 'dark' ? 'bg-surface/30' : 'bg-surface/10';
   const borderColor = currentTheme === 'dark' ? 'border-border/30' : 'border-gray-200';
 
   return (
     <div className={`relative group my-6 rounded-2xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
-      <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}/50 backdrop-blur-sm rounded-t-2xl`}>
+      <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b border-border/40 backdrop-blur-sm rounded-t-2xl`}>
         <span className="text-[11px] font-mono text-foreground uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
@@ -83,9 +83,9 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
       </div>
     </div>
   );
-};
+});
 
-const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreaming?: boolean }) => {
+const ThinkingProcess = React.memo(({ content, isStreaming, markdownComponents }: { content: string, isStreaming?: boolean, markdownComponents?: any }) => {
   const [isOpen, setIsOpen] = useState(isStreaming || false);
 
   useEffect(() => {
@@ -95,17 +95,17 @@ const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreamin
   }, [isStreaming]);
 
   return (
-    <div className="my-4 border border-border/50 rounded-2xl overflow-hidden bg-transparent transition-all duration-300">
+    <div className="my-4 border border-border/40 rounded-2xl overflow-hidden bg-surface/5 transition-all duration-300">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-surface-hover transition-colors text-xs font-medium text-foreground/40 group"
+        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-hover/50 transition-colors text-xs font-medium text-foreground/40 group"
       >
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center">
             <div className={`absolute inset-0 rounded-full blur-sm transition-opacity duration-500 ${isOpen ? 'bg-blue-500/20 opacity-100' : 'bg-transparent opacity-0'}`} />
             <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 relative z-10 ${isOpen ? 'bg-blue-500 scale-125' : 'bg-foreground/20'}`} />
           </div>
-          <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 text-foreground/40`}>
+          <span className={`tracking-wide uppercase font-medium text-[10px] transition-colors duration-300 text-foreground/40`}>
             Thinking Process
           </span>
         </div>
@@ -122,11 +122,12 @@ const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreamin
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
           >
-            <div className="px-5 pb-5 pt-1 text-[13px] text-foreground leading-relaxed border-t border-border/30 bg-transparent">
-              <div className="prose prose-sm dark:prose-invert max-w-none italic prose-p:text-foreground prose-li:text-foreground">
+            <div className="px-5 pb-5 pt-1 text-[13px] text-foreground/90 leading-relaxed border-t border-border/30 bg-transparent">
+              <div className="max-w-none italic">
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeKatex]}
+                  components={markdownComponents}
                   urlTransform={(url) => {
                     if (url.startsWith('data:image/')) return url;
                     return defaultUrlTransform(url);
@@ -141,11 +142,11 @@ const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreamin
       </AnimatePresence>
     </div>
   );
-};
+});
 
 const loadedImages = new Set<string>();
 
-const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
+const ImageRenderer = React.memo(({ src, alt, onImageClick, ...props }: any) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(!loadedImages.has(src));
 
@@ -281,7 +282,7 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
       </AnimatePresence>
     </>
   );
-};
+});
 
 interface ResponseFormatterProps {
   content: string;
@@ -299,26 +300,43 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
 
   const markdownComponents = React.useMemo(() => ({
     h1({ node, children, ...props }: any) {
-      return <h1 className="text-xl font-bold text-foreground mt-2 mb-4" {...props}>{children}</h1>;
+      return <h1 className="text-2xl font-bold text-foreground mt-8 mb-4 tracking-tight" {...props}>{children}</h1>;
     },
     h2({ node, children, ...props }: any) {
-      return <h2 className="text-lg font-bold text-foreground mt-2 mb-3" {...props}>{children}</h2>;
+      return <h2 className="text-xl font-semibold text-foreground mt-6 mb-3 tracking-tight" {...props}>{children}</h2>;
     },
     h3({ node, children, ...props }: any) {
-      return (
-        <h3 className="text-base font-bold mt-2 mb-3 text-foreground" {...props}>
-          {children}
-        </h3>
-      );
+      return <h3 className="text-lg font-medium text-foreground mt-5 mb-2" {...props}>{children}</h3>;
+    },
+    h4({ node, children, ...props }: any) {
+      return <h4 className="text-base font-semibold text-foreground mt-4 mb-2" {...props}>{children}</h4>;
+    },
+    h5({ node, children, ...props }: any) {
+      return <h5 className="text-sm font-semibold text-foreground mt-4 mb-2" {...props}>{children}</h5>;
+    },
+    h6({ node, children, ...props }: any) {
+      return <h6 className="text-sm font-medium text-foreground/80 mt-4 mb-2 uppercase tracking-wider" {...props}>{children}</h6>;
     },
     p({ node, children, ...props }: any) {
-      return <p className="text-foreground font-light leading-relaxed mb-3 last:mb-0" {...props}>{children}</p>;
+      return <p className="text-foreground leading-7 mb-4" {...props}>{children}</p>;
     },
     strong({ node, children, ...props }: any) {
       return <strong className="font-medium text-foreground" {...props}>{children}</strong>;
     },
+    ul({ node, children, ...props }: any) {
+      return <ul className="list-disc list-inside mb-4 pl-2 space-y-1 text-foreground marker:text-foreground/50" {...props}>{children}</ul>;
+    },
+    ol({ node, children, ...props }: any) {
+      return <ol className="list-decimal list-inside mb-4 pl-2 space-y-1 text-foreground marker:text-foreground/50" {...props}>{children}</ol>;
+    },
     li({ node, children, ...props }: any) {
-      return <li className="text-foreground font-light" {...props}>{children}</li>;
+      return <li className="text-foreground leading-7 mb-1" {...props}>{children}</li>;
+    },
+    em({ node, children, ...props }: any) {
+      return <em className="italic text-foreground/90" {...props}>{children}</em>;
+    },
+    del({ node, children, ...props }: any) {
+      return <del className="line-through text-foreground/50" {...props}>{children}</del>;
     },
     img({ node, src, alt, ...props }: any) {
       return <ImageRenderer src={src} alt={alt} onImageClick={(s: string) => onImageClickRef.current?.(s)} {...props} />;
@@ -341,14 +359,14 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
         );
       }
       return (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 underline decoration-blue-500/30 underline-offset-2 transition-colors font-medium" {...props}>
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 font-medium underline underline-offset-4 decoration-blue-500/30 transition-colors" {...props}>
           {children}
         </a>
       );
     },
     blockquote({ node, children, ...props }: any) {
       return (
-        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-3 rounded-r-2xl my-5 text-foreground not-italic shadow-sm" {...props}>
+        <blockquote className="border-l-4 border-blue-500/70 bg-blue-500/5 px-4 py-3 rounded-r-lg my-4 text-foreground/90 italic shadow-sm" {...props}>
           {children}
         </blockquote>
       );
@@ -416,10 +434,26 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
       normalized += '\n```';
     }
 
-    // 2. Fix malformed bold formatting (e.g., ** text ** -> **text**)
+    // 2. Fix unclosed inline code snippets (ensure even number of single backticks)
+    // Avoid using negative lookbehind for broader browser compatibility
+    let singleBackticksCount = 0;
+    let inTripleBackticks = false;
+    for (let i = 0; i < normalized.length; i++) {
+      if (normalized.substring(i, i + 3) === '```') {
+        inTripleBackticks = !inTripleBackticks;
+        i += 2; // Skip the next two backticks
+      } else if (normalized[i] === '`' && !inTripleBackticks) {
+        singleBackticksCount++;
+      }
+    }
+    if (singleBackticksCount % 2 !== 0) {
+      normalized += '`';
+    }
+
+    // 3. Fix malformed bold formatting (e.g., ** text ** -> **text**)
     normalized = normalized.replace(/\*\* (.*?) \*\*/g, '**$1**');
 
-    // 3. Ensure proper spacing around headings to prevent rendering issues
+    // 4. Ensure proper spacing around headings to prevent rendering issues
     normalized = normalized.replace(/([^\n])\n(#+ )/g, '$1\n\n$2');
 
     return normalized;
@@ -428,12 +462,12 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`w-full prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-foreground max-w-none font-normal break-words text-foreground prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:font-normal prose-strong:text-foreground prose-code:text-foreground text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`w-full text-foreground text-[14px] md:text-[15px] leading-relaxed break-words font-normal ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
           if (!thinkingContent) return null;
-          return <ThinkingProcess key={index} content={thinkingContent} isStreaming={isStreaming} />;
+          return <ThinkingProcess key={index} content={normalizeContent(thinkingContent)} isStreaming={isStreaming} markdownComponents={markdownComponents} />;
         }
 
         const normalizedContent = normalizeContent(part);
