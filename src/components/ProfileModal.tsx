@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, LogOut, Mail, Calendar, Shield, User as UserIcon, Camera, Save, Loader2, Sun, Moon, Check } from 'lucide-react';
+import { X, LogOut, Mail, Calendar, Shield, User as UserIcon, Camera, Save, Loader2, Sun, Moon, Check, Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { logout, auth, storage, db } from '../firebase';
 import { updateProfile } from 'firebase/auth';
@@ -129,54 +129,52 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           />
 
           {/* Modal Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-md bg-surface border border-border rounded-[32px] shadow-2xl overflow-hidden"
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="relative w-full max-w-sm bg-background border border-border/40 rounded-2xl shadow-2xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header / Close Button */}
-            <div className="absolute top-6 right-6 z-10">
+            <div className="absolute top-4 right-4 z-10">
               <button
                 onClick={onClose}
-                className="p-2 rounded-full bg-surface-hover text-foreground/60 hover:text-foreground transition-all border border-border/50"
+                className="p-1.5 rounded-md text-foreground/50 hover:text-foreground hover:bg-surface-hover transition-colors"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
 
             {/* Profile Content */}
-            <div className="p-8 pt-12">
+            <div className="p-6 pt-8">
               <div className="flex flex-col items-center text-center">
                 {/* Avatar with Upload */}
-                <div className="relative group mb-6">
-                  <div className="absolute -inset-1 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div className="relative group mb-5">
                   <div className="relative">
                     {previewUrl || user.profile?.photoURL || user.photoURL ? (
                       <img
                         src={previewUrl || user.profile?.photoURL || user.photoURL || ''}
                         alt={user.profile?.displayName || user.displayName || "User"}
-                        className="w-24 h-24 rounded-full object-cover border-2 border-background shadow-xl"
+                        className="w-20 h-20 rounded-full object-cover border border-border/50"
                       />
                     ) : (
                       <div 
-                        className="w-24 h-24 rounded-full flex items-center justify-center border-2 border-background shadow-xl text-white font-bold text-3xl"
-                        style={{ backgroundColor: `hsl(${(user.email?.length || 0) * 137.5 % 360}, 60%, 50%)` }}
+                        className="w-20 h-20 rounded-full flex items-center justify-center border border-border/50 text-foreground font-medium text-2xl bg-surface"
                       >
                         {(user.profile?.displayName || user.displayName)?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'J'}
                       </div>
                     )}
                     <button 
                       onClick={() => fileInputRef.current?.click()}
-                      className="absolute bottom-0 right-0 p-2 bg-foreground text-background rounded-full shadow-lg hover:scale-110 transition-transform border-2 border-background"
+                      className="absolute bottom-0 right-0 p-1.5 bg-background text-foreground rounded-full border border-border shadow-sm hover:bg-surface-hover transition-colors"
                     >
-                      <Camera size={14} />
+                      <Camera size={12} />
                     </button>
                     <input 
                       type="file" 
@@ -189,123 +187,108 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 </div>
 
                 {/* Name & Email */}
-                <div className="w-full space-y-4 mb-8">
-                  <div className="space-y-1">
-                    {isEditing ? (
-                      <div className="flex flex-col gap-2">
-                        <input
-                          type="text"
-                          value={displayName}
-                          onChange={(e) => setDisplayName(e.target.value)}
-                          className="w-full bg-surface-hover border border-border rounded-xl px-4 py-2 text-center text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all font-semibold text-lg"
-                          placeholder="Your display name"
-                          autoFocus
-                        />
-                      </div>
-                    ) : (
-                      <h2 
-                        className="text-2xl font-bold tracking-tight text-foreground cursor-pointer hover:text-blue-500 transition-colors"
-                        onClick={() => setIsEditing(true)}
-                      >
+                <div className="w-full space-y-1 mb-6">
+                  {isEditing ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <input
+                        type="text"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        className="w-full max-w-[200px] bg-surface border border-border/50 rounded-md px-3 py-1.5 text-center text-foreground text-sm focus:outline-none focus:border-foreground/30 transition-colors"
+                        placeholder="Display name"
+                        autoFocus
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2 group/name">
+                      <h2 className="text-lg font-medium text-foreground">
                         {user.profile?.displayName || user.displayName || "Anonymous User"}
                       </h2>
-                    )}
-                    <div className="flex items-center justify-center gap-2 text-foreground/60">
-                      <Mail size={14} />
-                      <span className="text-sm font-medium">{user.email}</span>
+                      <button 
+                        onClick={() => setIsEditing(true)}
+                        className="opacity-0 group-hover/name:opacity-100 text-foreground/40 hover:text-foreground transition-opacity"
+                      >
+                        <Edit2 size={12} />
+                      </button>
                     </div>
-                  </div>
+                  )}
+                  <p className="text-sm text-foreground/50">{user.email}</p>
 
                   {error && (
-                    <p className="text-xs text-red-500 font-medium bg-red-500/10 py-2 px-3 rounded-lg border border-red-500/20">
-                      {error}
-                    </p>
+                    <p className="text-xs text-red-500 mt-2">{error}</p>
                   )}
-
                   {success && (
-                    <p className="text-xs text-green-500 font-medium bg-green-500/10 py-2 px-3 rounded-lg border border-green-500/20 flex items-center justify-center gap-1.5">
-                      <Check size={12} /> Profile updated successfully
+                    <p className="text-xs text-green-500 mt-2 flex items-center justify-center gap-1">
+                      <Check size={12} /> Saved
                     </p>
                   )}
                 </div>
 
-                {/* Theme Toggle & Info Grid */}
-                <div className="w-full space-y-3 mb-8">
+                {/* Divider */}
+                <div className="w-full h-px bg-border/40 mb-6" />
+
+                {/* Settings List */}
+                <div className="w-full space-y-1 mb-6">
                   {/* Theme Toggle */}
-                  <div className="p-4 rounded-2xl bg-surface-hover/50 border border-border/50 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center border border-border/50">
-                        {mounted && (theme === 'dark' ? <Moon size={16} className="text-indigo-500" /> : <Sun size={16} className="text-yellow-500" />)}
-                      </div>
-                      <div className="text-left">
-                        <p className="text-xs font-bold text-foreground">Appearance</p>
-                        <p className="text-[10px] text-foreground/60 font-medium uppercase tracking-wider">{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</p>
-                      </div>
+                  <div className="flex items-center justify-between py-2 px-1">
+                    <div className="flex items-center gap-3 text-foreground/70">
+                      {mounted && (theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />)}
+                      <span className="text-sm font-medium">Appearance</span>
                     </div>
                     <button
                       onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                      className="relative inline-flex h-6 w-11 items-center rounded-full bg-surface-hover border border-border transition-colors focus:outline-none"
+                      className="text-xs font-medium text-foreground/50 hover:text-foreground transition-colors bg-surface-hover px-2 py-1 rounded-md"
                     >
-                      <span
-                        className={`${
-                          theme === 'dark' ? 'translate-x-6 bg-indigo-500' : 'translate-x-1 bg-yellow-500'
-                        } inline-block h-4 w-4 transform rounded-full transition-transform duration-200 ease-in-out`}
-                      />
+                      {theme === 'dark' ? 'Dark' : 'Light'}
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 w-full">
-                    <div className="p-4 rounded-2xl bg-surface-hover/50 border border-border/50 flex flex-col items-start gap-2">
-                      <Calendar size={16} className="text-blue-500" />
-                      <div className="text-left">
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-foreground/40">Joined</p>
-                        <p className="text-xs font-semibold text-foreground">
-                          {user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently'}
-                        </p>
-                      </div>
+                  {/* Joined */}
+                  <div className="flex items-center justify-between py-2 px-1">
+                    <div className="flex items-center gap-3 text-foreground/70">
+                      <Calendar size={16} />
+                      <span className="text-sm font-medium">Joined</span>
                     </div>
-                    <div className="p-4 rounded-2xl bg-surface-hover/50 border border-border/50 flex flex-col items-start gap-2">
-                      <Shield size={16} className={user.profile?.role === 'admin' ? "text-purple-500" : "text-blue-500"} />
-                      <div className="text-left">
-                        <p className="text-[10px] uppercase tracking-wider font-bold text-foreground/40">Status</p>
-                        <p className="text-xs font-semibold text-foreground">
-                          {user.profile?.role === 'admin' ? 'Administrator' : 'Verified User'}
-                        </p>
-                      </div>
+                    <span className="text-sm text-foreground/50">
+                      {user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently'}
+                    </span>
+                  </div>
+
+                  {/* Role */}
+                  <div className="flex items-center justify-between py-2 px-1">
+                    <div className="flex items-center gap-3 text-foreground/70">
+                      <Shield size={16} />
+                      <span className="text-sm font-medium">Role</span>
                     </div>
+                    <span className="text-sm text-foreground/50 capitalize">
+                      {user.profile?.role || 'User'}
+                    </span>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="w-full space-y-3">
+                <div className="w-full flex flex-col gap-2">
                   {(isEditing || previewUrl) && (
                     <button
                       onClick={handleSave}
                       disabled={isSaving}
-                      className="w-full flex items-center justify-center gap-2 py-4 px-6 bg-foreground text-background hover:opacity-90 rounded-2xl font-bold transition-all duration-300 shadow-lg disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-foreground text-background hover:opacity-90 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
                     >
-                      {isSaving ? (
-                        <Loader2 size={18} className="animate-spin" />
-                      ) : (
-                        <Save size={18} />
-                      )}
+                      {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
                       Save Changes
                     </button>
                   )}
                   
                   <button
                     onClick={() => setShowLogoutConfirm(true)}
-                    className="w-full group flex items-center justify-center gap-2 py-4 px-6 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl font-bold transition-all duration-300 border border-red-500/20 hover:border-red-500 shadow-sm"
+                    className="w-full flex items-center justify-center gap-2 py-2 px-4 text-red-500/80 hover:text-red-500 hover:bg-red-500/10 rounded-lg text-sm font-medium transition-colors"
                   >
-                    <LogOut size={18} className="group-hover:-translate-x-1 transition-transform" />
+                    <LogOut size={14} />
                     Sign Out
                   </button>
                 </div>
               </div>
             </div>
-
-            {/* Footer Decoration */}
-            <div className="h-1.5 w-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-50" />
           </motion.div>
         </div>
       )}
@@ -319,36 +302,34 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowLogoutConfirm(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-surface border border-border w-full max-w-[360px] rounded-[32px] p-8 shadow-2xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="relative bg-background border border-border/40 w-full max-w-[320px] rounded-2xl p-6 shadow-xl"
             >
-              <div className="flex flex-col items-center text-center space-y-6">
-                <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
-                  <LogOut size={32} />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-foreground">Sign Out?</h3>
-                  <p className="text-sm text-foreground/60 leading-relaxed">
-                    Are you sure you want to sign out of your account? You'll need to sign in again to access your chats.
+              <div className="flex flex-col text-center space-y-4">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-medium text-foreground">Sign Out</h3>
+                  <p className="text-sm text-foreground/60">
+                    Are you sure you want to sign out?
                   </p>
                 </div>
-                <div className="flex flex-col w-full gap-3 pt-2">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full py-4 px-6 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-all shadow-lg active:scale-[0.98]"
-                  >
-                    Yes, Sign Out
-                  </button>
+                <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setShowLogoutConfirm(false)}
-                    className="w-full py-4 px-6 bg-surface-hover text-foreground/60 hover:text-foreground rounded-2xl font-bold transition-all active:scale-[0.98]"
+                    className="flex-1 py-2 px-4 bg-surface hover:bg-surface-hover text-foreground rounded-lg text-sm font-medium transition-colors border border-border/50"
                   >
                     Cancel
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex-1 py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+                  >
+                    Sign Out
                   </button>
                 </div>
               </div>
