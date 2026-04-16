@@ -1,6 +1,6 @@
 "use client";
 import { initializeApp } from 'firebase/app';
-import { getAuth, signOut } from 'firebase/auth';
+import { getAuth, signOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfigJson from '../firebase-applet-config.json';
@@ -22,5 +22,8 @@ export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app, firestoreDatabaseId);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+
+export const googleProvider = new GoogleAuthProvider();
+export const loginWithGoogle = () => signInWithPopup(auth, googleProvider);
 
 export const logout = () => signOut(auth);

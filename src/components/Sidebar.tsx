@@ -5,7 +5,7 @@ import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
-import { db, auth } from '../firebase';
+import { db, auth, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
@@ -542,10 +542,19 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 )}
               </>
             ) : (
-              // Empty fallback if user is somehow null but Sidebar is rendered
-              <div className="w-9 h-9 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                <LogIn size={16} />
-              </div>
+              <>
+                <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
+                  <LogIn size={16} />
+                </button>
+                
+                {/* Login Tooltip */}
+                {isCollapsed && (
+                  <div className="fixed left-[76px] bg-surface-hover text-foreground text-[11px] px-[10px] py-[6px] rounded-[6px] opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-2xl transition-all duration-200 ease-in-out border border-border ml-[-10px] group-hover:ml-0 bottom-[22px]">
+                    <div className="absolute left-[-4px] top-1/2 -translate-y-1/2 w-2 h-2 bg-surface-hover border-l border-b border-border rotate-45"></div>
+                    Login with Google
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
