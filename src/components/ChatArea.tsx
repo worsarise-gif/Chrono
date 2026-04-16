@@ -234,7 +234,7 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
   }
 };
 
-const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any) => {
+const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any, temperature: number = 0.3) => {
   const keys = getApiKeys('groq');
   if (keys.length === 0) keys.push('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');
 
@@ -251,7 +251,7 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
           model: m, 
           messages, 
           stream: false,
-          temperature: 0.3
+          temperature
         }),
         signal
       });
@@ -1369,22 +1369,36 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
       } else if (mode === 'auto') {
         setLoadingStatus('Routing...');
         try {
+          const routingContext = contents.slice(-4, -1).map((m: any) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.parts?.[0]?.text || ''}`).join('\n');
+          
+          const systemPrompt = `You are an expert routing decision engine. Analyze the user's latest message and context, then route it to EXACTLY ONE of these models:
+
+1. "PRO"
+Use for: Writing or debugging code, complex logical reasoning, mathematical calculations, or deep architectural planning.
+
+2. "SEARCH"
+Use ONLY for: Real-time information, current events, live weather, highly specific up-to-date facts, or navigating to external web links.
+WARNING: Do NOT use SEARCH for general knowledge, coding, explaining theory, fixing text, or creative writing. Keep tool usage minimal.
+
+3. "FAST"
+Use for: Everything else. Simple chat, creative writing, translations, rewriting/fixing text, generalizations, or basic history/facts.
+
+Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
+
           const routingMessages = [
-            { role: 'system', content: 'Classify this message as either: CHAT/FAST, CODE/REASONING/PRO, SEARCH, or IMAGE. Reply with only one word.' },
-            { role: 'user', content: lastMessage }
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: `Context:\n${routingContext || 'No previous context.'}\n\nLatest User Message: ${lastMessage}\n\nClassification:` }
           ];
-          const routingResponse = await callGroqChatNonStream('llama-3.1-8b-instant', routingMessages, 'llama-3.1-8b-instant', controller.signal, addLog);
+
+          const routingResponse = await callGroqChatNonStream('llama-3.1-8b-instant', routingMessages, 'llama-3.1-8b-instant', controller.signal, addLog, 0.0);
           const route = (typeof routingResponse === 'string' ? routingResponse : (routingResponse as any)?.choices?.[0]?.message?.content || '').toUpperCase();
           
-          if (route.includes('CODE') || route.includes('REASONING') || route.includes('PRO')) {
+          if (route.includes('PRO')) {
             classification = 'pro';
             setLoadingStatus('Crafting Code...');
           } else if (route.includes('SEARCH')) {
             classification = 'search';
             setLoadingStatus('Searching...');
-          } else if (route.includes('IMAGE')) {
-            classification = 'image';
-            setLoadingStatus('Analyzing Image...');
           } else {
             classification = 'fast';
             setLoadingStatus('Thinking...');
