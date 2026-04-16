@@ -670,6 +670,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   }, [user?.uid, currentChatId]);
 
   const processImageFile = (file: File) => {
+    // Validate file size limit (e.g., 20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      handleError("File is too large", "Image attachment failed. Please select an image under 20MB.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onloadend = () => {
       const img = new Image();
@@ -698,9 +704,19 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
             data: base64String,
             mimeType: 'image/jpeg'
           });
+        } else {
+           handleError("Failed to access canvas context", "Image processing failed. Your browser might lack support.");
         }
       };
-      img.src = reader.result as string;
+      img.onerror = () => {
+        handleError("Failed to decode image", "Image attachment failed. The file you chose might be corrupted or in an unsupported format.");
+      };
+      if (typeof reader.result === 'string') {
+        img.src = reader.result;
+      }
+    };
+    reader.onerror = () => {
+      handleError("Failed to read file", "Image attachment failed. An error occurred while reading your file.");
     };
     reader.readAsDataURL(file);
   };
@@ -1855,7 +1871,19 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         if (error.name === 'AbortError') {
           console.log('Generation aborted by user');
         } else {
-          const { message: friendlyMessage } = handleError(error, "Failed to generate AI response");
+          let customErrorMessage = "Failed to generate AI response";
+          
+          if (classification === 'image') {
+            const errStr = String(error?.message || error).toLowerCase();
+            const status = error?.status || error?.response?.status;
+            if (status === 429 || errStr.includes('429') || errStr.includes('quota') || errStr.includes('rate limit') || errStr.includes('too many requests')) {
+              customErrorMessage = "Usage limit reached for image recognition";
+            } else {
+              customErrorMessage = "Image recognition feature failed";
+            }
+          }
+          
+          const { message: friendlyMessage } = handleError(error, customErrorMessage);
           fullResponse = `Error: ${friendlyMessage}`;
         }
       }
