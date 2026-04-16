@@ -77,25 +77,57 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     try {
       let photoURL = auth.currentUser.photoURL;
 
-      // Upload new photo if selected
+      // Local image compression to avoid hanging storage upload permissions
       if (fileInputRef.current?.files?.[0]) {
         const file = fileInputRef.current.files[0];
-        const storageRef = ref(storage, `profiles/${auth.currentUser.uid}`);
-        await uploadBytes(storageRef, file);
-        photoURL = await getDownloadURL(storageRef);
+        photoURL = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              const MAX_WIDTH = 250;
+              const MAX_HEIGHT = 250;
+              let width = img.width;
+              let height = img.height;
+
+              if (width > height) {
+                if (width > MAX_WIDTH) {
+                  height *= MAX_WIDTH / width;
+                  width = MAX_WIDTH;
+                }
+              } else {
+                if (height > MAX_HEIGHT) {
+                  width *= MAX_HEIGHT / height;
+                  height = MAX_HEIGHT;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              ctx?.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            img.onerror = () => reject(new Error('Failed to parse image'));
+            img.src = e.target?.result as string;
+          };
+          reader.onerror = () => reject(new Error('Failed to read file'));
+          reader.readAsDataURL(file);
+        });
       }
 
-      // Update profile
+      // Update auth profile
       await updateProfile(auth.currentUser, {
         displayName: displayName.trim(),
-        photoURL: photoURL
+        photoURL: photoURL || ''
       });
 
       // Update Firestore document
       const userRef = doc(db, 'users', auth.currentUser.uid);
       await updateDoc(userRef, {
         displayName: displayName.trim(),
-        photoURL: photoURL,
+        photoURL: photoURL || null,
         updatedAt: serverTimestamp()
       });
 

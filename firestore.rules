@@ -72,6 +72,7 @@ service cloud.firestore {
 
     function isValidOptionalString(field, minLen, maxLen) {
       return !(field in request.resource.data) ||
+             request.resource.data[field] == null ||
              (request.resource.data[field] is string &&
               request.resource.data[field].size() >= minLen &&
               request.resource.data[field].size() <= maxLen);
@@ -98,7 +99,7 @@ service cloud.firestore {
              request.resource.data.email is string && isValidEmail(request.resource.data.email) &&
              (request.resource.data.createdAt is timestamp || request.resource.data.createdAt is string) &&
              isValidOptionalString('displayName', 0, 100) &&
-             isValidOptionalString('photoURL', 0, 2048) &&
+             isValidOptionalString('photoURL', 0, 1048576) &&
              isValidOptionalString('role', 0, 20) &&
              isValidOptionalBoolean('hasMigratedImages') &&
              isValidOptionalBoolean('isBanned') &&
