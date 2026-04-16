@@ -234,6 +234,52 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
   }
 };
 
+const cleanTTSContent = (content: string) => {
+  let text = content;
+  // Remove <think>...</think> blocks
+  text = text.replace(/<think>[\s\S]*?<\/think>/g, '');
+  // Remove markdown images like ![alt](url)
+  text = text.replace(/!\[.*?\]\(.*?\)/g, '');
+  // Remove simple citations like [1]
+  text = text.replace(/\[\d+\]/g, '');
+  // Remove complete code blocks ```...```
+  text = text.replace(/```[\s\S]*?```/g, ' [Code Block Omitted] ');
+  // Remove remaining markdown headers
+  text = text.replace(/#/g, '');
+  // Remove bold and italic markers
+  text = text.replace(/\*\*/g, '');
+  text = text.replace(/\*/g, '');
+  // Extract text from markdown links [Text](URL) -> Text
+  text = text.replace(/\[(.*?)\]\(.*?\)/g, '$1');
+  return text.trim();
+};
+
+const speakUtteranceFemale = (text: string, onStart: () => void, onEnd: () => void) => {
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  
+  const voices = window.speechSynthesis.getVoices();
+  const femaleVoice = voices.find(v => 
+    v.name.includes('Female') || 
+    v.name.includes('Samantha') || 
+    v.name.includes('Victoria') || 
+    v.name.includes('Karen') ||
+    v.name.includes('Microsoft Zira') ||
+    v.name.includes('Tessa') ||
+    (v.name.includes('Google') && v.name.includes('English') && !v.name.includes('Male'))
+  );
+  
+  if (femaleVoice) {
+    utterance.voice = femaleVoice;
+  }
+  
+  utterance.onstart = onStart;
+  utterance.onend = onEnd;
+  utterance.onerror = onEnd;
+  
+  window.speechSynthesis.speak(utterance);
+};
+
 const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any, temperature: number = 0.3) => {
   const keys = getApiKeys('groq');
   if (keys.length === 0) keys.push('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');
@@ -2164,12 +2210,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                           window.speechSynthesis.cancel();
                                           setSpeakingMessageId(null);
                                         } else {
-                                          window.speechSynthesis.cancel();
-                                          const utterance = new SpeechSynthesisUtterance(msg.content);
-                                          utterance.onstart = () => setSpeakingMessageId(msg.id);
-                                          utterance.onend = () => setSpeakingMessageId(null);
-                                          utterance.onerror = () => setSpeakingMessageId(null);
-                                          window.speechSynthesis.speak(utterance);
+                                          const textToRead = cleanTTSContent(msg.content);
+                                          speakUtteranceFemale(textToRead, () => setSpeakingMessageId(msg.id), () => setSpeakingMessageId(null));
                                         }
                                       }}
                                       className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
@@ -2228,12 +2270,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                                       window.speechSynthesis.cancel();
                                                       setSpeakingMessageId(null);
                                                     } else {
-                                                      window.speechSynthesis.cancel();
-                                                      const utterance = new SpeechSynthesisUtterance(msg.content);
-                                                      utterance.onstart = () => setSpeakingMessageId(msg.id);
-                                                      utterance.onend = () => setSpeakingMessageId(null);
-                                                      utterance.onerror = () => setSpeakingMessageId(null);
-                                                      window.speechSynthesis.speak(utterance);
+                                                      const textToRead = cleanTTSContent(msg.content);
+                                                      speakUtteranceFemale(textToRead, () => setSpeakingMessageId(msg.id), () => setSpeakingMessageId(null));
                                                     }
                                                   }}
                                                   className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-foreground/70 hover:text-foreground transition-colors"
