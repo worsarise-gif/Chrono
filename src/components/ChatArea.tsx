@@ -508,8 +508,25 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   }, [isLoading]);
 
   useEffect(() => {
+    // Basic focus on chat switch
     textareaRef.current?.focus();
-  }, [currentChatId]);
+    
+    // Advanced auto-focus when returning from Profile or other modals
+    const handleFocus = () => {
+      // Small timeout to ensure the UI has settled if coming back from an iframe or modal
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    };
+
+    // Trigger focus when window regains focus (good for multi-tab or returning to page)
+    window.addEventListener('focus', handleFocus);
+    
+    // Also focus when ChatArea mounts (covers navigation back to chat)
+    handleFocus();
+
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [currentChatId, user]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);

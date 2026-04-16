@@ -117,11 +117,19 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         });
       }
 
+      // Only update Firebase Auth photoURL if it's not a base64 string
+      // Firebase Auth has a strict length limit (~2048 chars) for photoURL
+      const isBase64 = photoURL?.startsWith('data:image');
+      const authUpdates: { displayName: string; photoURL?: string } = {
+        displayName: displayName.trim()
+      };
+      
+      if (!isBase64) {
+        authUpdates.photoURL = photoURL || '';
+      }
+
       // Update auth profile
-      await updateProfile(auth.currentUser, {
-        displayName: displayName.trim(),
-        photoURL: photoURL || ''
-      });
+      await updateProfile(auth.currentUser, authUpdates);
 
       // Update Firestore document
       const userRef = doc(db, 'users', auth.currentUser.uid);
