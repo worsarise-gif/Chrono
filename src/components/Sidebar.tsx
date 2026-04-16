@@ -256,6 +256,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           </div>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
+              aria-label="Collapse sidebar"
               onClick={() => setIsCollapsed(true)}
               className="text-foreground/60 hover:text-foreground transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
             >
@@ -309,6 +310,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             className="flex-1 bg-transparent border-none outline-none text-[13px] text-foreground py-1"
                           />
                           <button 
+                            aria-label="Save chat title"
                             onClick={() => handleSaveTitle(chat.id)}
                             disabled={isSavingTitle}
                             className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors"
@@ -316,6 +318,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                             <Check size={14} />
                           </button>
                           <button 
+                            aria-label="Cancel editing chat title"
                             onClick={handleCancelEdit}
                             className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
                           >
@@ -342,6 +345,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                           </button>
                           
                           <button
+                            aria-label={`Options for chat: ${chat.title || 'Untitled chat'}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
@@ -415,6 +419,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           {/* Expand Toggle Button */}
           <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
+              aria-label="Expand sidebar"
               onClick={() => setIsCollapsed(false)}
               className="text-foreground/60 hover:text-foreground transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
             >
@@ -456,7 +461,16 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             {user ? (
               <>
                 <div 
+                  aria-label="Profile settings"
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setIsProfileModalOpen(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      setIsProfileModalOpen(true);
+                      e.preventDefault();
+                    }
+                  }}
                   className="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
                   style={{ 
                     backgroundColor: (user.profile?.photoURL || user.photoURL) ? 'transparent' : `hsl(${(user.email?.length || 0) * 137.5 % 360}, 60%, 50%)` 
@@ -479,7 +493,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               </>
             ) : (
               <>
-                <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
+                <button aria-label="Login with Google" onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
                   <LogIn size={16} />
                 </button>
                 
