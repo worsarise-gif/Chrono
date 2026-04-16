@@ -136,6 +136,17 @@ service cloud.firestore {
     // ===============================================================
     // Rules
     // ===============================================================
+    // Support collection group queries
+    match /{path=**}/generated_images/{imageId} {
+      allow read, delete: if isAdmin();
+    }
+    match /{path=**}/chats/{chatId} {
+      allow read, delete: if isAdmin();
+    }
+    match /{path=**}/messages/{messageId} {
+      allow read, delete: if isAdmin();
+    }
+
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow create: if isAuthenticated() && isValidUser() && uidUnchanged() && ((isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == 'user')) || isAdmin());

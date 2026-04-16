@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Settings, Save, AlertTriangle, CheckCircle2, RefreshCw, Sliders, ShieldAlert, Bot, Trash2 } from 'lucide-react';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, collectionGroup, writeBatch, DocumentReference } from 'firebase/firestore';
 import { ref, listAll, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -57,32 +57,55 @@ export default function SettingsTab() {
 
     setClearingData(true);
     try {
+      // Use Firestore Batches and Collection Group queries for performance optimization
+      const batchSize = 500;
+      let currentBatch = writeBatch(db);
+      let opCount = 0;
+
+      const commitBatch = async () => {
+        if (opCount > 0) {
+          await currentBatch.commit();
+          currentBatch = writeBatch(db);
+          opCount = 0;
+        }
+      };
+
+      const addToBatch = async (docRef: DocumentReference) => {
+        currentBatch.delete(docRef);
+        opCount++;
+        if (opCount >= batchSize) {
+          await commitBatch();
+        }
+      };
+
+      // 1. Delete all messages using collectionGroup
+      const messagesSnapshot = await getDocs(collectionGroup(db, 'messages'));
+      for (const msgDoc of messagesSnapshot.docs) {
+        await addToBatch(msgDoc.ref);
+      }
+
+      // 2. Delete all chats using collectionGroup
+      const chatsSnapshot = await getDocs(collectionGroup(db, 'chats'));
+      for (const chatDoc of chatsSnapshot.docs) {
+        await addToBatch(chatDoc.ref);
+      }
+
+      // 3. Delete all generated images using collectionGroup
+      const imagesSnapshot = await getDocs(collectionGroup(db, 'generated_images'));
+      for (const imgDoc of imagesSnapshot.docs) {
+        await addToBatch(imgDoc.ref);
+      }
+
+      // 4. Delete all user documents (except super admin)
       const usersSnapshot = await getDocs(collection(db, 'users'));
-      
       for (const userDoc of usersSnapshot.docs) {
-        const uid = userDoc.id;
-        
-        // Delete generated_images
-        const imagesSnapshot = await getDocs(collection(db, `users/${uid}/generated_images`));
-        for (const imgDoc of imagesSnapshot.docs) {
-          await deleteDoc(doc(db, `users/${uid}/generated_images`, imgDoc.id));
-        }
-        
-        // Delete chats and messages
-        const chatsSnapshot = await getDocs(collection(db, `users/${uid}/chats`));
-        for (const chatDoc of chatsSnapshot.docs) {
-          const messagesSnapshot = await getDocs(collection(db, `users/${uid}/chats/${chatDoc.id}/messages`));
-          for (const msgDoc of messagesSnapshot.docs) {
-            await deleteDoc(doc(db, `users/${uid}/chats/${chatDoc.id}/messages`, msgDoc.id));
-          }
-          await deleteDoc(doc(db, `users/${uid}/chats`, chatDoc.id));
-        }
-        
-        // Delete user document, except for the super admin
-        if (uid !== auth.currentUser?.uid) {
-          await deleteDoc(doc(db, 'users', uid));
+        if (userDoc.id !== auth.currentUser?.uid) {
+          await addToBatch(userDoc.ref);
         }
       }
+
+      // Commit any remaining operations
+      await commitBatch();
       
       // Delete Storage data
       await deleteStorageFolder(ref(storage, 'profiles'));
