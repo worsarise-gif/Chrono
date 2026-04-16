@@ -1262,16 +1262,38 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
       }
 
       for (const msg of recentMessages) {
-        const textContent = msg.content || (msg.hasImage ? "[Image uploaded]" : "");
-        if (!textContent) continue;
+        const parts: any[] = [];
+        if (msg.content) {
+          parts.push({ text: msg.content });
+        }
+        
+        if (msg.hasImage && msg.imageUrl) {
+          try {
+            const mimeTypeMatch = msg.imageUrl.match(/data:(.*?);base64,/);
+            const mimeType = mimeTypeMatch ? mimeTypeMatch[1] : 'image/jpeg';
+            const dataBase64 = msg.imageUrl.split(',')[1];
+            if (dataBase64) {
+              parts.push({
+                inlineData: {
+                  data: dataBase64,
+                  mimeType: mimeType
+                }
+              });
+            }
+          } catch (e) {
+            console.error("Failed to parse image for Gemini history", e);
+          }
+        }
+
+        if (parts.length === 0) continue;
 
         if (contents.length > 0 && contents[contents.length - 1].role === msg.role) {
           // Append to the previous message's parts
-          contents[contents.length - 1].parts.push({ text: "\n\n" + textContent });
+          contents[contents.length - 1].parts.push({ text: "\n\n" }, ...parts);
         } else {
           contents.push({
             role: msg.role,
-            parts: [{ text: textContent }]
+            parts: parts
           });
         }
       }
@@ -1362,10 +1384,11 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
       
       const lastMessage = contents[contents.length - 1]?.parts?.[0]?.text || '';
       let classification = 'fast';
+      const hasRecentImage = recentMessages.some(m => m.hasImage && !!m.imageUrl);
 
-      if (currentImage) {
+      if (currentImage || hasRecentImage) {
         classification = 'image';
-        setLoadingStatus('Analyzing Image...');
+        setLoadingStatus(currentImage ? 'Analyzing Image...' : 'Reviewing Image Context...');
       } else if (mode === 'auto') {
         setLoadingStatus('Routing...');
         try {
@@ -1423,11 +1446,26 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       const mergedRecentMessages: any[] = [];
       for (const m of recentMessages) {
         const role = m.role === 'model' ? 'assistant' : 'user';
-        const content = m.content || (m.hasImage ? "[Image uploaded]" : " ");
+        let contentArray: any[] = [];
+        
+        if (m.content) {
+          contentArray.push({ type: 'text', text: m.content });
+        }
+        
+        if (m.hasImage && m.imageUrl) {
+          contentArray.push({ type: 'image_url', image_url: { url: m.imageUrl } });
+        }
+        
+        if (contentArray.length === 0) {
+          contentArray.push({ type: 'text', text: " " });
+        }
+
         if (mergedRecentMessages.length > 0 && mergedRecentMessages[mergedRecentMessages.length - 1].role === role) {
-          mergedRecentMessages[mergedRecentMessages.length - 1].content += "\n\n" + content;
+          const lastMsg = mergedRecentMessages[mergedRecentMessages.length - 1];
+          const lastMsgArray = Array.isArray(lastMsg.content) ? lastMsg.content : [{ type: 'text', text: lastMsg.content }];
+          lastMsg.content = [...lastMsgArray, { type: 'text', text: "\n\n" }, ...contentArray];
         } else {
-          mergedRecentMessages.push({ role, content });
+          mergedRecentMessages.push({ role, content: contentArray });
         }
       }
 
@@ -1450,7 +1488,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       }
 
       let openAIMessages: any[] = [];
-      if (currentImage) {
+      if (classification === 'image') {
         openAIMessages = [...mergedRecentMessages];
         if (openAIMessages.length > 0 && openAIMessages[0].role === 'user') {
           const sysContent = dynamicSystemInstruction + (contextText ? `\n\n${contextText}` : '');
@@ -1632,7 +1670,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       };
 
       try {
-        if (currentImage) {
+        if (classification === 'image') {
           // Image Analysis
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.2-11b-vision-preview', openAIMessages, handleChunk, signal, addLog);
           await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 45000, 15000, 90000);
