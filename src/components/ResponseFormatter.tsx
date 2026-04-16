@@ -299,14 +299,14 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
 
   const markdownComponents = React.useMemo(() => ({
     h1({ node, children, ...props }: any) {
-      return <h1 className="text-xl font-bold text-foreground mt-2 mb-4" {...props}>{children}</h1>;
+      return <h1 className="text-xl font-medium text-foreground mt-2 mb-4" {...props}>{children}</h1>;
     },
     h2({ node, children, ...props }: any) {
-      return <h2 className="text-lg font-bold text-foreground mt-2 mb-3" {...props}>{children}</h2>;
+      return <h2 className="text-lg font-medium text-foreground mt-2 mb-3" {...props}>{children}</h2>;
     },
     h3({ node, children, ...props }: any) {
       return (
-        <h3 className="text-base font-bold mt-2 mb-3 text-foreground" {...props}>
+        <h3 className="text-base font-medium mt-2 mb-3 text-foreground" {...props}>
           {children}
         </h3>
       );
@@ -428,7 +428,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`w-full prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-foreground max-w-none font-extralight break-words text-foreground prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:font-normal prose-strong:text-foreground prose-code:text-foreground text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`w-full prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-light prose-headings:tracking-tight prose-li:marker:text-foreground max-w-none font-light break-words text-foreground prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:font-medium prose-strong:text-foreground prose-code:text-foreground text-[14px] md:text-[15px] ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
