@@ -53,25 +53,24 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full bg-[#0a0a0a] text-white font-sans font-extralight overflow-y-auto">
-      <div className="w-full max-w-[420px] h-full flex flex-col relative z-10 bg-[#0a0a0a] mx-auto min-h-[600px]">
-        {/* Header */}
-        <div className="flex flex-col justify-center items-center p-8 gap-6 pt-12 shrink-0">
-          <div className="flex items-center justify-center">
-            <PlanetLogo className="!text-white scale-[1.15]" />
-          </div>
-          <div className="flex items-center gap-2 border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium text-gray-300 shadow-sm cursor-pointer hover:bg-white/5 transition-colors">
-            You are signing into 
-            <span className="flex items-center gap-1 text-white font-semibold">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-              Chris
-            </span>
-            <ChevronDown size={14} className="text-gray-500 ml-1" />
-          </div>
+    <div className="flex flex-col h-[100dvh] w-full bg-[#0a0a0a] text-white font-sans font-extralight overflow-y-auto">
+      {/* Header */}
+      <div className="flex justify-between items-center p-6 w-full shrink-0">
+        <div className="flex items-center">
+          <PlanetLogo className="!text-white" />
         </div>
+        <div className="flex items-center gap-2 border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium text-gray-300 shadow-sm cursor-pointer hover:bg-white/5 transition-colors">
+          You are signing into 
+          <span className="text-white font-semibold">
+            Chris
+          </span>
+          <ChevronDown size={14} className="text-gray-500 ml-1" />
+        </div>
+      </div>
 
+      <div className="w-full max-w-[420px] pb-12 flex-1 flex flex-col justify-center relative z-10 bg-[#0a0a0a] mx-auto min-h-[600px]">
         {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-8 w-full mt-[-20px]">
+        <div className="flex flex-col items-center justify-center px-6 sm:px-8 w-full mt-[-40px]">
           <h1 className="text-[32px] font-normal mb-8 text-center text-white">
             {mode === 'login' && 'Log into your account'}
             {mode === 'register' && 'Create an account'}
