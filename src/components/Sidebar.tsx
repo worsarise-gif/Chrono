@@ -81,7 +81,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const pathname = usePathname();
   const [chats, setChats] = useState<Chat[]>([]);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isHistoryExpanded, setIsHistoryExpanded] = useState(false);
+  const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [chatToDelete, setChatToDelete] = useState<{ id: string, title: string } | null>(null);
@@ -307,18 +307,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={3} />
           </ul>
         </nav>
-
-        {/* Projects Section */}
-        <div className="mt-4 mb-2 shrink-0">
-          <div className={`flex items-center justify-between px-4 mb-2 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-            <span className="text-[13px] font-semibold text-foreground">Projects</span>
-            <ChevronDown size={14} className="text-foreground/50" />
-          </div>
-          <ul className="space-y-0.5">
-            <NavItem icon={<Plus size={18} strokeWidth={2} className="text-foreground/50" />} label="New Project" onClick={() => {}} isCollapsed={isCollapsed} index={4} />
-            <NavItem icon={<Bell size={18} strokeWidth={2} className="text-orange-500" />} label="Ace" onClick={() => {}} isCollapsed={isCollapsed} index={5} />
-          </ul>
-        </div>
 
         {/* History Section Header */}
         <div className={`mt-4 mb-2 shrink-0 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
