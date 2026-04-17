@@ -52,7 +52,7 @@ export default function AdminLoginPage() {
             <Shield className="w-8 h-8 text-foreground" />
           </div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground mb-2">Admin Access</h1>
-          <p className="text-foreground/60">Secure portal for Q1 administrators</p>
+          <p className="text-foreground/60">Secure portal for Chris administrators</p>
         </div>
 
         {user && !isAdmin ? (
@@ -93,7 +93,7 @@ export default function AdminLoginPage() {
 
         <div className="mt-10 pt-8 border-t border-border/50 flex items-center justify-center gap-2">
           <PlanetLogo className="text-foreground/20" />
-          <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/20 font-bold">Q1 Control Panel</span>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/20 font-bold">Chris Control Panel</span>
         </div>
       </motion.div>
     </div>

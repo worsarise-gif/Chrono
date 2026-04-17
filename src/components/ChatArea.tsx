@@ -1432,7 +1432,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
 
       const systemInstruction = `You are a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
            CRITICAL: You MUST use the search_web tool for any relevant queries requiring up-to-date, real-world, or specific factual information. When you use the search_web tool, you MUST cite your sources by appending [link] to the facts you provide.
-           IMPORTANT: NEVER mention internal tools (like search_web), internal search mechanisms, or hidden implementation details in your responses to the user. Do not include the name 'Q1' unless explicitly requested by the user.
+           IMPORTANT: NEVER mention internal tools (like search_web), internal search mechanisms, or hidden implementation details in your responses to the user. Do not include any internal system identifiers unless explicitly requested by the user.
            
            MATH FORMATTING GUIDELINES:
            When answering math problems, produce clean, structured, and highly readable outputs that mirror professional mathematical presentation.
@@ -2594,7 +2594,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 <p className="text-foreground text-sm">
                   {guestRequestCount >= 10 
                     ? "You've reached the free guest limit. Sign in to continue chatting and unlock more features." 
-                    : "Sign in to use image recognition and unlock the full power of Q1."}
+                    : "Sign in to use image recognition and unlock all features."}
                 </p>
               </div>
 
@@ -2649,7 +2649,6 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             ) : (
               <>
                 <PlanetLogo className="text-foreground" />
-                <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">Q1</h1>
               </>
             )}
           </div>
