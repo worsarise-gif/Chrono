@@ -52,17 +52,17 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full bg-white text-black font-sans font-extralight overflow-hidden">
+    <div className="flex h-[100dvh] w-full bg-[#0a0a0a] text-white font-sans font-extralight overflow-hidden">
       {/* Left Side - Login Form */}
-      <div className="w-full md:w-1/2 h-full flex flex-col relative z-10 bg-white">
+      <div className="w-full md:w-1/2 h-full flex flex-col relative z-10 bg-[#0a0a0a]">
         {/* Header */}
         <div className="flex justify-between items-center p-6">
           <div className="flex items-center">
-            <div className="font-bold text-xl tracking-tight text-black">Chris</div>
+            <PlanetLogo />
           </div>
-          <div className="flex items-center gap-2 border border-gray-200 rounded-full px-4 py-1.5 text-sm font-medium text-gray-700 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors">
+          <div className="flex items-center gap-2 border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium text-gray-300 shadow-sm cursor-pointer hover:bg-white/5 transition-colors">
             You are signing into 
-            <span className="flex items-center gap-1 text-black font-semibold">
+            <span className="flex items-center gap-1 text-white font-semibold">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
               Chris
             </span>
@@ -72,7 +72,7 @@ export default function AuthPage() {
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col items-center justify-center px-8 max-w-[400px] mx-auto w-full">
-          <h1 className="text-[32px] font-normal mb-8 text-center text-black">
+          <h1 className="text-[32px] font-normal mb-8 text-center text-white">
             {mode === 'login' && 'Log into your account'}
             {mode === 'register' && 'Create an account'}
             {mode === 'forgot_password' && 'Reset your password'}
@@ -80,23 +80,23 @@ export default function AuthPage() {
           
           <form className="w-full space-y-4" onSubmit={handleSubmit}>
             {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl">
+              <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-500/20 rounded-xl">
                 {error}
               </div>
             )}
             
             {success && (
-              <div className="p-3 text-sm text-green-700 bg-green-50 border border-green-100 rounded-xl">
+              <div className="p-3 text-sm text-green-400 bg-green-900/20 border border-green-500/20 rounded-xl">
                 {success}
               </div>
             )}
 
             <div className="space-y-4">
               <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Email address</label>
+                <label className="text-sm font-medium text-gray-300">Email address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail size={18} className="text-gray-400" />
+                    <Mail size={18} className="text-gray-500" />
                   </div>
                   <input 
                     type="email" 
@@ -104,7 +104,7 @@ export default function AuthPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all outline-none"
+                    className="w-full pl-10 pr-4 py-3 bg-[#18181b] border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent transition-all outline-none text-white placeholder-gray-500"
                     placeholder="Enter your email"
                   />
                 </div>
@@ -113,12 +113,12 @@ export default function AuthPage() {
               {mode !== 'forgot_password' && (
                 <div className="space-y-1">
                    <div className="flex justify-between items-center pl-1">
-                    <label className="text-sm font-medium text-gray-700">Password</label>
+                    <label className="text-sm font-medium text-gray-300">Password</label>
                     {mode === 'login' && (
                       <button 
                         type="button" 
                         onClick={() => { setMode('forgot_password'); resetMessages(); }}
-                        className="text-xs text-gray-500 hover:text-black transition-colors"
+                        className="text-xs text-gray-500 hover:text-white transition-colors"
                       >
                         Forgot?
                       </button>
@@ -126,7 +126,7 @@ export default function AuthPage() {
                    </div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Key size={18} className="text-gray-400" />
+                      <Key size={18} className="text-gray-500" />
                     </div>
                     <input 
                       type="password" 
@@ -134,7 +134,7 @@ export default function AuthPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all outline-none"
+                      className="w-full pl-10 pr-4 py-3 bg-[#18181b] border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent transition-all outline-none text-white placeholder-gray-500"
                       placeholder="Enter your password"
                     />
                   </div>
@@ -145,7 +145,7 @@ export default function AuthPage() {
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full bg-black mt-2 text-white rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-black/90 transition-colors text-[15px] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-white mt-2 text-black rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-gray-200 transition-colors text-[15px] disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? <Loader2 size={18} className="animate-spin" /> : null}
               {mode === 'login' ? 'Continue' : mode === 'register' ? 'Sign Up' : 'Send Reset Link'}
@@ -156,9 +156,9 @@ export default function AuthPage() {
           {mode !== 'forgot_password' && (
             <div className="w-full mt-6">
               <div className="flex items-center my-4 w-full">
-                <div className="flex-1 border-t border-gray-200"></div>
-                <span className="px-4 text-sm text-gray-500 bg-white">OR</span>
-                <div className="flex-1 border-t border-gray-200"></div>
+                <div className="flex-1 border-t border-white/10"></div>
+                <span className="px-4 text-sm text-gray-500 bg-[#0a0a0a]">OR</span>
+                <div className="flex-1 border-t border-white/10"></div>
               </div>
 
               <button 
@@ -175,7 +175,7 @@ export default function AuthPage() {
                     }
                   }
                 }}
-                className="w-full bg-white text-black border border-gray-200 rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-gray-50 transition-colors text-[15px]"
+                className="w-full bg-[#18181b] text-white border border-white/10 rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-white/5 transition-colors text-[15px]"
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -191,11 +191,11 @@ export default function AuthPage() {
           <div className="mt-8 text-[15px] text-gray-500 w-full text-center">
             {mode === 'login' ? (
               <p>
-                Don't have an account? <button type="button" onClick={() => { setMode('register'); resetMessages(); }} className="text-black font-medium hover:underline">Sign up</button>
+                Don't have an account? <button type="button" onClick={() => { setMode('register'); resetMessages(); }} className="text-white font-medium hover:underline">Sign up</button>
               </p>
             ) : (
               <p>
-                Already have an account? <button type="button" onClick={() => { setMode('login'); resetMessages(); }} className="text-black font-medium hover:underline">Log in</button>
+                Already have an account? <button type="button" onClick={() => { setMode('login'); resetMessages(); }} className="text-white font-medium hover:underline">Log in</button>
               </p>
             )}
           </div>
@@ -203,7 +203,7 @@ export default function AuthPage() {
 
         {/* Footer */}
         <div className="p-6 text-center text-[13px] text-gray-500">
-          By continuing, you agree to Chris's <a href="#" className="text-black hover:underline">Terms of Service</a> and <a href="#" className="text-black hover:underline">Privacy Policy</a>.
+          By continuing, you agree to Chris's <a href="#" className="text-white hover:underline">Terms of Service</a> and <a href="#" className="text-white hover:underline">Privacy Policy</a>.
         </div>
       </div>
 

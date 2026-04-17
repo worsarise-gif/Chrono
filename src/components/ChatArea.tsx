@@ -2112,7 +2112,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           {!user ? (
             <div className="flex items-center gap-2 pointer-events-auto">
               <Link href="/">
-                <PlanetLogo className="text-foreground/60 hover:text-foreground w-6 h-6 transition-all" />
+                <PlanetLogo className="text-foreground/60 hover:text-foreground transition-all" />
               </Link>
             </div>
           ) : (
@@ -2588,7 +2588,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-foreground/5 rounded-full flex items-center justify-center mb-4">
-                  <PlanetLogo className="w-8 h-8 text-foreground" />
+                  <PlanetLogo className="text-foreground" />
                 </div>
                 <h2 className="text-2xl font-semibold text-foreground mb-2">Sign In Required</h2>
                 <p className="text-foreground text-sm">
@@ -2644,11 +2644,11 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             {!user ? (
               <Link href="/">
-                <PlanetLogo className="text-foreground w-10 h-10 md:w-12 md:h-12 hover:opacity-80 transition-opacity" />
+                <PlanetLogo className="text-foreground hover:opacity-80 transition-opacity" />
               </Link>
             ) : (
               <>
-                <PlanetLogo className="text-foreground w-10 h-10 md:w-12 md:h-12" />
+                <PlanetLogo className="text-foreground" />
                 <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-foreground">Q1</h1>
               </>
             )}

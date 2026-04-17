@@ -58,7 +58,7 @@ export default function AdminDashboard() {
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface z-50 shrink-0">
           <div className="flex items-center gap-2">
-            <PlanetLogo className="w-6 h-6 text-foreground" />
+            <PlanetLogo className="text-foreground" />
             <span className="font-bold tracking-tight text-foreground">Admin</span>
           </div>
           <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-foreground">
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
         {/* Sidebar */}
         <aside className={`fixed md:relative top-0 left-0 h-full w-64 bg-surface border-r border-border flex flex-col z-40 transition-transform duration-300 ease-in-out shrink-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 hidden md:flex items-center gap-3">
-            <PlanetLogo className="w-8 h-8 text-foreground" />
+            <PlanetLogo className="text-foreground" />
             <span className="text-xl font-bold tracking-tight text-foreground">Admin</span>
           </div>
           

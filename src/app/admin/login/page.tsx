@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
         </div>
 
         <div className="mt-10 pt-8 border-t border-border/50 flex items-center justify-center gap-2">
-          <PlanetLogo className="w-5 h-5 text-foreground/20" />
+          <PlanetLogo className="text-foreground/20" />
           <span className="text-[10px] uppercase tracking-[0.2em] text-foreground/20 font-bold">Q1 Control Panel</span>
         </div>
       </motion.div>
