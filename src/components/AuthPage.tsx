@@ -58,7 +58,7 @@ export default function AuthPage() {
         {/* Header */}
         <div className="flex justify-between items-center p-6">
           <div className="flex items-center">
-            <PlanetLogo />
+            <PlanetLogo className="!text-white" />
           </div>
           <div className="flex items-center gap-2 border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium text-gray-300 shadow-sm cursor-pointer hover:bg-white/5 transition-colors">
             You are signing into 
@@ -219,7 +219,7 @@ export default function AuthPage() {
 
             {/* Planet Logo - now clearly visible on top */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-              <PlanetLogo />
+              <PlanetLogo className="!text-white" />
             </div>
 
             {/* Right side bright edge */}

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Search, SquarePen, AudioLines, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield, Pin, PinOff, ChevronDown, Plus, Bell } from 'lucide-react';
+import { Search, Compass, MessageCircle, Mic, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield, Pin, PinOff, ChevronDown, Plus, Bell } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
@@ -29,7 +29,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-foreground bg-surface-hover' : active && isCollapsed ? 'text-foreground' : 'text-foreground/60 hover:text-foreground'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
+        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-foreground dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-foreground dark:text-white' : 'text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
         {/* Stationary Icon Container */}
         <div className="w-[52px] flex-shrink-0 flex items-center justify-center relative h-full">
@@ -279,13 +279,13 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative shrink-0">
-          <div className="w-[68px] flex-shrink-0 flex items-center justify-center">
-            <PlanetLogo className="text-foreground" />
-          </div>
+          <Link href="/" className="flex-shrink-0 flex items-center pl-6 hover:opacity-80 transition-opacity">
+            <PlanetLogo className="text-foreground dark:text-white" />
+          </Link>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
               onClick={() => setIsCollapsed(true)}
-              className="text-foreground/60 hover:text-foreground transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
+              className="text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
             >
               <ChevronsLeft size={16} strokeWidth={2} />
             </button>
@@ -302,8 +302,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               isCollapsed={isCollapsed} 
               index={0} 
             />
-            <NavItem icon={<SquarePen size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
-            <NavItem icon={<AudioLines size={18} strokeWidth={2} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={2} />
+            <NavItem icon={<MessageCircle size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
+            <NavItem icon={<Mic size={18} strokeWidth={2} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={2} />
             <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={3} />
           </ul>
         </nav>
@@ -314,10 +314,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             className="flex items-center justify-between px-4 mb-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
           >
-            <span className="text-[13px] font-semibold text-foreground">History</span>
+            <span className="text-[13px] font-semibold text-foreground dark:text-white">History</span>
             <ChevronDown 
               size={14} 
-              className={`text-foreground/50 transition-transform duration-300 ${isHistoryExpanded ? 'rotate-180' : ''}`} 
+              className={`text-foreground/50 transition-transform duration-300 dark:text-white ${isHistoryExpanded ? 'rotate-180' : ''}`} 
             />
           </div>
         </div>
@@ -336,7 +336,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                   {groupedChats.map((group, groupIndex) => (
                     <React.Fragment key={group.label}>
                       <div className={`flex items-center gap-3 px-3 py-2 ${groupIndex > 0 ? 'mt-2' : ''} transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                        <span className="text-[11px] text-foreground/50 whitespace-nowrap">{group.label}</span>
+                        <span className="text-[11px] text-foreground/50 dark:text-white whitespace-nowrap">{group.label}</span>
                         <div className="h-px bg-border flex-1"></div>
                       </div>
                       <ul className="space-y-0.5">
@@ -376,7 +376,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     setCurrentChatId(chat.id);
                                     setIsMobileOpen?.(false);
                                   }}
-                                  className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground bg-surface-hover' : 'text-foreground/60 hover:bg-surface-hover/50 hover:text-foreground'}`}
+                                  className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground dark:text-white bg-surface-hover' : 'text-foreground/60 dark:text-white dark:hover:text-white hover:bg-surface-hover/50 hover:text-foreground'}`}
                                   title={chat.title}
                                 >
                                   {chat.title === 'New Chat' ? (
@@ -451,7 +451,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 </div>
                 <button 
                   onClick={() => setIsChatHistoryModalOpen(true)}
-                  className="text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground mt-2 font-normal"
+                  className="text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-normal"
                 >
                   See all
                 </button>
@@ -467,7 +467,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
               onClick={() => setIsCollapsed(false)}
-              className="text-foreground/60 hover:text-foreground transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
+              className="text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
             >
               <ChevronsRight size={20} strokeWidth={1.5} />
             </button>
@@ -485,7 +485,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             <div className="w-[68px] flex-shrink-0 flex items-center justify-center group relative mb-2">
               <Link 
                 href="/admin"
-                className="w-9 h-9 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-foreground/60 hover:text-foreground transition-all flex-shrink-0 shadow-sm pointer-events-auto"
+                className="w-9 h-9 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-all flex-shrink-0 shadow-sm pointer-events-auto"
                 title="Admin Dashboard"
               >
                 <Shield size={18} />

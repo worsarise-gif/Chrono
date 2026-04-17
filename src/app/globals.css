@@ -16,15 +16,33 @@
 }
 
 .dark {
-  --color-background: #0a0a0a;
-  --color-sidebar-bg: #0a0a0a;
-  --color-chat-bg: #0a0a0a;
-  --color-foreground: #f4f4f5;
+  --color-background: #050505;
+  --color-sidebar-bg: #050505;
+  --color-chat-bg: #050505;
+  --color-foreground: #ffffff;
   --color-surface: #18181b;
   --color-surface-hover: #27272a;
   --color-border: #27272a;
-  --color-muted: #a1a1aa;
+  --color-muted: #ffffff;
   --color-stars: rgba(255, 255, 255, 0.03);
+}
+
+/* Force text and icons to be solid white in dark mode */
+.dark .text-foreground\/40,
+.dark .text-foreground\/50,
+.dark .text-foreground\/60,
+.dark .text-foreground\/70,
+.dark .text-foreground\/80,
+.dark .text-white\/40,
+.dark .text-white\/50,
+.dark .text-white\/60,
+.dark .text-white\/70,
+.dark .text-white\/80 {
+  color: #ffffff !important;
+}
+
+.dark .text-muted-foreground {
+  color: #ffffff !important;
 }
 
 /* Custom Scrollbar for all elements */
