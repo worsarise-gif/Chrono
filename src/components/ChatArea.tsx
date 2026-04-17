@@ -394,6 +394,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [guestRequestCount, setGuestRequestCount] = useState<number>(0);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [userMenuState, setUserMenuState] = useState<{messageId: string, content: string, x: number, y: number} | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent, msgId: string, content: string) => {
@@ -741,6 +743,48 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
           e.preventDefault();
           break;
         }
+      }
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      const isFile = Array.from(e.dataTransfer.items).some(item => item.kind === 'file');
+      if (isFile) {
+        setIsDragging(true);
+      }
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounterRef.current = 0;
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file.type.startsWith('image/')) {
+        processImageFile(file);
+      } else {
+        handleError("Unsupported file type", "Only image files are supported for drag and drop.", ErrorSeverity.WARNING);
       }
     }
   };
@@ -2064,7 +2108,30 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
   );
 
   return (
-    <div className="flex flex-row h-full w-full relative">
+    <div 
+      className="flex flex-row h-full w-full relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      <AnimatePresence>
+        {isDragging && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[300] bg-background/80 backdrop-blur-md flex items-center justify-center border-4 border-dashed border-foreground/30 m-4 rounded-[32px] pointer-events-none"
+          >
+            <div className="flex flex-col items-center justify-center p-12 bg-surface/50 rounded-[40px] shadow-2xl space-y-6">
+              <div className="w-24 h-24 bg-foreground/10 flex items-center justify-center rounded-full animate-pulse">
+                <Upload size={48} className="text-foreground" />
+              </div>
+              <p className="text-3xl font-light text-foreground tracking-tight">Drop image here</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden font-sans">
         {/* Messages Area */}
         <div 
