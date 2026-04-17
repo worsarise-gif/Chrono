@@ -25,6 +25,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true);
       await logout();
       setShowLogoutConfirm(false);
       onClose();
@@ -48,6 +50,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       window.location.href = '/';
     } catch (error) {
       console.error("Logout failed:", error);
+      setIsLoggingOut(false);
     }
   };
 
@@ -361,15 +364,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 <div className="flex gap-2 pt-2">
                   <button
                     onClick={() => setShowLogoutConfirm(false)}
-                    className="flex-1 py-2 px-4 bg-surface hover:bg-surface-hover text-foreground rounded-lg text-sm font-medium transition-colors border border-border/50"
+                    disabled={isLoggingOut}
+                    className="flex-1 py-2 px-4 bg-surface hover:bg-surface-hover text-foreground rounded-lg text-sm font-medium transition-colors border border-border/50 disabled:opacity-50"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleLogout}
-                    className="flex-1 py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+                    disabled={isLoggingOut}
+                    className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                   >
-                    Sign Out
+                    {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : null}
+                    {isLoggingOut ? 'Signing out...' : 'Sign Out'}
                   </button>
                 </div>
               </div>

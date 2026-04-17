@@ -279,7 +279,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative shrink-0">
-          <Link href="/" className="flex-shrink-0 flex items-center pl-6 hover:opacity-80 transition-opacity">
+          <Link href="/" className="w-[68px] flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity">
             <PlanetLogo className="text-foreground dark:text-white" />
           </Link>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
@@ -303,8 +303,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               index={0} 
             />
             <NavItem icon={<MessageCircle size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
-            <NavItem icon={<Mic size={18} strokeWidth={2} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={2} />
-            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={3} />
+            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={2} />
           </ul>
         </nav>
 
