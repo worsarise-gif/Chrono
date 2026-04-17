@@ -12,7 +12,6 @@ import Link from 'next/link';
 // Import Tab Components
 import OverviewTab from '../../components/admin/OverviewTab';
 import UsersTab from '../../components/admin/UsersTab';
-import ModelsTab from '../../components/admin/ModelsTab';
 import DatabaseTab from '../../components/admin/DatabaseTab';
 import LogsTab from '../../components/admin/LogsTab';
 import SettingsTab from '../../components/admin/SettingsTab';
@@ -33,7 +32,6 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'users', label: 'Users', icon: Users },
-    { id: 'models', label: 'AI Models', icon: Server },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'logs', label: 'System Logs', icon: Terminal },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -43,7 +41,6 @@ export default function AdminDashboard() {
     switch (activeTab) {
       case 'overview': return <OverviewTab />;
       case 'users': return <UsersTab />;
-      case 'models': return <ModelsTab />;
       case 'database': return <DatabaseTab />;
       case 'logs': return <LogsTab />;
       case 'settings': return <SettingsTab />;

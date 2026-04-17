@@ -1,22 +1,54 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown, ChevronUp, AlertCircle, Info, AlertTriangle, Terminal } from 'lucide-react';
-
-const mockLogs = [
-  { id: 'log-1', timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), severity: 'error', source: 'AI API', message: 'Rate limit exceeded for Gemini 2.5 Pro', payload: { endpoint: '/v1/models/gemini-2.5-pro:generateContent', status: 429, error: 'Quota exceeded' } },
-  { id: 'log-2', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString(), severity: 'info', source: 'Database', message: 'Successful backup completed', payload: { size: '4.2GB', duration: '45s', tables: ['users', 'chats', 'messages'] } },
-  { id: 'log-3', timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(), severity: 'warning', source: 'UI', message: 'High latency detected on client load', payload: { loadTime: '4.5s', userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X)', region: 'eu-west' } },
-  { id: 'log-4', timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), severity: 'info', source: 'Auth', message: 'New admin user provisioned', payload: { adminId: 'usr_8923jkl', grantedBy: 'system' } },
-  { id: 'log-5', timestamp: new Date(Date.now() - 1000 * 60 * 300).toISOString(), severity: 'error', source: 'Database', message: 'Firestore connection timeout', payload: { attempt: 3, latency: '15000ms', region: 'us-central1' } },
-  { id: 'log-6', timestamp: new Date(Date.now() - 1000 * 60 * 400).toISOString(), severity: 'info', source: 'AI API', message: 'Fallback routing triggered', payload: { primary: 'gemini-2.5-pro', fallback: 'llama-3.1-8b', reason: '429 Too Many Requests' } },
-];
+import { db } from '../../firebase';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 
 export default function LogsTab() {
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
   const [filterSeverity, setFilterSeverity] = useState<string>('all');
   const [filterSource, setFilterSource] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [realLogs, setRealLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredLogs = mockLogs.filter(log => {
+  useEffect(() => {
+    const q = query(
+      collection(db, 'logs'),
+      orderBy('timestamp', 'desc'),
+      limit(100)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedLogs: any[] = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        let ts = new Date().toISOString();
+        if (data.timestamp && data.timestamp.toDate) {
+          ts = data.timestamp.toDate().toISOString();
+        } else if (data.timestamp) {
+          ts = new Date(data.timestamp).toISOString();
+        }
+        
+        fetchedLogs.push({
+          id: doc.id,
+          timestamp: ts,
+          severity: data.severity || 'info',
+          source: data.source || 'Unknown',
+          message: data.message || '',
+          payload: data.payload || {}
+        });
+      });
+      setRealLogs(fetchedLogs);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching logs:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const filteredLogs = realLogs.filter(log => {
     const matchSeverity = filterSeverity === 'all' || log.severity === filterSeverity;
     const matchSource = filterSource === 'all' || log.source.toLowerCase() === filterSource.toLowerCase();
     const matchSearch = log.message.toLowerCase().includes(searchTerm.toLowerCase()) || log.id.includes(searchTerm);
