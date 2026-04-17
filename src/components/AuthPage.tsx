@@ -53,13 +53,12 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex h-[100dvh] w-full bg-[#0a0a0a] text-white font-sans font-extralight overflow-hidden">
-      {/* Left Side - Login Form */}
-      <div className="w-full md:w-1/2 h-full flex flex-col relative z-10 bg-[#0a0a0a]">
+    <div className="flex h-[100dvh] w-full bg-[#0a0a0a] text-white font-sans font-extralight overflow-y-auto">
+      <div className="w-full max-w-[420px] h-full flex flex-col relative z-10 bg-[#0a0a0a] mx-auto min-h-[600px]">
         {/* Header */}
-        <div className="flex justify-between items-center p-6">
-          <div className="flex items-center">
-            <PlanetLogo className="!text-white" />
+        <div className="flex flex-col justify-center items-center p-8 gap-6 pt-12 shrink-0">
+          <div className="flex items-center justify-center">
+            <PlanetLogo className="!text-white scale-[1.15]" />
           </div>
           <div className="flex items-center gap-2 border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium text-gray-300 shadow-sm cursor-pointer hover:bg-white/5 transition-colors">
             You are signing into 
@@ -72,7 +71,7 @@ export default function AuthPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col items-center justify-center px-8 max-w-[400px] mx-auto w-full">
+        <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-8 w-full mt-[-20px]">
           <h1 className="text-[32px] font-normal mb-8 text-center text-white">
             {mode === 'login' && 'Log into your account'}
             {mode === 'register' && 'Create an account'}
@@ -210,32 +209,8 @@ export default function AuthPage() {
         </div>
 
         {/* Footer */}
-        <div className="p-6 text-center text-[13px] text-gray-500">
+        <div className="p-6 pb-8 text-center text-[13px] text-gray-500 shrink-0">
           By continuing, you agree to Chris's <a href="#" className="text-white hover:underline">Terms of Service</a> and <a href="#" className="text-white hover:underline">Privacy Policy</a>.
-        </div>
-      </div>
-
-      <div className="hidden md:block md:w-1/2 h-full bg-black relative overflow-hidden">
-        {/* Abstract gradient graphic */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full h-full max-w-[800px] max-h-[800px]">
-
-            {/* Base glow - behind everything */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] 
-                            bg-gradient-to-r from-transparent via-[#3b4a5a]/30 to-[#8ba3b8]/50 
-                            blur-3xl rounded-full opacity-60 z-0"></div>
-
-            {/* Planet Logo - now clearly visible on top */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-              <PlanetLogo className="!text-white" />
-            </div>
-
-            {/* Right side bright edge */}
-            <div className="absolute right-0 top-0 bottom-0 w-1/3 
-                            bg-gradient-to-l from-[#dbe6f0] to-transparent 
-                            opacity-40 blur-2xl mix-blend-screen z-5"></div>
-
-          </div>
         </div>
       </div>
     </div>
