@@ -215,28 +215,25 @@ export default function AuthPage() {
         </div>
       </div>
 
-      <div className="hidden md:block md:w-1/2 h-full bg-black relative overflow-hidden">
-        {/* Abstract gradient graphic */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="relative w-full h-full max-w-[800px] max-h-[800px]">
-
-            {/* Base glow - behind everything */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] 
-                            bg-gradient-to-r from-transparent via-[#3b4a5a]/30 to-[#8ba3b8]/50 
-                            blur-3xl rounded-full opacity-60 z-0"></div>
-
-            {/* Planet Logo - now clearly visible on top */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-              <PlanetLogo className="!text-white" />
-            </div>
-
-            {/* Right side bright edge */}
-            <div className="absolute right-0 top-0 bottom-0 w-1/3 
-                            bg-gradient-to-l from-[#dbe6f0] to-transparent 
-                            opacity-40 blur-2xl mix-blend-screen z-5"></div>
-
-          </div>
+      <div className="hidden md:flex md:w-1/2 h-full relative overflow-hidden bg-gradient-to-br from-[#000000] via-[#050810] to-[#0a0f1a] items-center justify-center">
+        
+        {/* Subtle radial glow from center-left behind the shape */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(40,55,80,0.15),transparent_60%)] z-0 mix-blend-screen pointer-events-none"></div>
+        
+        {/* Main Abstract 'G' Shape */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-[45%] -translate-y-[45%] w-[130%] max-w-[1200px] aspect-square z-10 pointer-events-none flex items-center justify-center opacity-[0.14] blur-[3px]">
+          <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full text-[#8a93a0]">
+            <path d="M 160 50 A 80 80 0 1 0 180 140" stroke="currentColor" strokeWidth="24" strokeLinecap="round" />
+            <path d="M 20 180 L 180 20" stroke="currentColor" strokeWidth="18" strokeLinecap="round" />
+          </svg>
         </div>
+
+        {/* Strong Vertical Light Bloom on Right Edge */}
+        <div className="absolute right-0 top-[-10%] bottom-[-10%] w-[60%] bg-gradient-to-l from-white/70 via-white/10 to-transparent opacity-70 z-20 pointer-events-none mix-blend-plus-lighter blur-2xl"></div>
+        
+        {/* Secondary closer edge highlight for crispness */}
+        <div className="absolute right-0 top-0 bottom-0 w-[20%] bg-gradient-to-l from-white/40 to-transparent opacity-80 z-20 pointer-events-none mix-blend-screen"></div>
+
       </div>
     </div>
   );
