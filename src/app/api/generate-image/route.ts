@@ -4,7 +4,8 @@ import { getApiKeys, withFallback } from '../../../lib/apiFallback';
 async function generateWithModel(model: string, prompt: string, width?: number, height?: number) {
   const keys = getApiKeys('cloudflare');
   if (keys.length === 0) {
-    keys.push({ accountId: '2215383dfc48baa1df7666821342db26', token: 'cfut_0IxFXq61q0R2HHpsQ2DBoCC8M19ilcDvae9nnEZn53ed73dd' });
+    // Security fix: Removed hardcoded API keys
+    throw new Error('Cloudflare credentials not configured');
   }
 
   return await withFallback(keys, async (keyObj: any) => {
