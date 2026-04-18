@@ -8,6 +8,7 @@ import { ThemeProvider } from "../components/ThemeProvider";
 import { DebugProvider } from "../contexts/DebugContext";
 import FloatingDebugger from "../components/FloatingDebugger";
 import { Toaster } from "sonner";
+import ElevenLabsWidget from "../components/ElevenLabsWidget";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -50,6 +51,7 @@ export default function RootLayout({
                   <div className="fixed top-0 left-0 right-0 h-[calc(6rem+env(safe-area-inset-top))] bg-gradient-to-b from-chat-bg via-chat-bg/80 to-transparent z-[39] pointer-events-none md:hidden" />
                   {children}
                   <FloatingDebugger />
+                  <ElevenLabsWidget />
                 </ChatProvider>
               </AuthProvider>
             </ErrorBoundary>
