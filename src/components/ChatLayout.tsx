@@ -45,6 +45,7 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
           </p>
           <button 
             onClick={handleSwitchAccount}
+            aria-label="Login with another account"
             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background rounded-xl font-medium hover:opacity-90 transition-all shadow-lg"
           >
             <LogOut size={18} />
