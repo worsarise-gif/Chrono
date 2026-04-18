@@ -1,0 +1,3 @@
+## 2024-05-18 - Adding React.memo to prevent unnecessary re-renders during streaming
+**Learning:** When dealing with streaming content updates in React, complex sub-components like CodeBlock, ThinkingProcess, and ImageRenderer can cause significant performance issues due to unnecessary re-renders if not memoized, particularly when the main component re-renders frequently (like on every streaming chunk).
+**Action:** Always wrap expensive or complex sub-components with `React.memo` when they are rendered inside a component that receives frequent state updates, especially in streaming or chat interfaces.

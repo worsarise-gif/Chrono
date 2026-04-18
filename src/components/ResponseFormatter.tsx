@@ -17,7 +17,8 @@ interface ResponseFormatterProps {
 
 let globalMounted = false;
 
-const CodeBlock = ({ language, value }: { language: string, value: string }) => {
+// ⚡ Bolt: Wrapped in React.memo to prevent unnecessary re-renders during frequent streaming updates
+const CodeBlock = React.memo(({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(globalMounted);
@@ -83,9 +84,11 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
       </div>
     </div>
   );
-};
+});
+CodeBlock.displayName = 'CodeBlock';
 
-const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreaming?: boolean }) => {
+// ⚡ Bolt: Memoized to prevent expensive re-renders of the thinking process block
+const ThinkingProcess = React.memo(({ content, isStreaming }: { content: string, isStreaming?: boolean }) => {
   const [isOpen, setIsOpen] = useState(isStreaming || false);
 
   useEffect(() => {
@@ -141,11 +144,13 @@ const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreamin
       </AnimatePresence>
     </div>
   );
-};
+});
+ThinkingProcess.displayName = 'ThinkingProcess';
 
 const loadedImages = new Set<string>();
 
-const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
+// ⚡ Bolt: Memoized to avoid re-rendering images repeatedly on every streaming chunk
+const ImageRenderer = React.memo(({ src, alt, onImageClick, ...props }: any) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(!loadedImages.has(src));
 
@@ -281,7 +286,8 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
       </AnimatePresence>
     </>
   );
-};
+});
+ImageRenderer.displayName = 'ImageRenderer';
 
 interface ResponseFormatterProps {
   content: string;
