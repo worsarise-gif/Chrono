@@ -302,8 +302,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               isCollapsed={isCollapsed} 
               index={0} 
             />
-            <NavItem icon={<MessageCircle size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
+            <NavItem icon={<MessageCircle size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine') && !pathname.startsWith('/voice')} isCollapsed={isCollapsed} index={1} />
             <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={2} />
+            <NavItem icon={<Mic size={18} strokeWidth={2} />} label="Voice" onClick={() => { router.push('/voice'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/voice')} isCollapsed={isCollapsed} index={3} />
           </ul>
         </nav>
 
