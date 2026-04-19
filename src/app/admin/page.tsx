@@ -53,7 +53,7 @@ export default function AdminDashboard() {
       <div className="h-screen bg-background flex flex-col md:flex-row font-sans overflow-hidden">
         
         {/* Mobile Header */}
-        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface z-50 shrink-0">
+        <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface z-30 shrink-0">
           <div className="flex items-center gap-2">
             <PlanetLogo className="text-foreground" />
             <span className="font-bold tracking-tight text-foreground">Admin</span>
