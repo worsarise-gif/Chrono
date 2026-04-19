@@ -284,7 +284,13 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           </Link>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
-              onClick={() => setIsCollapsed(true)}
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setIsMobileOpen?.(false);
+                } else {
+                  setIsCollapsed(true);
+                }
+              }}
               className="text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface"
             >
               <ChevronsLeft size={16} strokeWidth={2} />
