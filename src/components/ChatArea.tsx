@@ -784,7 +784,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       if (file.type.startsWith('image/')) {
         processImageFile(file);
       } else {
-        handleError("Unsupported file type", "Only image files are supported for drag and drop.", ErrorSeverity.WARNING);
+        handleError("Unsupported file type", "Only image files are supported for drag and drop.", { severity: ErrorSeverity.WARNING });
       }
     }
   };
@@ -2175,7 +2175,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           </div>
         )}
         {/* Sticky Floating Actions */}
-        <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
+        <div className="sticky top-0 left-0 right-0 z-30 flex justify-between items-center p-4 pointer-events-none shrink-0">
           {!user ? (
             <div className="flex items-center gap-2 pointer-events-auto">
               <Link href="/">

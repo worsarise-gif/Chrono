@@ -42,7 +42,7 @@ export const DebugProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       };
       
       // Save global logs for admins
-      if (type === 'error' || type === 'warning' || type === 'info') {
+      if (type === 'error' || type === 'warning' || type === 'info' || type === 'success') {
         // Run async without blocking
         setTimeout(async () => {
           try {
