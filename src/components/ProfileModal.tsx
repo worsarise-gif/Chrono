@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, LogOut, Mail, Calendar, Shield, User as UserIcon, Camera, Save, Loader2, Sun, Moon, Check, Edit2 } from 'lucide-react';
+import { X, LogOut, Mail, Calendar, Shield, User as UserIcon, Camera, Save, Loader2, Sun, Moon, Monitor, Check, Edit2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { logout, auth, storage, db } from '../firebase';
 import { updateProfile } from 'firebase/auth';
@@ -275,14 +275,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   {/* Theme Toggle */}
                   <div className="flex items-center justify-between py-2 px-1">
                     <div className="flex items-center gap-3 text-foreground/70">
-                      {mounted && (theme === 'dark' ? <Moon size={16} /> : <Sun size={16} />)}
+                      {mounted && (
+                        theme === 'system' ? <Monitor size={16} /> :
+                        theme === 'dark' ? <Moon size={16} /> :
+                        <Sun size={16} />
+                      )}
                       <span className="text-sm font-medium">Appearance</span>
                     </div>
                     <button
-                      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                      className="text-xs font-medium text-foreground/50 hover:text-foreground transition-colors bg-surface-hover px-2 py-1 rounded-md"
+                      onClick={() => {
+                        if (theme === 'light') setTheme('dark');
+                        else if (theme === 'dark') setTheme('system');
+                        else setTheme('light');
+                      }}
+                      className="text-xs font-medium text-foreground/50 hover:text-foreground transition-colors bg-surface-hover px-2 py-1 rounded-md capitalize min-w-[60px]"
                     >
-                      {theme === 'dark' ? 'Dark' : 'Light'}
+                      {mounted ? theme : 'System'}
                     </button>
                   </div>
 
