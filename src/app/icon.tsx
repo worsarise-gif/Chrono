@@ -31,14 +31,20 @@ export default function Icon() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#1a1a1a',
-            fontSize: 14,
-            fontWeight: 900,
-            fontFamily: 'Arial, Helvetica, sans-serif',
-            lineHeight: 1,
           }}
         >
-          Chrono
+          <span
+            style={{
+              fontSize: 20,
+              fontWeight: 900,
+              color: '#1a1a1a',
+              fontFamily: 'Arial, Helvetica, sans-serif',
+              lineHeight: 1,
+              transform: 'translateY(1px)', // slight visual centering tweak
+            }}
+          >
+            C
+          </span>
         </div>
       </div>
     ),
