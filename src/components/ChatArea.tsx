@@ -13,7 +13,7 @@ import { db, storage, auth, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
-import { handleError, ErrorSeverity } from '../utils/errorHandler';
+import { handleError, ErrorSeverity, AppError } from '../utils/errorHandler';
 
 import ResponseIconIndicator from './ResponseIconIndicator';
 
@@ -784,7 +784,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       if (file.type.startsWith('image/')) {
         processImageFile(file);
       } else {
-        handleError("Unsupported file type", "Only image files are supported for drag and drop.", ErrorSeverity.WARNING);
+        handleError(new AppError("Unsupported file type", { severity: ErrorSeverity.WARNING }), "Only image files are supported for drag and drop.");
       }
     }
   };
@@ -2091,14 +2091,14 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 alt={hostname}
                 className="w-4 h-4 rounded-full bg-background object-cover"
               />
-              <span className="text-[13px] font-medium text-foreground/80 group-hover:text-foreground transition-colors truncate">
+              <span className="text-[13px] font-medium text-black/80 group-hover:text-black transition-colors truncate">
                 {domainName}
               </span>
             </div>
-            <h4 className="text-[14px] font-medium text-foreground leading-snug mb-1.5 group-hover:underline">
+            <h4 className="text-[14px] font-medium text-black leading-snug mb-1.5 group-hover:underline">
               {source.title}
             </h4>
-            <span className="text-[13px] text-foreground/60 line-clamp-3 leading-relaxed">
+            <span className="text-[13px] text-black/60 line-clamp-3 leading-relaxed">
               {source.snippet || source.link}
             </span>
           </a>
@@ -2125,9 +2125,9 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           >
             <div className="flex flex-col items-center justify-center p-12 bg-surface/50 rounded-[40px] shadow-2xl space-y-6">
               <div className="w-24 h-24 bg-foreground/10 flex items-center justify-center rounded-full animate-pulse">
-                <Upload size={48} className="text-foreground" />
+                <Upload size={48} className="text-black" />
               </div>
-              <p className="text-3xl font-light text-foreground tracking-tight">Drop image here</p>
+              <p className="text-3xl font-light text-black tracking-tight">Drop image here</p>
             </div>
           </motion.div>
         )}
@@ -2156,7 +2156,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 handleEditMessage(userMenuState.messageId, userMenuState.content);
                 setUserMenuState(null);
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors text-foreground text-sm"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors text-black text-sm"
             >
               <Edit2 size={16} />
               Edit
@@ -2167,7 +2167,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 handleCopyMessage(userMenuState.messageId, userMenuState.content);
                 setUserMenuState(null);
               }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors text-foreground text-sm"
+              className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors text-black text-sm"
             >
               <Copy size={16} />
               Copy
@@ -2179,13 +2179,13 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           {!user ? (
             <div className="flex items-center gap-2 pointer-events-auto">
               <Link href="/">
-                <PlanetLogo className="text-foreground/60 hover:text-foreground transition-all" />
+                <PlanetLogo className="text-black/60 hover:text-black transition-all" />
               </Link>
             </div>
           ) : (
             <button 
               onClick={onMenuClick}
-              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
+              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-black/60 hover:text-black md:hidden pointer-events-auto transition-all shadow-lg"
             >
               <Menu size={20} />
             </button>
@@ -2201,7 +2201,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <button 
               onClick={() => setCurrentChatId(null)}
-              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
+              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-black/60 hover:text-black pointer-events-auto transition-all shadow-lg ml-auto group"
               title="New Chat"
             >
               <SquarePen size={20} className="group-hover:scale-110 transition-transform" />
@@ -2243,16 +2243,16 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                           referrerPolicy="no-referrer"
                         />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-2xl flex items-center justify-center">
-                          <Search className="text-white opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
+                          <Search className="text-black opacity-0 group-hover:opacity-100 transition-opacity" size={20} />
                         </div>
                       </motion.div>
                     )}
 
-          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-foreground text-[16px] md:text-[15px] w-full'}`}>
+          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-black shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-black text-[16px] md:text-[15px] w-full'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full">
                           {msg.content.startsWith('Error:') ? (
-                            <div className="p-4 bg-surface-hover border border-border rounded-xl text-foreground flex items-start gap-3 mb-2">
+                            <div className="p-4 bg-surface-hover border border-border rounded-xl text-black flex items-start gap-3 mb-2">
                               <AlertCircle size={18} className="mt-0.5 shrink-0" />
                               <div className="text-sm font-medium leading-relaxed">
                                 {msg.content.replace('Error:', '').trim()}
@@ -2265,18 +2265,18 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                           {!msg.isStreaming && (
                             <>
                               {/* Action Row */}
-                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 transition-opacity text-foreground/40 relative">
+                              <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 transition-opacity text-black/40 relative">
                                 {/* Primary Actions - Always Visible */}
                                 <button 
                                   onClick={() => handleRegenerate(index)}
-                                  className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                  className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-black"
                                   title="Regenerate"
                                 >
                                   <RefreshCcw size={14} />
                                 </button>
                                 <button 
                                   onClick={() => handleCopyMessage(msg.id, msg.content)}
-                                  className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                  className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-black"
                                   title="Copy"
                                 >
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
@@ -2286,14 +2286,14 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 <div className="hidden md:flex items-center gap-1">
                                   <button 
                                     onClick={() => handleFeedback(msg.id, 'upvote')}
-                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'hover:text-foreground'}`} 
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'hover:text-black'}`}
                                     title="Good response"
                                   >
                                     <ThumbsUp size={14} className={msg.feedback === 'upvote' ? 'fill-current' : ''} />
                                   </button>
                                   <button 
                                     onClick={() => handleFeedback(msg.id, 'downvote')}
-                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'downvote' ? 'text-red-500' : 'hover:text-foreground'}`} 
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'downvote' ? 'text-red-500' : 'hover:text-black'}`}
                                     title="Bad response"
                                   >
                                     <ThumbsDown size={14} className={msg.feedback === 'downvote' ? 'fill-current' : ''} />
@@ -2309,7 +2309,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                           speakUtteranceFemale(textToRead, () => setSpeakingMessageId(msg.id), () => setSpeakingMessageId(null));
                                         }
                                       }}
-                                      className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
+                                      className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-black"
                                       title={speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}
                                     >
                                       {speakingMessageId === msg.id ? <Square size={14} className="fill-current" /> : <Volume2 size={14} />}
@@ -2321,7 +2321,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 <div className="relative">
                                   <button 
                                     onClick={() => setActiveMoreMenuId(activeMoreMenuId === msg.id ? null : msg.id)}
-                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground ${activeMoreMenuId === msg.id ? 'bg-surface-hover text-foreground' : ''}`} 
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-black ${activeMoreMenuId === msg.id ? 'bg-surface-hover text-black' : ''}`}
                                     title="More options"
                                   >
                                     <MoreHorizontal size={14} />
@@ -2345,14 +2345,14 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                             <div className="flex flex-col">
                                               <button 
                                                 onClick={() => { handleFeedback(msg.id, 'upvote'); setActiveMoreMenuId(null); }}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'text-foreground/70 hover:text-foreground'}`}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'text-black/70 hover:text-black'}`}
                                               >
                                                 <ThumbsUp size={14} className={msg.feedback === 'upvote' ? 'fill-current' : ''} />
                                                 <span>Good response</span>
                                               </button>
                                               <button 
                                                 onClick={() => { handleFeedback(msg.id, 'downvote'); setActiveMoreMenuId(null); }}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] transition-colors ${msg.feedback === 'downvote' ? 'text-red-500' : 'text-foreground/70 hover:text-foreground'}`}
+                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] transition-colors ${msg.feedback === 'downvote' ? 'text-red-500' : 'text-black/70 hover:text-black'}`}
                                               >
                                                 <ThumbsDown size={14} className={msg.feedback === 'downvote' ? 'fill-current' : ''} />
                                                 <span>Bad response</span>
@@ -2369,7 +2369,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                                       speakUtteranceFemale(textToRead, () => setSpeakingMessageId(msg.id), () => setSpeakingMessageId(null));
                                                     }
                                                   }}
-                                                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-foreground/70 hover:text-foreground transition-colors"
+                                                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-black/70 hover:text-black transition-colors"
                                                 >
                                                   {speakingMessageId === msg.id ? <Square size={14} /> : <Volume2 size={14} />}
                                                   <span>{speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}</span>
@@ -2409,7 +2409,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                             );
                                           })}
                                         </div>
-                                        <span className="text-sm font-semibold text-foreground">Sources</span>
+                                        <span className="text-sm font-semibold text-black">Sources</span>
                                       </div>
                                     );
                                   }
@@ -2427,10 +2427,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                         setInput(rec.prompt);
                                         textareaRef.current?.focus();
                                       }}
-                                      className="flex items-center gap-3 text-sm font-normal text-foreground/60 hover:text-foreground transition-colors text-left"
+                                      className="flex items-center gap-3 text-sm font-normal text-black/60 hover:text-black transition-colors text-left"
                                       title={rec.prompt}
                                     >
-                                      <CornerDownRight size={16} className="text-foreground/40 shrink-0" />
+                                      <CornerDownRight size={16} className="text-black/40 shrink-0" />
                                       {rec.title}
                                     </button>
                                   ))}
@@ -2446,13 +2446,13 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               <textarea
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
-                                className="w-full bg-chat-bg/50 text-foreground rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
+                                className="w-full bg-chat-bg/50 text-black rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
                                 rows={3}
                                 autoFocus
                               />
                               <div className="flex items-center justify-end gap-2 mt-1">
-                                <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium text-foreground/60 hover:text-foreground transition-colors rounded-lg hover:bg-surface-hover">Cancel</button>
-                                <button onClick={() => handleSaveEdit(msg.id, false)} className="px-3 py-1.5 text-xs font-medium text-foreground bg-surface-hover hover:bg-surface transition-colors rounded-lg border border-border/50">Save</button>
+                                <button onClick={handleCancelEdit} className="px-3 py-1.5 text-xs font-medium text-black/60 hover:text-black transition-colors rounded-lg hover:bg-surface-hover">Cancel</button>
+                                <button onClick={() => handleSaveEdit(msg.id, false)} className="px-3 py-1.5 text-xs font-medium text-black bg-surface-hover hover:bg-surface transition-colors rounded-lg border border-border/50">Save</button>
                                 <button onClick={() => handleSaveEdit(msg.id, true)} className="px-3 py-1.5 text-xs font-medium text-background bg-foreground hover:opacity-90 transition-colors rounded-lg">Save & Submit</button>
                               </div>
                             </div>
@@ -2467,10 +2467,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {msg.content}
                               </p>
                               <div className="absolute -bottom-10 right-0 hidden md:flex items-center gap-1 opacity-100 transition-opacity">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
+                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-black/40 hover:text-black" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
+                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-black/40 hover:text-black" title="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                                 </button>
                               </div>
@@ -2496,7 +2496,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   />
                 )}
                 {streamingMessage.length > 0 && (
-                  <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
+                  <div className="w-full relative bg-transparent text-black text-[16px] md:text-[15px]">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
                     </div>
@@ -2579,7 +2579,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       link.click();
                       document.body.removeChild(link);
                     }}
-                    className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
+                    className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-black/70 hover:text-black transition-all duration-200 drop-shadow-md"
                     title="Download"
                   >
                     <Download size={20} />
@@ -2590,7 +2590,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     setPreviewImage(null);
                     setPreviewImageIndex(null);
                   }}
-                  className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
+                  className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-black/70 hover:text-black transition-all duration-200 drop-shadow-md"
                   title="Close preview"
                 >
                   <X size={20} />
@@ -2606,7 +2606,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                         e.stopPropagation();
                         setPreviewImageIndex(previewImageIndex - 1);
                       }}
-                      className="absolute left-4 p-3 rounded-full bg-black/20 hover:bg-black/40 text-white/70 hover:text-white transition-all backdrop-blur-sm border border-white/10"
+                      className="absolute left-4 p-3 rounded-full bg-black/20 hover:bg-black/40 text-black/70 hover:text-black transition-all backdrop-blur-sm border border-white/10"
                     >
                       <ChevronDown size={24} className="rotate-90" />
                     </button>
@@ -2617,7 +2617,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                         e.stopPropagation();
                         setPreviewImageIndex(previewImageIndex + 1);
                       }}
-                      className="absolute right-4 p-3 rounded-full bg-black/20 hover:bg-black/40 text-white/70 hover:text-white transition-all backdrop-blur-sm border border-white/10"
+                      className="absolute right-4 p-3 rounded-full bg-black/20 hover:bg-black/40 text-black/70 hover:text-black transition-all backdrop-blur-sm border border-white/10"
                     >
                       <ChevronDown size={24} className="-rotate-90" />
                     </button>
@@ -2648,17 +2648,17 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             >
               <button 
                 onClick={() => setShowSignInModal(false)}
-                className="absolute top-4 right-4 p-2 text-foreground/60 hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
+                className="absolute top-4 right-4 p-2 text-black/60 hover:text-black hover:bg-surface-hover rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
               
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-foreground/5 rounded-full flex items-center justify-center mb-4">
-                  <PlanetLogo className="text-foreground" />
+                  <PlanetLogo className="text-black" />
                 </div>
-                <h2 className="text-2xl font-semibold text-foreground mb-2">Sign In Required</h2>
-                <p className="text-foreground text-sm">
+                <h2 className="text-2xl font-semibold text-black mb-2">Sign In Required</h2>
+                <p className="text-black text-sm">
                   {guestRequestCount >= 10 
                     ? "You've reached the free guest limit. Sign in to continue chatting and unlock more features." 
                     : "Sign in to use image recognition and unlock all features."}
@@ -2699,7 +2699,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
               onClick={() => scrollToBottom(true)}
-              className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-foreground/60 hover:text-foreground shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
+              className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-black/60 hover:text-black shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
               title="Scroll to bottom"
             >
               <ChevronDown size={20} />
@@ -2711,11 +2711,11 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             {!user ? (
               <Link href="/">
-                <PlanetLogo className="text-foreground hover:opacity-80 transition-opacity" />
+                <PlanetLogo className="text-black hover:opacity-80 transition-opacity" />
               </Link>
             ) : (
               <>
-                <PlanetLogo className="text-foreground" />
+                <PlanetLogo className="text-black" />
               </>
             )}
           </div>
@@ -2753,7 +2753,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     <button 
                       type="button"
                       onClick={() => fileInputRef.current?.click()} 
-                      className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-white"
+                      className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-black"
                       title="Replace image"
                     >
                       <RefreshCw size={18} />
@@ -2775,7 +2775,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <button 
                 type="button" 
                 onClick={() => fileInputRef.current?.click()}
-                className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
+                className="w-10 h-10 flex items-center justify-center text-muted hover:text-black hover:bg-surface-hover rounded-full transition-colors shrink-0"
                 title="Attach image"
               >
                 <Paperclip size={20} />
@@ -2788,7 +2788,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 placeholder="Ask anything"
-                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-light resize-none leading-[24px] break-words"
+                className="flex-1 bg-transparent border-none outline-none text-black placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-light resize-none leading-[24px] break-words"
                 rows={1}
                 disabled={isLoading}
                 style={{ minHeight: '24px', maxHeight: '200px' }}
@@ -2801,7 +2801,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     <button 
                       type="button" 
                       onClick={() => setShowModeDropdown(!showModeDropdown)}
-                      className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-foreground text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
+                      className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-black text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
                     >
                       <span className="hidden sm:inline">{modeLabels[mode]}</span>
                       <span className="sm:hidden">{modeIcons[mode]}</span>
@@ -2817,11 +2817,11 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                             onClick={() => { setMode(m); setShowModeDropdown(false); }}
                             className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors relative ${mode === m ? 'bg-surface-hover/50' : ''}`}
                           >
-                            <div className={`mt-0.5 ${mode === m ? 'text-foreground' : 'text-muted'}`}>
+                            <div className={`mt-0.5 ${mode === m ? 'text-black' : 'text-muted'}`}>
                               {modeIcons[m]}
                             </div>
                             <div className="flex-1">
-                              <div className={`text-sm font-medium ${mode === m ? 'text-foreground' : 'text-muted'}`}>
+                              <div className={`text-sm font-medium ${mode === m ? 'text-black' : 'text-muted'}`}>
                                 {modeLabels[m]}
                               </div>
                               <div className="text-[11px] text-muted leading-tight mt-0.5">
@@ -2892,10 +2892,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             className="hidden md:flex h-full border-l border-border bg-background flex-col overflow-hidden shrink-0"
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
-              <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
+              <h3 className="font-medium text-black text-[15px]">Sources</h3>
               <button 
                 onClick={() => setShowSourcesPanel(false)}
-                className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
+                className="p-1.5 rounded-md hover:bg-surface text-black/60 hover:text-black transition-colors"
               >
                 <X size={18} />
               </button>
@@ -2924,10 +2924,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               className="fixed bottom-0 left-0 right-0 h-[80vh] bg-background z-[101] md:hidden rounded-t-[24px] flex flex-col overflow-hidden shadow-2xl"
             >
               <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
-                <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
+                <h3 className="font-medium text-black text-[15px]">Sources</h3>
                 <button 
                   onClick={() => setShowSourcesPanel(false)}
-                  className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
+                  className="p-1.5 rounded-md hover:bg-surface text-black/60 hover:text-black transition-colors"
                 >
                   <X size={18} />
                 </button>

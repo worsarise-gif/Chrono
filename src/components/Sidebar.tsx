@@ -29,7 +29,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-foreground dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-foreground dark:text-white' : 'text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
+        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-black dark:text-black bg-surface-hover' : active && isCollapsed ? 'text-black dark:text-black' : 'text-black/60 hover:text-black dark:text-black dark:hover:text-black'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
         {/* Stationary Icon Container */}
         <div className="w-[52px] flex-shrink-0 flex items-center justify-center relative h-full">
@@ -61,7 +61,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
       {/* Tooltip - Fixed positioning to float above everything */}
       {isCollapsed && (
         <div 
-          className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0"
+          className="fixed left-[76px] bg-surface border border-border/50 text-black text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0"
           style={{ 
             top: `${60 + index * 42 + 20}px`,
             transform: 'translateY(-50%)'
@@ -275,17 +275,17 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           onClick={() => setIsMobileOpen?.(false)}
         />
       )}
-      <div className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-50 font-sans font-light transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[68px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className={`h-[100dvh] bg-sidebar-bg text-black border-r border-border z-50 font-sans font-light transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[68px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative shrink-0">
           <Link href="/" className="w-[68px] flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity">
-            <PlanetLogo className="text-foreground dark:text-white" />
+            <PlanetLogo className="text-black dark:text-black" />
           </Link>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
               onClick={() => setIsCollapsed(true)}
-              className="text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
+              className="text-black/60 hover:text-black dark:text-black dark:hover:text-black transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
             >
               <ChevronsLeft size={16} strokeWidth={2} />
             </button>
@@ -313,10 +313,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             className="flex items-center justify-between px-4 mb-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
           >
-            <span className="text-[13px] font-semibold text-foreground dark:text-white">History</span>
+            <span className="text-[13px] font-semibold text-black dark:text-black">History</span>
             <ChevronDown 
               size={14} 
-              className={`text-foreground/50 transition-transform duration-300 dark:text-white ${isHistoryExpanded ? 'rotate-180' : ''}`} 
+              className={`text-black/50 transition-transform duration-300 dark:text-black ${isHistoryExpanded ? 'rotate-180' : ''}`}
             />
           </div>
         </div>
@@ -335,7 +335,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                   {groupedChats.map((group, groupIndex) => (
                     <React.Fragment key={group.label}>
                       <div className={`flex items-center gap-3 px-3 py-2 ${groupIndex > 0 ? 'mt-2' : ''} transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-                        <span className="text-[11px] text-foreground/50 dark:text-white whitespace-nowrap">{group.label}</span>
+                        <span className="text-[11px] text-black/50 dark:text-black whitespace-nowrap">{group.label}</span>
                         <div className="h-px bg-border flex-1"></div>
                       </div>
                       <ul className="space-y-0.5">
@@ -352,7 +352,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     if (e.key === 'Enter') handleSaveTitle(chat.id);
                                     if (e.key === 'Escape') handleCancelEdit();
                                   }}
-                                  className="flex-1 bg-transparent border-none outline-none text-[13px] text-foreground py-1"
+                                  className="flex-1 bg-transparent border-none outline-none text-[13px] text-black py-1"
                                 />
                                 <button 
                                   onClick={() => handleSaveTitle(chat.id)}
@@ -375,7 +375,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     setCurrentChatId(chat.id);
                                     setIsMobileOpen?.(false);
                                   }}
-                                  className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground dark:text-white bg-surface-hover' : 'text-foreground/60 dark:text-white dark:hover:text-white hover:bg-surface-hover/50 hover:text-foreground'}`}
+                                  className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-black dark:text-black bg-surface-hover' : 'text-black/60 dark:text-black dark:hover:text-black hover:bg-surface-hover/50 hover:text-black'}`}
                                   title={chat.title}
                                 >
                                   {chat.title === 'New Chat' ? (
@@ -392,13 +392,13 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     e.stopPropagation();
                                     setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
                                   }}
-                                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-all z-[60] flex items-center justify-center"
+                                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-surface text-black/60 hover:text-black transition-all z-[60] flex items-center justify-center"
                                   title="More options"
                                 >
                                   <div className="relative w-3.5 h-3.5 flex items-center justify-center">
                                     <Pin 
                                       size={14} 
-                                      className={`absolute transition-all duration-200 ${chat.isPinned ? 'text-foreground fill-foreground opacity-100 rotate-45' : 'opacity-0'} group-hover:opacity-0 group-hover:scale-75`} 
+                                      className={`absolute transition-all duration-200 ${chat.isPinned ? 'text-black fill-black opacity-100 rotate-45' : 'opacity-0'} group-hover:opacity-0 group-hover:scale-75`}
                                     />
                                     <MoreVertical 
                                       size={14} 
@@ -416,14 +416,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     <div className="absolute right-2 top-10 bg-surface border border-border rounded-lg shadow-xl py-1 z-[101] min-w-[120px]">
                                       <button
                                         onClick={(e) => handleTogglePin(e, chat.id, !!chat.isPinned)}
-                                        className="w-full text-left px-3 py-1.5 text-[12px] text-foreground/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
+                                        className="w-full text-left px-3 py-1.5 text-[12px] text-black/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
                                       >
-                                        {chat.isPinned ? <PinOff size={12} className="rotate-45" /> : <Pin size={12} className="rotate-45 fill-foreground" />}
+                                        {chat.isPinned ? <PinOff size={12} className="rotate-45" /> : <Pin size={12} className="rotate-45 fill-black" />}
                                         {chat.isPinned ? 'Unpin' : 'Pin'}
                                       </button>
                                       <button
                                         onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
-                                        className="w-full text-left px-3 py-1.5 text-[12px] text-foreground/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
+                                        className="w-full text-left px-3 py-1.5 text-[12px] text-black/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
                                       >
                                         <Edit2 size={12} />
                                         Edit Title
@@ -450,7 +450,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 </div>
                 <button 
                   onClick={() => setIsChatHistoryModalOpen(true)}
-                  className="text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-normal"
+                  className="text-left px-3 py-2 text-[13px] text-black/40 hover:text-black dark:text-black dark:hover:text-black mt-2 font-normal"
                 >
                   See all
                 </button>
@@ -466,14 +466,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
               onClick={() => setIsCollapsed(false)}
-              className="text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
+              className="text-black/60 dark:text-black hover:text-black dark:hover:text-black transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
             >
               <ChevronsRight size={20} strokeWidth={1.5} />
             </button>
             
             {/* Expand Tooltip */}
             {isCollapsed && (
-              <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[118px]">
+              <div className="fixed left-[76px] bg-surface border border-border/50 text-black text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[118px]">
                 Expand Sidebar
               </div>
             )}
@@ -484,7 +484,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             <div className="w-[68px] flex-shrink-0 flex items-center justify-center group relative mb-2">
               <Link 
                 href="/admin"
-                className="w-9 h-9 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-all flex-shrink-0 shadow-sm pointer-events-auto"
+                className="w-9 h-9 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-black/60 dark:text-black hover:text-black dark:hover:text-black transition-all flex-shrink-0 shadow-sm pointer-events-auto"
                 title="Admin Dashboard"
               >
                 <Shield size={18} />
@@ -492,7 +492,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               
               {/* Admin Tooltip */}
               {isCollapsed && (
-                <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[72px]">
+                <div className="fixed left-[76px] bg-surface border border-border/50 text-black text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[72px]">
                   Admin Dashboard
                 </div>
               )}
@@ -505,7 +505,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               <>
                 <div 
                   onClick={() => setIsProfileModalOpen(true)}
-                  className="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-black font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
                   style={{ 
                     backgroundColor: (user.profile?.photoURL || user.photoURL) ? 'transparent' : `hsl(${(user.email?.length || 0) * 137.5 % 360}, 60%, 50%)` 
                   }}
@@ -519,20 +519,20 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 
                 {/* Profile Tooltip */}
                 {isCollapsed && (
-                  <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
+                  <div className="fixed left-[76px] bg-surface border border-border/50 text-black text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
                     Profile Settings
                   </div>
                 )}
               </>
             ) : (
               <>
-                <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
+                <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-black hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
                   <LogIn size={16} />
                 </button>
                 
                 {/* Login Tooltip */}
                 {isCollapsed && (
-                  <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
+                  <div className="fixed left-[76px] bg-surface border border-border/50 text-black text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
                     Login with Google
                   </div>
                 )}
@@ -586,21 +586,21 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                   <Trash2 size={24} />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-foreground">Delete Chat?</h3>
-                  <p className="text-sm text-foreground/60 leading-relaxed">
-                    This will permanently delete <span className="text-foreground font-medium">"{chatToDelete.title}"</span> and all its messages. This action cannot be undone.
+                  <h3 className="text-lg font-semibold text-black">Delete Chat?</h3>
+                  <p className="text-sm text-black/60 leading-relaxed">
+                    This will permanently delete <span className="text-black font-medium">"{chatToDelete.title}"</span> and all its messages. This action cannot be undone.
                   </p>
                 </div>
                 <div className="flex flex-col w-full gap-2 pt-2">
                   <button
                     onClick={confirmDeleteChat}
-                    className="w-full py-3 px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
+                    className="w-full py-3 px-4 bg-red-500 hover:bg-red-600 text-black rounded-xl font-medium transition-colors"
                   >
                     Delete
                   </button>
                   <button
                     onClick={() => setChatToDelete(null)}
-                    className="w-full py-3 px-4 bg-transparent hover:bg-surface text-foreground/60 hover:text-foreground rounded-xl font-medium transition-colors"
+                    className="w-full py-3 px-4 bg-transparent hover:bg-surface text-black/60 hover:text-black rounded-xl font-medium transition-colors"
                   >
                     Cancel
                   </button>
