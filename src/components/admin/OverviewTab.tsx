@@ -49,7 +49,7 @@ export default function OverviewTab() {
         if (isMounted) {
           setHealthStatus(`${health}%`);
           // Randomize avg response time between 400 and 1200ms dynamically based on active load to simulate real APM logic if no telemetry exists
-          const simulatedPing = 600 + Math.floor(Math.random() * 400);
+          const simulatedPing = 0;
           setAvgResponseTime(simulatedPing);
         }
 

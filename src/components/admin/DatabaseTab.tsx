@@ -50,10 +50,10 @@ export default function DatabaseTab() {
       // Simulate pinging auth/storage since client SDK doesn't expose a ping method
       // We base it roughly off Firestore latency + network overhead model
       setHealthServices([
-        { name: 'Firebase Authentication', status: 'operational', latency: `${fsLatency - 5 > 0 ? fsLatency - 5 : fsLatency + 12}ms` },
+        { name: 'Firebase Authentication', status: 'operational', latency: 'N/A' },
         { name: 'Cloud Firestore', status: fsLatency > 1500 ? 'degraded' : 'operational', latency: `${fsLatency}ms` },
-        { name: 'Cloud Storage', status: 'operational', latency: `${fsLatency + 18}ms` },
-        { name: 'AI API Endpoint', status: 'operational', latency: `${Math.round(fsLatency * 1.5)}ms` },
+        { name: 'Cloud Storage', status: 'operational', latency: 'N/A' },
+        { name: 'AI API Endpoint', status: 'operational', latency: 'N/A' },
       ]);
 
       setLastUpdated(new Date());

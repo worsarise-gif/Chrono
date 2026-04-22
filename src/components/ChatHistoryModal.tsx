@@ -163,17 +163,17 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
             {/* Header */}
             <div className="p-6 md:p-8 border-b border-border flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-foreground">
+                <div className="w-10 h-10 rounded-xl bg-foreground/5 flex items-center justify-center text-black">
                   <MessageSquare size={20} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Chat History</h2>
-                  <p className="text-sm text-foreground/60">{chats.length} conversations found</p>
+                  <h2 className="text-xl font-bold text-black">Chat History</h2>
+                  <p className="text-sm text-black/60">{chats.length} conversations found</p>
                 </div>
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all"
+                className="p-2 rounded-full hover:bg-surface-hover text-black/60 hover:text-black transition-all"
               >
                 <X size={24} />
               </button>
@@ -182,14 +182,14 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
             {/* Search Bar */}
             <div className="px-6 md:px-8 py-4 bg-surface/50 border-b border-border shrink-0">
               <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40 group-focus-within:text-foreground transition-colors" size={18} />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-black/40 group-focus-within:text-black transition-colors" size={18} />
                 <input
                   ref={searchInputRef}
                   type="text"
                   placeholder="Search your conversations..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-surface-hover border border-border rounded-2xl pl-12 pr-4 py-3 text-foreground placeholder:text-foreground/40 focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-all"
+                  className="w-full bg-surface-hover border border-border rounded-2xl pl-12 pr-4 py-3 text-black placeholder:text-black/40 focus:outline-none focus:ring-2 focus:ring-foreground/10 transition-all"
                 />
               </div>
             </div>
@@ -238,7 +238,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                     if (e.key === 'Enter') handleSaveTitle(e, chat.id);
                                     if (e.key === 'Escape') handleCancelEdit(e);
                                   }}
-                                  className="flex-1 bg-transparent border-none outline-none text-sm text-foreground py-1 px-2"
+                                  className="flex-1 bg-transparent border-none outline-none text-sm text-black py-1 px-2"
                                 />
                                 <button 
                                   onClick={(e) => handleSaveTitle(e, chat.id)}
@@ -256,7 +256,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                               </div>
                             ) : (
                               <>
-                                <h3 className="font-semibold text-foreground line-clamp-2 leading-tight flex items-center gap-2">
+                                <h3 className="font-semibold text-black line-clamp-2 leading-tight flex items-center gap-2">
                                   {chat.title}
                                   {chat.isPinned && (
                                     <Pin size={12} className="text-blue-500 fill-blue-500/20 shrink-0" />
@@ -268,7 +268,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                               </>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 text-[11px] text-foreground/40 font-medium uppercase tracking-wider">
+                          <div className="flex items-center gap-3 text-[11px] text-black/40 font-medium uppercase tracking-wider">
                             <div className="flex items-center gap-1">
                               <Calendar size={12} />
                               {formatDate(chat.updatedAt)}
@@ -289,7 +289,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                   className={`p-2 rounded-lg transition-all ${
                                     chat.isPinned 
                                       ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' 
-                                      : 'hover:bg-foreground/10 text-foreground/40 hover:text-foreground'
+                                      : 'hover:bg-foreground/10 text-black/40 hover:text-black'
                                   }`}
                                   title={chat.isPinned ? "Unpin" : "Pin"}
                                 >
@@ -297,7 +297,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 </button>
                                 <button
                                   onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
-                                  className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-all"
+                                  className="p-2 rounded-lg hover:bg-foreground/10 text-black/40 hover:text-black transition-all"
                                   title="Rename"
                                 >
                                   <Edit2 size={14} />
@@ -309,13 +309,13 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 e.stopPropagation();
                                 onDeleteChat(chat.id, chat.title);
                               }}
-                              className="p-2 rounded-lg hover:bg-red-500/10 text-foreground/40 hover:text-red-500 transition-all"
+                              className="p-2 rounded-lg hover:bg-red-500/10 text-black/40 hover:text-red-500 transition-all"
                               title="Delete"
                             >
                               <Trash2 size={14} />
                             </button>
                           </div>
-                          <div className="text-foreground/0 group-hover:text-foreground/40 transition-all">
+                          <div className="text-black/0 group-hover:text-black/40 transition-all">
                             <ArrowRight size={16} />
                           </div>
                         </div>
@@ -328,7 +328,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
 
             {/* Footer */}
             <div className="p-6 bg-surface/50 border-t border-border flex items-center justify-between shrink-0">
-              <div className="text-xs text-foreground/40 font-medium">
+              <div className="text-xs text-black/40 font-medium">
                 Showing {filteredChats.length} of {chats.length} conversations
               </div>
               <button

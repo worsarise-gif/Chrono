@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 import { Server, AlertTriangle, CheckCircle2, Key, Settings2, Save, RefreshCw } from 'lucide-react';
 
 const modelsData = [
@@ -13,14 +15,37 @@ export default function ModelsTab() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const handleSaveFallbacks = () => {
+  const [fallbacks, setFallbacks] = useState<Record<string, { secondary: string, tertiary: string }>>({});
+
+  useEffect(() => {
+    const fetchFallbacks = async () => {
+      try {
+        const docRef = doc(db, 'config', 'models');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().fallbacks) {
+          setFallbacks(docSnap.data().fallbacks);
+        }
+      } catch (error) {
+        console.error('Error fetching fallback keys:', error);
+      }
+    };
+    fetchFallbacks();
+  }, []);
+
+
+  const handleSaveFallbacks = async () => {
     setSaving(true);
-    // Simulate saving to Firestore
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      await setDoc(doc(db, 'config', 'models'), { fallbacks }, { merge: true });
       setToast('Fallback configuration saved successfully. Routing logic updated.');
       setTimeout(() => setToast(null), 3000);
-    }, 1000);
+    } catch (error) {
+      console.error('Error saving fallback keys:', error);
+      setToast('Failed to save fallback configuration.');
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -128,7 +153,7 @@ export default function ModelsTab() {
                   <span className="w-20 text-xs font-medium text-muted-foreground uppercase tracking-wider">Secondary</span>
                   <div className="relative flex-1">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-                    <input type="password" placeholder={`Enter fallback ${provider} key...`} className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all" />
+                    <input type="password" placeholder={`Enter fallback ${provider} key...`} className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all" value={fallbacks[provider]?.secondary || ''} onChange={(e) => setFallbacks(prev => ({ ...prev, [provider]: { ...prev[provider], secondary: e.target.value } }))} />
                   </div>
                   <span className="text-[10px] bg-surface border border-border text-muted-foreground px-2 py-1 rounded font-bold uppercase tracking-wider">Standby</span>
                 </div>
@@ -136,7 +161,7 @@ export default function ModelsTab() {
                   <span className="w-20 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tertiary</span>
                   <div className="relative flex-1">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
-                    <input type="password" placeholder={`Enter tertiary ${provider} key...`} className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all" />
+                    <input type="password" placeholder={`Enter tertiary ${provider} key...`} className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all" value={fallbacks[provider]?.tertiary || ''} onChange={(e) => setFallbacks(prev => ({ ...prev, [provider]: { ...prev[provider], tertiary: e.target.value } }))} />
                   </div>
                   <span className="text-[10px] bg-surface border border-border text-muted-foreground px-2 py-1 rounded font-bold uppercase tracking-wider">Standby</span>
                 </div>
