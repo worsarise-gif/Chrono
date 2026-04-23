@@ -3,6 +3,7 @@ import { auth, loginWithGoogle } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { ChevronDown, Mail, ArrowRight, Loader2, Key } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
+import Link from 'next/link';
 
 type AuthMode = 'login' | 'register' | 'forgot_password';
 
@@ -209,7 +210,7 @@ export default function AuthPage() {
 
         {/* Footer */}
         <div className="p-6 pb-8 text-center text-[13px] text-gray-500 shrink-0">
-          By continuing, you agree to Chrono's <a href="#" className="text-white hover:underline">Terms of Service</a> and <a href="#" className="text-white hover:underline">Privacy Policy</a>.
+          By continuing, you agree to Chrono's <Link href="/terms" className="text-white hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-white hover:underline">Privacy Policy</Link>.
         </div>
       </div>
     </div>
