@@ -103,6 +103,8 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
 
   return (
     <div className="flex h-[100dvh] w-full relative">
+      {/* Mobile Top Scrim */}
+      <div className="fixed top-0 left-0 right-0 h-[calc(6rem+env(safe-area-inset-top))] bg-gradient-to-b from-chat-bg via-chat-bg/80 to-transparent z-[39] pointer-events-none md:hidden" />
       <StarryBackground />
       {user && <Sidebar isMobileOpen={isMobileSidebarOpen} setIsMobileOpen={setIsMobileSidebarOpen} />}
       {!isImaginePage && <ChatArea onMenuClick={() => setIsMobileSidebarOpen(true)} />}
