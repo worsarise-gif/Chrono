@@ -578,9 +578,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
-  };
 
-  useLayoutEffect(() => {
+    // Resize immediately on input instead of waiting for layout effect
     if (textareaRef.current) {
       const textarea = textareaRef.current;
       textarea.style.height = 'auto';
@@ -590,7 +589,8 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       textarea.style.height = `${newHeight}px`;
       textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
     }
-  }, [input]);
+  };
+
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.nativeEvent.isComposing) return;
