@@ -71,7 +71,7 @@ export default function ModelsTab() {
           return (
             <div key={model.id} className={`bg-surface border rounded-xl p-5 shadow-sm transition-colors ${isWarning ? 'border-yellow-500/50 bg-yellow-500/5' : 'border-border'}`}>
               <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
                   <div className={`p-2 rounded-lg ${isWarning ? 'bg-yellow-500/20 text-yellow-600' : 'bg-green-500/10 text-green-500'}`}>
                     <Server size={18} />
                   </div>
@@ -141,25 +141,25 @@ export default function ModelsTab() {
                 <p className="text-xs text-muted-foreground mt-1">API Key Chain</p>
               </div>
               <div className="md:col-span-9 space-y-3">
-                <div className="flex items-center gap-3">
-                  <span className="w-20 text-xs font-medium text-muted-foreground uppercase tracking-wider">Primary</span>
-                  <div className="relative flex-1">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
+                  <span className="w-full sm:w-20 text-xs font-medium text-muted-foreground uppercase tracking-wider">Primary</span>
+                  <div className="relative flex-1 w-full min-w-[200px]">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                     <input type="password" defaultValue="••••••••••••••••••••••••" disabled className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm text-muted-foreground opacity-70 cursor-not-allowed" />
                   </div>
                   <span className="text-[10px] bg-green-500/10 text-green-500 px-2 py-1 rounded font-bold uppercase tracking-wider">Active</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-20 text-xs font-medium text-muted-foreground uppercase tracking-wider">Secondary</span>
-                  <div className="relative flex-1">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
+                  <span className="w-full sm:w-20 text-xs font-medium text-muted-foreground uppercase tracking-wider">Secondary</span>
+                  <div className="relative flex-1 w-full min-w-[200px]">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                     <input type="password" placeholder={`Enter fallback ${provider} key...`} className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all" value={fallbacks[provider]?.secondary || ''} onChange={(e) => setFallbacks(prev => ({ ...prev, [provider]: { ...prev[provider], secondary: e.target.value } }))} />
                   </div>
                   <span className="text-[10px] bg-surface border border-border text-muted-foreground px-2 py-1 rounded font-bold uppercase tracking-wider">Standby</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="w-20 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tertiary</span>
-                  <div className="relative flex-1">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
+                  <span className="w-full sm:w-20 text-xs font-medium text-muted-foreground uppercase tracking-wider">Tertiary</span>
+                  <div className="relative flex-1 w-full min-w-[200px]">
                     <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={14} />
                     <input type="password" placeholder={`Enter tertiary ${provider} key...`} className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all" value={fallbacks[provider]?.tertiary || ''} onChange={(e) => setFallbacks(prev => ({ ...prev, [provider]: { ...prev[provider], tertiary: e.target.value } }))} />
                   </div>

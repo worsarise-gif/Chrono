@@ -275,7 +275,7 @@ export default function SettingsTab() {
                     Clear All Data
                   </button>
                 ) : (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                     <button 
                       onClick={() => setShowClearConfirm(false)}
                       disabled={clearingData}
@@ -295,6 +295,7 @@ export default function SettingsTab() {
                 )}
               </div>
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-red-500/20 rounded-lg bg-background/50 mt-4">
+
                 <div>
                   <span className="font-medium text-foreground block">Clear System Logs</span>
                   <span className="text-xs text-muted-foreground">Permanently deletes all debugging and system logs from the database.</span>

@@ -50,7 +50,7 @@ export default function AdminDashboard() {
 
   return (
     <AdminGuard>
-      <div className="h-screen bg-background flex flex-col md:flex-row font-sans overflow-hidden">
+      <div className="h-screen bg-background flex flex-col md:flex-row font-sans overflow-hidden relative">
         
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-surface z-50 shrink-0">
@@ -104,7 +104,7 @@ export default function AdminDashboard() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 h-full overflow-y-auto p-6 md:p-10 lg:p-12 w-full">
+        <main className="flex-1 h-full overflow-y-auto p-4 md:p-8 lg:p-10 w-full">
           <div className="max-w-[1600px] mx-auto">
             {renderTabContent()}
           </div>
