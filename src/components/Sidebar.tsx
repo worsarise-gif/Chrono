@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Compass, MessageCircle, Mic, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield, Pin, PinOff, ChevronDown, Plus, Bell } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
+import { MagnifyingGlassIcon, ChatBubbleIcon, ImageIcon as RadixImageIcon } from '@radix-ui/react-icons';
+
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
@@ -29,14 +31,14 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-black dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-black dark:text-white' : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
+        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-lg transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-black dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-black dark:text-white' : 'text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
         {/* Stationary Icon Container */}
         <div className="w-[52px] flex-shrink-0 flex items-center justify-center relative h-full">
           {/* Hover/Active Highlight Background for Collapsed State */}
           {isCollapsed && (
             <div className="absolute inset-0 flex items-center justify-center z-0">
-              <div className={`w-10 h-10 rounded-full transition-colors duration-200 ${active ? 'bg-surface-hover' : 'bg-transparent group-hover:bg-surface-hover/50'}`}></div>
+              <div className={`w-10 h-10 rounded-lg transition-colors duration-200 ${active ? 'bg-surface-hover' : 'bg-transparent group-hover:bg-surface-hover/50'}`}></div>
             </div>
           )}
           <div className="relative z-10 flex items-center justify-center">
@@ -271,11 +273,11 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div 
-          className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity cursor-pointer"
+          className="fixed inset-0 bg-black/60 z-[55] md:hidden transition-opacity cursor-pointer"
           onClick={() => setIsMobileOpen?.(false)}
         />
       )}
-      <div className={`h-[100dvh] bg-sidebar-bg text-black dark:text-white border-r border-border z-50 font-sans font-light transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[68px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className={`h-[100dvh] bg-sidebar-bg text-black dark:text-white border-r border-border z-[60] font-sans font-light transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[68px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative shrink-0">
@@ -284,8 +286,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           </Link>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
-              onClick={() => setIsCollapsed(true)}
-              className="text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white dark:text-white dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
+              onClick={() => { setIsCollapsed(true); setIsMobileOpen?.(false); }}
+              className="text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white dark:text-white dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface block"
             >
               <ChevronsLeft size={16} strokeWidth={2} />
             </button>
@@ -296,14 +298,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         <nav className="shrink-0">
           <ul className="space-y-0.5">
             <NavItem 
-              icon={<Search size={18} strokeWidth={2} />} 
+              icon={<MagnifyingGlassIcon className="w-[18px] h-[18px]" />}
               label="Search" 
               onClick={() => setIsChatHistoryModalOpen(true)} 
               isCollapsed={isCollapsed} 
               index={0} 
             />
-            <NavItem icon={<MessageCircle size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
-            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={2} />
+            <NavItem icon={<ChatBubbleIcon className="w-[18px] h-[18px]" />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
+            <NavItem icon={<RadixImageIcon className="w-[18px] h-[18px]" />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={2} />
           </ul>
         </nav>
 
