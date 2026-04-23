@@ -6,7 +6,6 @@ import { ChatProvider } from "../contexts/ChatContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ThemeProvider } from "../components/ThemeProvider";
 import { DebugProvider } from "../contexts/DebugContext";
-import FloatingDebugger from "../components/FloatingDebugger";
 import { Toaster } from "sonner";
 
 const montserrat = Montserrat({
@@ -49,7 +48,6 @@ export default function RootLayout({
                   {/* Mobile Top Scrim */}
                   <div className="fixed top-0 left-0 right-0 h-[calc(6rem+env(safe-area-inset-top))] bg-gradient-to-b from-chat-bg via-chat-bg/80 to-transparent z-[39] pointer-events-none md:hidden" />
                   {children}
-                  <FloatingDebugger />
                 </ChatProvider>
               </AuthProvider>
             </ErrorBoundary>

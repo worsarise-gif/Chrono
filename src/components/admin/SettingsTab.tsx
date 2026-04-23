@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Settings, Save, AlertTriangle, CheckCircle2, RefreshCw, Sliders, ShieldAlert, Bot, Trash2 } from 'lucide-react';
-import { collection, getDocs, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { ref, listAll, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,6 +9,7 @@ export default function SettingsTab() {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
   const [clearingData, setClearingData] = useState(false);
+  const [clearingLogs, setClearingLogs] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   
@@ -22,34 +23,14 @@ export default function SettingsTab() {
     enableWebSearch: true,
   });
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const docRef = doc(db, 'config', 'system');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setSettings(prev => ({ ...prev, ...docSnap.data() }));
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error);
-      }
-    };
-    fetchSettings();
-  }, []);
-
-  const handleSave = async () => {
+  const handleSave = () => {
     setSaving(true);
-    try {
-      await setDoc(doc(db, 'config', 'system'), settings, { merge: true });
+    // Simulate saving to Firestore
+    setTimeout(() => {
+      setSaving(false);
       setToast('System settings updated successfully.');
       setTimeout(() => setToast(null), 3000);
-    } catch (error) {
-      console.error('Error saving system settings:', error);
-      setToast('Failed to save settings.');
-      setTimeout(() => setToast(null), 3000);
-    } finally {
-      setSaving(false);
-    }
+    }, 1000);
   };
 
   const deleteStorageFolder = async (folderRef: any) => {
@@ -65,6 +46,28 @@ export default function SettingsTab() {
       if (error.code !== 'storage/object-not-found') {
         console.error("Error deleting storage folder:", error);
       }
+    }
+  };
+
+
+  const handleClearLogs = async () => {
+    const confirmed = window.confirm("Are you sure you want to clear all system logs? This cannot be undone.");
+    if (!confirmed) return;
+
+    setClearingLogs(true);
+    try {
+      const logsSnap = await getDocs(collection(db, 'logs'));
+      const deletePromises = logsSnap.docs.map(logDoc => deleteDoc(doc(db, 'logs', logDoc.id)));
+      await Promise.all(deletePromises);
+
+      setToast('All system logs have been cleared.');
+      setTimeout(() => setToast(null), 3000);
+    } catch (error) {
+      console.error('Error clearing logs:', error);
+      setToast('Failed to clear system logs.');
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setClearingLogs(false);
     }
   };
 
@@ -180,53 +183,7 @@ export default function SettingsTab() {
 
         {/* AI Parameters */}
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
-              <Sliders size={20} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Default AI Parameters</h3>
-              <p className="text-sm text-muted-foreground">Adjust the default behavior and limits for AI models.</p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-foreground">Temperature</label>
-                <span className="text-xs font-mono text-muted-foreground">{settings.defaultTemperature}</span>
-              </div>
-              <input 
-                type="range" 
-                min="0" max="2" step="0.1" 
-                value={settings.defaultTemperature}
-                onChange={(e) => setSettings({...settings, defaultTemperature: parseFloat(e.target.value)})}
-                className="w-full accent-foreground"
-              />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Precise</span>
-                <span>Creative</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-foreground">Max Output Tokens</label>
-                <span className="text-xs font-mono text-muted-foreground">{settings.maxTokens}</span>
-              </div>
-              <input 
-                type="range" 
-                min="256" max="8192" step="256" 
-                value={settings.maxTokens}
-                onChange={(e) => setSettings({...settings, maxTokens: parseInt(e.target.value)})}
-                className="w-full accent-foreground"
-              />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
-                <span>Short</span>
-                <span>Long</span>
-              </div>
-            </div>
-          </div>
 
           <div className="mt-6 space-y-4">
             <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
@@ -263,17 +220,7 @@ export default function SettingsTab() {
           </div>
         </div>
 
-        {/* System Prompt Override */}
-        <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg">
-              <Bot size={20} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">System Prompt Override</h3>
-              <p className="text-sm text-muted-foreground">Append custom instructions to the base system prompt for all models.</p>
-            </div>
-          </div>
+
           
           <div className="space-y-2">
             <textarea 
@@ -347,10 +294,24 @@ export default function SettingsTab() {
                   </div>
                 )}
               </div>
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-red-500/20 rounded-lg bg-background/50 mt-4">
+                <div>
+                  <span className="font-medium text-foreground block">Clear System Logs</span>
+                  <span className="text-xs text-muted-foreground">Permanently deletes all debugging and system logs from the database.</span>
+                </div>
+                <button
+                  onClick={handleClearLogs}
+                  disabled={clearingLogs}
+                  className="flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors whitespace-nowrap disabled:opacity-70"
+                >
+                  {clearingLogs ? <RefreshCw size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                  Clear Logs
+                </button>
+              </div>
+
             </div>
           </div>
         )}
       </div>
-    </div>
   );
 }

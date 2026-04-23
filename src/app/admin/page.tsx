@@ -64,7 +64,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Sidebar */}
-        <aside className={`fixed md:relative top-0 left-0 h-full w-64 bg-surface border-r border-border flex flex-col z-40 transition-transform duration-300 ease-in-out shrink-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <aside className={`fixed md:relative top-0 left-0 h-full w-64 bg-surface border-r border-border flex flex-col z-[60] transition-transform duration-300 ease-in-out shrink-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 hidden md:flex items-center gap-3">
             <PlanetLogo className="text-foreground" />
             <span className="text-xl font-bold tracking-tight text-foreground">Admin</span>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
         {/* Mobile Overlay */}
         {mobileMenuOpen && (
           <div 
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30 md:hidden"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[55] md:hidden"
             onClick={() => setMobileMenuOpen(false)}
           />
         )}
