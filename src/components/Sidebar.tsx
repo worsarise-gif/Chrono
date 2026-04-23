@@ -280,7 +280,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative shrink-0">
           <Link href="/" className="w-[68px] flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity">
-            <PlanetLogo className="text-black dark:text-white" />
+            <PlanetLogo className="text-black dark:text-white" showText={false} />
           </Link>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
