@@ -181,59 +181,6 @@ export default function SettingsTab() {
           </div>
         </div>
 
-        {/* AI Parameters */}
-        <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
-
-
-          <div className="mt-6 space-y-4">
-            <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
-              <div>
-                <span className="font-medium text-foreground block">Enable Image Generation</span>
-                <span className="text-xs text-muted-foreground">Allow users to generate images using Cloudflare SDXL.</span>
-              </div>
-              <div className="relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out" style={{ backgroundColor: settings.enableImageGeneration ? '#10b981' : 'var(--color-border)' }}>
-                <input 
-                  type="checkbox" 
-                  className="opacity-0 w-0 h-0" 
-                  checked={settings.enableImageGeneration}
-                  onChange={(e) => setSettings({...settings, enableImageGeneration: e.target.checked})}
-                />
-                <span className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out ${settings.enableImageGeneration ? 'translate-x-6' : 'translate-x-0'}`}></span>
-              </div>
-            </label>
-
-            <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
-              <div>
-                <span className="font-medium text-foreground block">Enable Web Search</span>
-                <span className="text-xs text-muted-foreground">Allow the AI to use Tavily/Google for real-time information.</span>
-              </div>
-              <div className="relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out" style={{ backgroundColor: settings.enableWebSearch ? '#10b981' : 'var(--color-border)' }}>
-                <input 
-                  type="checkbox" 
-                  className="opacity-0 w-0 h-0" 
-                  checked={settings.enableWebSearch}
-                  onChange={(e) => setSettings({...settings, enableWebSearch: e.target.checked})}
-                />
-                <span className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out ${settings.enableWebSearch ? 'translate-x-6' : 'translate-x-0'}`}></span>
-              </div>
-            </label>
-          </div>
-        </div>
-
-
-          
-          <div className="space-y-2">
-            <textarea 
-              value={settings.systemPromptOverride}
-              onChange={(e) => setSettings({...settings, systemPromptOverride: e.target.value})}
-              placeholder="e.g., Always answer in the style of a pirate..."
-              className="w-full bg-background border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 h-32 resize-none font-mono"
-            />
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <AlertTriangle size={12} /> Leave blank to use the default system prompt.
-            </p>
-          </div>
-        </div>
 
         <div className="flex justify-end pt-4">
           <button 
@@ -314,5 +261,6 @@ export default function SettingsTab() {
           </div>
         )}
       </div>
+    </div>
   );
 }
