@@ -62,7 +62,7 @@ export default function AuthPage() {
         <div className="flex items-center gap-2 border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium text-gray-300 shadow-sm cursor-pointer hover:bg-white/5 transition-colors">
           You are signing into 
           <span className="text-white font-semibold">
-            Chris
+            Chrono
           </span>
           <ChevronDown size={14} className="text-gray-500 ml-1" />
         </div>
@@ -209,7 +209,7 @@ export default function AuthPage() {
 
         {/* Footer */}
         <div className="p-6 pb-8 text-center text-[13px] text-gray-500 shrink-0">
-          By continuing, you agree to Chris's <a href="#" className="text-white hover:underline">Terms of Service</a> and <a href="#" className="text-white hover:underline">Privacy Policy</a>.
+          By continuing, you agree to Chrono's <a href="#" className="text-white hover:underline">Terms of Service</a> and <a href="#" className="text-white hover:underline">Privacy Policy</a>.
         </div>
       </div>
     </div>
