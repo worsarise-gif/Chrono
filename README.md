@@ -4,11 +4,6 @@
   <path d="M 98 55 L 67.3 55 A 18 18 0 0 1 32.7 55 L 14.4 55 A 36 36 0 0 0 74.7 74.7 C 82.7 66.7, 90 56, 98 55 Z" fill="#1a1a1a" />
 </svg>
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/d554e2c7-abbe-4d9d-ad50-32d14e18842c
 
 ## Run Locally
 
