@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useDeferredValue } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { GoogleGenAI, Type, Modality } from '@google/genai';
@@ -370,6 +370,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const { addLog } = useDebug();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const deferredInput = useDeferredValue(input);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
