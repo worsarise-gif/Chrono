@@ -16,8 +16,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Chris",
-  description: "Chris Chat App",
+  title: "Chrono",
+  description: "Chrono Chat App",
 };
 
 export const viewport = {
