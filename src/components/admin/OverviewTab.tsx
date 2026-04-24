@@ -204,8 +204,8 @@ export default function OverviewTab() {
                   <YAxis yAxisId="left" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
                   <YAxis yAxisId="right" orientation="right" stroke="var(--color-muted-foreground)" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', borderRadius: '8px', color: 'var(--color-foreground)' }}
-                    itemStyle={{ color: 'var(--color-foreground)' }}
+                    contentStyle={{ backgroundColor: 'var(--color-foreground)', border: 'none', borderRadius: '4px', color: 'var(--color-background)', fontSize: '12px', padding: '4px 8px' }}
+                    itemStyle={{ color: 'var(--color-background)' }}
                   />
                   <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                   <Area yAxisId="left" type="monotone" dataKey="newUsers" name="New Users" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorUsers)" />
