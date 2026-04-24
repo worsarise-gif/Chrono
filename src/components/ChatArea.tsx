@@ -784,7 +784,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       if (file.type.startsWith('image/')) {
         processImageFile(file);
       } else {
-        handleError("Unsupported file type", "Only image files are supported for drag and drop.", ErrorSeverity.WARNING);
+        handleError("Unsupported file type", "Only image files are supported for drag and drop.", { severity: ErrorSeverity.WARNING });
       }
     }
   };

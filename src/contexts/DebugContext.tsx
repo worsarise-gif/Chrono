@@ -49,7 +49,7 @@ export const DebugProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             // Clean up potentially undefined details that firestore doesn't like
             const cleanDetails = details ? JSON.parse(JSON.stringify(details, Object.getOwnPropertyNames(details))) : null;
             await addDoc(collection(db, 'logs'), {
-              severity: type === 'success' ? 'info' : type,
+              severity: type === ('success' as any) ? 'info' : type,
               source: component,
               message,
               payload: cleanDetails || {},

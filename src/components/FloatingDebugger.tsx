@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDebug, DebugLog } from '../contexts/DebugContext';
 import { X, Terminal, ChevronDown, ChevronUp, Trash2, Maximize2, Minimize2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function FloatingDebugger() {
   const { user } = useAuth();

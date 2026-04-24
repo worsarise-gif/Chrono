@@ -61,7 +61,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
       {/* Tooltip - Fixed positioning to float above everything */}
       {isCollapsed && (
         <div 
-          className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0"
+          className="fixed left-[76px] bg-foreground text-background text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0"
           style={{ 
             top: `${60 + index * 42 + 20}px`,
             transform: 'translateY(-50%)'
@@ -473,7 +473,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             
             {/* Expand Tooltip */}
             {isCollapsed && (
-              <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[118px]">
+              <div className="fixed left-[76px] bg-foreground text-background text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[118px]">
                 Expand Sidebar
               </div>
             )}
@@ -492,7 +492,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               
               {/* Admin Tooltip */}
               {isCollapsed && (
-                <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[72px]">
+                <div className="fixed left-[76px] bg-foreground text-background text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[72px]">
                   Admin Dashboard
                 </div>
               )}
@@ -519,7 +519,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 
                 {/* Profile Tooltip */}
                 {isCollapsed && (
-                  <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
+                  <div className="fixed left-[76px] bg-foreground text-background text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
                     Profile Settings
                   </div>
                 )}
@@ -532,7 +532,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 
                 {/* Login Tooltip */}
                 {isCollapsed && (
-                  <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
+                  <div className="fixed left-[76px] bg-foreground text-background text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
                     Login with Google
                   </div>
                 )}
