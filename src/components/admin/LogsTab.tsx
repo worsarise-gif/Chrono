@@ -115,62 +115,104 @@ export default function LogsTab() {
         </div>
       </div>
 
-      <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-background border-b border-border text-muted-foreground">
-              <tr>
-                <th className="px-6 py-4 font-medium w-12"></th>
-                <th className="px-6 py-4 font-medium">Timestamp</th>
-                <th className="px-6 py-4 font-medium">Severity</th>
-                <th className="px-6 py-4 font-medium">Source</th>
-                <th className="px-6 py-4 font-medium">Message</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filteredLogs.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">No logs found matching your filters.</td>
-                </tr>
-              ) : (
-                filteredLogs.map((log) => (
-                  <React.Fragment key={log.id}>
-                    <tr 
-                      onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)}
-                      className={`hover:bg-background/50 transition-colors cursor-pointer ${expandedLog === log.id ? 'bg-background/50' : ''}`}
-                    >
-                      <td className="px-6 py-4 text-muted-foreground">
-                        {expandedLog === log.id ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                      </td>
-                      <td className="px-6 py-4 text-muted-foreground font-mono text-xs">
-                        {new Date(log.timestamp).toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border ${getSeverityBadge(log.severity)}`}>
-                          {getSeverityIcon(log.severity)}
-                          {log.severity}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-medium text-foreground">{log.source}</td>
-                      <td className="px-6 py-4 text-foreground">{log.message}</td>
-                    </tr>
-                    {expandedLog === log.id && (
-                      <tr className="bg-background border-b border-border">
-                        <td colSpan={5} className="px-6 py-6">
-                          <div className="bg-[#1e1e1e] rounded-lg p-4 font-mono text-xs text-green-400 overflow-x-auto relative group">
-                            <div className="absolute top-3 right-3 text-white/30 group-hover:text-white/70 transition-colors">
-                              <Terminal size={16} />
-                            </div>
-                            <pre>{JSON.stringify(log.payload, null, 2)}</pre>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))
-              )}
-            </tbody>
-          </table>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Good Condition (Info) */}
+        <div className="flex flex-col h-[600px]">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-1.5 bg-blue-500/10 rounded-md text-blue-500 border border-blue-500/20">
+              <Info size={16} />
+            </div>
+            <h3 className="font-semibold text-foreground">Good Condition</h3>
+            <span className="ml-auto bg-surface border border-border text-muted-foreground text-xs px-2 py-0.5 rounded-full font-medium">
+              {filteredLogs.filter(l => l.severity === 'info').length}
+            </span>
+          </div>
+          <div className="bg-surface border border-border rounded-xl flex-1 overflow-y-auto shadow-sm p-4 space-y-3">
+            {filteredLogs.filter(l => l.severity === 'info').length === 0 ? (
+              <div className="text-center text-muted-foreground text-sm py-8">No info logs</div>
+            ) : (
+              filteredLogs.filter(l => l.severity === 'info').map(log => (
+                <div key={log.id} onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)} className="border border-border bg-background rounded-lg p-3 cursor-pointer hover:border-blue-500/30 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-medium text-foreground">{log.source}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <p className="text-sm text-foreground mb-1 line-clamp-2">{log.message}</p>
+                  {expandedLog === log.id && (
+                    <div className="mt-3 bg-[#1e1e1e] rounded p-3 font-mono text-[10px] text-green-400 overflow-x-auto">
+                      <pre>{JSON.stringify(log.payload, null, 2)}</pre>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Maintenance Needed (Warnings) */}
+        <div className="flex flex-col h-[600px]">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-1.5 bg-yellow-500/10 rounded-md text-yellow-600 border border-yellow-500/20">
+              <AlertTriangle size={16} />
+            </div>
+            <h3 className="font-semibold text-foreground">Maintenance Needed</h3>
+            <span className="ml-auto bg-surface border border-border text-muted-foreground text-xs px-2 py-0.5 rounded-full font-medium">
+              {filteredLogs.filter(l => l.severity === 'warning').length}
+            </span>
+          </div>
+          <div className="bg-surface border border-border rounded-xl flex-1 overflow-y-auto shadow-sm p-4 space-y-3">
+            {filteredLogs.filter(l => l.severity === 'warning').length === 0 ? (
+              <div className="text-center text-muted-foreground text-sm py-8">No warnings</div>
+            ) : (
+              filteredLogs.filter(l => l.severity === 'warning').map(log => (
+                <div key={log.id} onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)} className="border border-yellow-500/20 bg-background rounded-lg p-3 cursor-pointer hover:border-yellow-500/50 transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-medium text-foreground">{log.source}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <p className="text-sm text-foreground mb-1 line-clamp-2">{log.message}</p>
+                  {expandedLog === log.id && (
+                    <div className="mt-3 bg-[#1e1e1e] rounded p-3 font-mono text-[10px] text-green-400 overflow-x-auto">
+                      <pre>{JSON.stringify(log.payload, null, 2)}</pre>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Failing (Errors) */}
+        <div className="flex flex-col h-[600px]">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-1.5 bg-red-500/10 rounded-md text-red-500 border border-red-500/20">
+              <AlertCircle size={16} />
+            </div>
+            <h3 className="font-semibold text-foreground">Failing</h3>
+            <span className="ml-auto bg-surface border border-border text-muted-foreground text-xs px-2 py-0.5 rounded-full font-medium">
+              {filteredLogs.filter(l => l.severity === 'error').length}
+            </span>
+          </div>
+          <div className="bg-surface border border-border rounded-xl flex-1 overflow-y-auto shadow-sm p-4 space-y-3">
+            {filteredLogs.filter(l => l.severity === 'error').length === 0 ? (
+              <div className="text-center text-muted-foreground text-sm py-8">No errors</div>
+            ) : (
+              filteredLogs.filter(l => l.severity === 'error').map(log => (
+                <div key={log.id} onClick={() => setExpandedLog(expandedLog === log.id ? null : log.id)} className="border border-red-500/30 bg-background rounded-lg p-3 cursor-pointer hover:border-red-500/60 transition-colors shadow-sm shadow-red-500/5">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-xs font-bold text-red-500">{log.source}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{new Date(log.timestamp).toLocaleTimeString()}</span>
+                  </div>
+                  <p className="text-sm text-foreground mb-1 line-clamp-3">{log.message}</p>
+                  {expandedLog === log.id && (
+                    <div className="mt-3 bg-[#1e1e1e] rounded p-3 font-mono text-[10px] text-red-400 overflow-x-auto border border-red-500/20">
+                      <pre>{JSON.stringify(log.payload, null, 2)}</pre>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

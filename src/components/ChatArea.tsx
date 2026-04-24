@@ -370,7 +370,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const { addLog } = useDebug();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const deferredInput = useDeferredValue(input);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
@@ -592,6 +591,13 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   };
 
+  useLayoutEffect(() => {
+    if (input === '' && textareaRef.current) {
+      textareaRef.current.style.height = '24px';
+      textareaRef.current.scrollTop = 0;
+    }
+  }, [input]);
+
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.nativeEvent.isComposing) return;
@@ -605,13 +611,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
     }
   };
-
-  useLayoutEffect(() => {
-    if (input === '' && textareaRef.current) {
-      textareaRef.current.style.height = '24px';
-      textareaRef.current.scrollTop = 0;
-    }
-  }, [input]);
 
   useEffect(() => {
     if (!user) {
@@ -2712,11 +2711,11 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             {!user ? (
               <Link href="/">
-                <PlanetLogo className="text-black dark:text-white hover:opacity-80 transition-opacity" />
+                <PlanetLogo size="lg" className="text-black dark:text-white hover:opacity-80 transition-opacity" />
               </Link>
             ) : (
               <>
-                <PlanetLogo className="text-black dark:text-white" />
+                <PlanetLogo size="lg" className="text-black dark:text-white" />
               </>
             )}
           </div>

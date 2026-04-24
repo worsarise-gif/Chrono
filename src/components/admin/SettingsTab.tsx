@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Save, AlertTriangle, CheckCircle2, RefreshCw, Sliders, ShieldAlert, Bot, Trash2 } from 'lucide-react';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, listAll, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,14 +23,30 @@ export default function SettingsTab() {
     enableWebSearch: true,
   });
 
-  const handleSave = () => {
+  const isSuperAdmin = user?.email === 'johnkerveelayese@gmail.com';
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const docSnap = await getDoc(doc(db, 'config', 'system'));
+      if (docSnap.exists()) {
+        setSettings(prev => ({ ...prev, ...docSnap.data() }));
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
     setSaving(true);
-    // Simulate saving to Firestore
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      await setDoc(doc(db, 'config', 'system'), settings, { merge: true });
       setToast('System settings updated successfully.');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      setToast('Failed to save settings.');
+    } finally {
+      setSaving(false);
       setTimeout(() => setToast(null), 3000);
-    }, 1000);
+    }
   };
 
   const deleteStorageFolder = async (folderRef: any) => {
@@ -121,8 +137,6 @@ export default function SettingsTab() {
       setTimeout(() => setToast(null), 3000);
     }
   };
-
-  const isSuperAdmin = user?.email === 'johnkerveelayese@gmail.com';
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">
