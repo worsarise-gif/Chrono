@@ -5,7 +5,26 @@ import { Search, MoreVertical, Shield, ShieldOff, Ban, CheckCircle2, Loader2 } f
 import { toast } from 'sonner';
 import { handleFirestoreError, OperationType } from '../../utils/firebaseErrorHandler';
 
-const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, setActionMenuOpen }: any) => {
+interface AdminUser {
+  id: string;
+  email?: string;
+  displayName?: string;
+  photoURL?: string;
+  role?: string;
+  isBanned: boolean;
+  totalMessages?: number;
+  createdAt?: any; // Firebase Timestamp
+}
+
+interface UserRowProps {
+  user: AdminUser;
+  handleToggleAdmin: (userId: string, currentRole: string) => Promise<void>;
+  handleToggleBan: (userId: string, currentStatus: boolean) => Promise<void>;
+  actionMenuOpen: string | null;
+  setActionMenuOpen: (id: string | null) => void;
+}
+
+const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, setActionMenuOpen }: UserRowProps) => {
   const [chatCount, setChatCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -67,7 +86,7 @@ const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, set
             <div className="fixed inset-0 z-40" onClick={() => setActionMenuOpen(null)}></div>
             <div className="absolute right-8 top-10 w-48 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-200">
               <button 
-                onClick={() => handleToggleAdmin(user.id, user.role)}
+                onClick={() => handleToggleAdmin(user.id, user.role || 'user')}
                 className="w-full text-left px-4 py-2.5 text-sm hover:bg-background flex items-center gap-2 text-foreground transition-colors"
               >
                 {user.role === 'admin' ? <ShieldOff size={14} /> : <Shield size={14} />}
@@ -89,7 +108,7 @@ const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, set
 };
 
 export default function UsersTab() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionMenuOpen, setActionMenuOpen] = useState<string | null>(null);
@@ -97,11 +116,14 @@ export default function UsersTab() {
   useEffect(() => {
     const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const usersData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data({ serverTimestamps: 'estimate' }),
-        isBanned: doc.data({ serverTimestamps: 'estimate' }).isBanned || false,
-      }));
+      const usersData = snapshot.docs.map(doc => {
+        const data = doc.data({ serverTimestamps: 'estimate' });
+        return {
+          id: doc.id,
+          ...data,
+          isBanned: data.isBanned || false,
+        } as AdminUser;
+      });
       setUsers(usersData);
       setLoading(false);
     });
