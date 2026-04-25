@@ -417,7 +417,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
     }
 
     // 2. Fix malformed bold formatting (e.g., ** text ** -> **text**)
-    normalized = normalized.replace(/\*\* (.*?) \*\*/g, '**$1**');
+    normalized = normalized.replace(/\*\*\s*(.+?)\s*\*\*/g, '**$1**');
 
     // 3. Ensure proper spacing around headings to prevent rendering issues
     normalized = normalized.replace(/([^\n])\n(#+ )/g, '$1\n\n$2');
