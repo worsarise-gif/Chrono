@@ -32,7 +32,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
         className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-foreground dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-foreground dark:text-white' : 'text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
         {/* Stationary Icon Container */}
-        <div className="w-[52px] flex-shrink-0 flex items-center justify-center relative h-full">
+        <div className="w-[56px] flex-shrink-0 flex items-center justify-center relative h-full">
           {/* Hover/Active Highlight Background for Collapsed State */}
           {isCollapsed && (
             <div className="absolute inset-0 flex items-center justify-center z-0">
@@ -61,7 +61,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
       {/* Tooltip - Fixed positioning to float above everything */}
       {isCollapsed && (
         <div 
-          className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0"
+          className="fixed left-[64px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0"
           style={{ 
             top: `${60 + index * 42 + 20}px`,
             transform: 'translateY(-50%)'
@@ -275,16 +275,16 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           onClick={() => setIsMobileOpen?.(false)}
         />
       )}
-      <div className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-50 font-sans font-light transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[68px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-50 font-sans font-light transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[56px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative shrink-0">
-          <Link href="/" className="w-[68px] flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity">
-            <PlanetLogo className="text-foreground dark:text-white" />
+          <Link href="/" className="w-[56px] flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity">
+            <PlanetLogo showText={false} className="text-foreground dark:text-white mx-auto" />
           </Link>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
-              onClick={() => setIsCollapsed(true)}
+              onClick={() => setIsCollapsed?.(true)}
               className="text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
             >
               <ChevronsLeft size={16} strokeWidth={2} />
@@ -463,9 +463,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         {/* Bottom Section */}
         <div className="mt-auto relative pb-4 pt-2">
           {/* Expand Toggle Button */}
-          <div className={`absolute bottom-[112px] left-0 w-[68px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+          <div className={`absolute bottom-[112px] left-0 w-[56px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
-              onClick={() => setIsCollapsed(false)}
+              onClick={() => setIsCollapsed?.(false)}
               className="text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
             >
               <ChevronsRight size={20} strokeWidth={1.5} />
@@ -473,7 +473,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             
             {/* Expand Tooltip */}
             {isCollapsed && (
-              <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[118px]">
+              <div className="fixed left-[64px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[118px]">
                 Expand Sidebar
               </div>
             )}
@@ -481,7 +481,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
 
           {/* Admin Panel Link */}
           {isAdmin && (
-            <div className="w-[68px] flex-shrink-0 flex items-center justify-center group relative mb-2">
+            <div className="w-[56px] flex-shrink-0 flex items-center justify-center group relative mb-2">
               <Link 
                 href="/admin"
                 className="w-9 h-9 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-all flex-shrink-0 shadow-sm pointer-events-auto"
@@ -492,7 +492,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               
               {/* Admin Tooltip */}
               {isCollapsed && (
-                <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[72px]">
+                <div className="fixed left-[64px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[72px]">
                   Admin Dashboard
                 </div>
               )}
@@ -500,7 +500,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           )}
 
           {/* User Profile / Login */}
-          <div className="w-[68px] flex-shrink-0 flex items-center justify-center group relative">
+          <div className="w-[56px] flex-shrink-0 flex items-center justify-center group relative">
             {user ? (
               <>
                 <div 
@@ -519,7 +519,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 
                 {/* Profile Tooltip */}
                 {isCollapsed && (
-                  <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
+                  <div className="fixed left-[64px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
                     Profile Settings
                   </div>
                 )}
@@ -532,7 +532,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 
                 {/* Login Tooltip */}
                 {isCollapsed && (
-                  <div className="fixed left-[76px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
+                  <div className="fixed left-[64px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
                     Login with Google
                   </div>
                 )}

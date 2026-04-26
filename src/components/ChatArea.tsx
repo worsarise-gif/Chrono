@@ -2711,18 +2711,18 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             {!user ? (
               <Link href="/">
-                <PlanetLogo className="text-foreground hover:opacity-80 transition-opacity" />
+                <PlanetLogo size={48} showText={true} className="text-foreground hover:opacity-80 transition-opacity" />
               </Link>
             ) : (
               <>
-                <PlanetLogo className="text-foreground" />
+                <PlanetLogo size={48} showText={true} className="text-foreground" />
               </>
             )}
           </div>
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
           <motion.div 
-            className="relative bg-surface rounded-[24px] md:rounded-[28px] shadow-xl border border-border focus-within:border-muted/60 focus-within:bg-surface-hover transition-colors duration-300 flex flex-col p-1.5 md:p-2"
+            className="relative bg-surface rounded-[24px] md:rounded-[28px] shadow-xl border border-border transition-colors duration-300 flex flex-col p-1.5 md:p-2"
           >
             <AnimatePresence>
               {selectedImage && (
