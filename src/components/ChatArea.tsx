@@ -2711,11 +2711,11 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
             {!user ? (
               <Link href="/">
-                <PlanetLogo size={48} showText={true} className="text-foreground hover:opacity-80 transition-opacity" />
+                <PlanetLogo size={144} showText={true} className="text-foreground hover:opacity-80 transition-opacity" />
               </Link>
             ) : (
               <>
-                <PlanetLogo size={48} showText={true} className="text-foreground" />
+                <PlanetLogo size={144} showText={true} className="text-foreground" />
               </>
             )}
           </div>
