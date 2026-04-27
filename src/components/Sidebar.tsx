@@ -1,6 +1,10 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import { Search, Compass, MessageCircle, Mic, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield, Pin, PinOff, ChevronDown, Plus, Bell } from 'lucide-react';
+import { SearchIcon } from './icons/SearchIcon';
+import { EditIcon } from './icons/EditIcon';
+import { GalleryIcon } from './icons/GalleryIcon';
+import { AudioIcon } from './icons/AudioIcon';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
@@ -296,14 +300,15 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         <nav className="shrink-0">
           <ul className="space-y-0.5">
             <NavItem 
-              icon={<Search size={18} strokeWidth={2} />} 
+              icon={<SearchIcon style={{ width: '18px', height: '18px' }} />}
               label="Search" 
               onClick={() => setIsChatHistoryModalOpen(true)} 
               isCollapsed={isCollapsed} 
               index={0} 
             />
-            <NavItem icon={<MessageCircle size={18} strokeWidth={2} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
-            <NavItem icon={<ImageIcon size={18} strokeWidth={2} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={2} />
+            <NavItem icon={<EditIcon style={{ width: '18px', height: '18px' }} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
+            <NavItem icon={<GalleryIcon style={{ width: '18px', height: '18px' }} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={2} />
+            <NavItem icon={<AudioIcon style={{ width: '18px', height: '18px' }} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={3} />
           </ul>
         </nav>
 
@@ -425,7 +430,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                         onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
                                         className="w-full text-left px-3 py-1.5 text-[12px] text-foreground/60 hover:bg-surface-hover flex items-center gap-2 transition-colors"
                                       >
-                                        <Edit2 size={12} />
+                                        <EditIcon style={{ width: '12px', height: '12px' }} />
                                         Edit Title
                                       </button>
                                       <button
