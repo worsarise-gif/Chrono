@@ -313,10 +313,13 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         </nav>
 
         {/* History Section Header */}
-        <div className={`mt-4 mb-2 shrink-0 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <div
+          className={`mt-4 mb-2 shrink-0 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 cursor-pointer' : 'opacity-100'}`}
+          onClick={() => isCollapsed && setIsCollapsed?.(false)}
+        >
           <div 
             className="flex items-center justify-between px-4 mb-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => setIsHistoryExpanded(!isHistoryExpanded)}
+            onClick={() => !isCollapsed && setIsHistoryExpanded(!isHistoryExpanded)}
           >
             <span className="text-[13px] font-semibold text-foreground dark:text-white">History</span>
             <ChevronDown 
@@ -327,11 +330,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         </div>
 
         {/* Chat History (Scrollable) */}
-        <div className={`flex-1 overflow-y-auto sidebar-scroll transition-all duration-300 ${isHistoryExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div
+          className={`flex-1 overflow-y-auto sidebar-scroll transition-all duration-300 ${isHistoryExpanded ? 'opacity-100' : 'opacity-0'} ${isCollapsed ? 'cursor-pointer' : ''} ${!isHistoryExpanded && !isCollapsed ? 'pointer-events-none' : ''}`}
+          onClick={() => isCollapsed && setIsCollapsed?.(false)}
+        >
           {isHistoryExpanded && (
             <div className="px-2 pb-2 flex flex-col min-h-full">
             {isLoadingChats ? (
-              <div className="flex justify-center py-4">
+              <div className={`flex justify-center py-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <Helix size="24" speed="2.5" color="var(--color-foreground)" />
               </div>
             ) : chats.length > 0 && (
@@ -455,7 +461,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 </div>
                 <button 
                   onClick={() => setIsChatHistoryModalOpen(true)}
-                  className="text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-normal"
+                  className={`text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-normal transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                 >
                   See all
                 </button>
