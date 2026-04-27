@@ -2129,7 +2129,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="w-24 h-24 bg-foreground/10 flex items-center justify-center rounded-full animate-pulse">
                 <Upload size={48} className="text-foreground" />
               </div>
-              <p className="text-3xl font-light text-foreground tracking-tight">Drop image here</p>
+              <p className="text-3xl font-normal text-foreground tracking-tight">Drop image here</p>
             </div>
           </motion.div>
         )}
@@ -2429,7 +2429,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                         setInput(rec.prompt);
                                         textareaRef.current?.focus();
                                       }}
-                                      className="flex items-center gap-3 text-sm font-normal text-foreground/60 hover:text-foreground transition-colors text-left"
+                                      className="flex items-center gap-3 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors text-left"
                                       title={rec.prompt}
                                     >
                                       <CornerDownRight size={16} className="text-foreground/40 shrink-0" />
@@ -2461,7 +2461,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                           ) : (
                             <>
                               <p 
-                                className="whitespace-pre-wrap leading-relaxed break-words font-normal"
+                                className="whitespace-pre-wrap leading-relaxed break-words font-medium"
                                 onTouchStart={(e) => handleTouchStart(e, msg.id, msg.content)}
                                 onTouchEnd={clearLongPress}
                                 onTouchMove={clearLongPress}
@@ -2790,7 +2790,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 placeholder="Ask anything"
-                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-light resize-none leading-[24px] break-words"
+                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-normal resize-none leading-[24px] break-words"
                 rows={1}
                 disabled={isLoading}
                 style={{ minHeight: '24px', maxHeight: '200px' }}
@@ -2891,7 +2891,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="hidden md:flex absolute right-0 top-0 h-full w-[350px] border-l border-border bg-background flex-col overflow-hidden z-40"
+            className="hidden md:flex absolute right-0 top-0 h-full w-[350px] border-l border-border bg-background flex-col overflow-hidden z-[60]"
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
