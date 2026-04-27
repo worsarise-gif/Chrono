@@ -3,6 +3,7 @@ import { auth, loginWithGoogle } from '../firebase';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { ChevronDown, Mail, ArrowRight, Loader2, Key } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
+import Link from 'next/link';
 
 type AuthMode = 'login' | 'register' | 'forgot_password';
 
@@ -58,13 +59,6 @@ export default function AuthPage() {
       <div className="flex justify-between items-center p-6 w-full shrink-0">
         <div className="flex items-center">
           <PlanetLogo className="!text-white" />
-        </div>
-        <div className="flex items-center gap-2 border border-white/10 rounded-full px-4 py-1.5 text-sm font-medium text-gray-300 shadow-sm cursor-pointer hover:bg-white/5 transition-colors">
-          You are signing into 
-          <span className="text-white font-semibold">
-            Chrono
-          </span>
-          <ChevronDown size={14} className="text-gray-500 ml-1" />
         </div>
       </div>
 
@@ -209,7 +203,7 @@ export default function AuthPage() {
 
         {/* Footer */}
         <div className="p-6 pb-8 text-center text-[13px] text-gray-500 shrink-0">
-          By continuing, you agree to Chrono's <a href="#" className="text-white hover:underline">Terms of Service</a> and <a href="#" className="text-white hover:underline">Privacy Policy</a>.
+          By continuing, you agree to Chrono's <Link href="/terms" className="text-white hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-white hover:underline">Privacy Policy</Link>.
         </div>
       </div>
     </div>
