@@ -6,7 +6,7 @@ export const PlanetLogo = ({ className = "", showText = true, size = 32 }: { cla
       width={size}
       height={size}
       viewBox="0 0 100 100"
-      className="shrink-0 bg-white dark:bg-black text-[#1a1a1a] dark:text-white"
+      className="shrink-0 bg-transparent text-black dark:text-white"
       style={{ transform: 'rotate(-45deg)', borderRadius: '50%' }}
     >
       <path
