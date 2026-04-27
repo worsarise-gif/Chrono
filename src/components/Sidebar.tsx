@@ -32,7 +32,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
         className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-foreground dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-foreground dark:text-white' : 'text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
         {/* Stationary Icon Container */}
-        <div className="w-[56px] flex-shrink-0 flex items-center justify-center relative h-full">
+        <div className="w-[40px] flex-shrink-0 flex items-center justify-center relative h-full">
           {/* Hover/Active Highlight Background for Collapsed State */}
           {isCollapsed && (
             <div className="absolute inset-0 flex items-center justify-center z-0">
@@ -43,12 +43,12 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
             {icon}
           </div>
           {hasDot && (
-            <div className={`absolute top-2 right-2 w-2 h-2 rounded-full bg-[#5c6ad2] border-2 border-background transition-opacity duration-300 z-20 ${isCollapsed ? 'opacity-100' : 'opacity-0'}`}></div>
+            <div className={`absolute top-1.5 right-1 w-2 h-2 rounded-full bg-[#5c6ad2] border-2 border-background transition-opacity duration-300 z-20 ${isCollapsed ? 'opacity-100' : 'opacity-0'}`}></div>
           )}
         </div>
 
         {/* Label */}
-        <span className={`font-medium text-[14px] whitespace-nowrap transition-all duration-300 flex-1 text-left ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>
+        <span className={`ml-4 font-medium text-[14px] whitespace-nowrap transition-all duration-300 flex-1 text-left ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>
           {label}
         </span>
 
