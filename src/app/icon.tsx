@@ -27,7 +27,7 @@ export default function Icon() {
             width: '100%',
             height: '100%',
             borderRadius: '50%',
-            background: '#ffffff',
+            background: '#000000',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -48,12 +48,12 @@ export default function Icon() {
               {/* Top-left piece with mathematically mapped flare curve */}
               <path
                 d="M 2 45 L 32.7 45 A 18 18 0 0 1 67.3 45 L 85.6 45 A 36 36 0 0 0 25.3 25.3 C 17.3 33.3, 10 44, 2 45 Z"
-                fill="#1a1a1a"
+                fill="#ffffff"
               />
               {/* Bottom-right piece (exact 180 degree rotation of the top-left) */}
               <path
                 d="M 98 55 L 67.3 55 A 18 18 0 0 1 32.7 55 L 14.4 55 A 36 36 0 0 0 74.7 74.7 C 82.7 66.7, 90 56, 98 55 Z"
-                fill="#1a1a1a"
+                fill="#ffffff"
               />
             </svg>
           </div>

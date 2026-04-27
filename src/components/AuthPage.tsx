@@ -68,9 +68,9 @@ export default function AuthPage() {
         </div>
       </div>
 
-      <div className="w-full max-w-[420px] pb-12 flex-1 flex flex-col justify-center relative z-10 bg-[#0a0a0a] mx-auto min-h-[600px]">
+      <div className="w-full max-w-[420px] pb-12 flex-1 flex flex-col justify-center relative z-10 bg-[#0a0a0a] mx-auto">
         {/* Main Content */}
-        <div className="flex flex-col items-center justify-center px-6 sm:px-8 w-full mt-[-40px]">
+        <div className="flex flex-col items-center justify-center px-4 sm:px-8 w-full mt-0 sm:mt-[-40px]">
           <h1 className="text-[32px] font-normal mb-8 text-center text-white">
             {mode === 'login' && 'Log into your account'}
             {mode === 'register' && 'Create an account'}

@@ -2185,9 +2185,9 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <button 
               onClick={onMenuClick}
-              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
+              className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
             >
-              <Menu size={20} />
+              <Menu size={18} />
             </button>
           )}
           <div className="flex-1" />
@@ -2201,10 +2201,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <button 
               onClick={() => setCurrentChatId(null)}
-              className="p-3 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
+              className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
               title="New Chat"
             >
-              <SquarePen size={20} className="group-hover:scale-110 transition-transform" />
+              <SquarePen size={18} className="group-hover:scale-110 transition-transform" />
             </button>
           )}
         </div>
@@ -2885,11 +2885,11 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       <AnimatePresence>
         {showSourcesPanel && (
           <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 350, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
+            initial={{ x: "100%", opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: "100%", opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="hidden md:flex h-full border-l border-border bg-background flex-col overflow-hidden shrink-0"
+            className="hidden md:flex absolute right-0 top-0 h-full w-[350px] border-l border-border bg-background flex-col overflow-hidden z-40"
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
@@ -2920,7 +2920,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               className="fixed bottom-0 left-0 right-0 h-[80vh] bg-background z-[101] md:hidden rounded-t-[24px] flex flex-col overflow-hidden shadow-2xl"
             >
               <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
