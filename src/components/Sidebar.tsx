@@ -250,13 +250,16 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
     ];
 
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
     chats.forEach(chat => {
       const date = chat.updatedAt?.toDate?.() || new Date();
-      const chatDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+      const chatDate = new Date(date);
+      chatDate.setHours(0, 0, 0, 0);
 
       if (chatDate.getTime() === today.getTime()) {
         groups[0].chats.push(chat);
@@ -279,7 +282,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           onClick={() => setIsMobileOpen?.(false)}
         />
       )}
-      <div className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-[101] font-sans font-light transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[56px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-[101] font-sans font-normal transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[56px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-5 pb-4 h-[60px] relative shrink-0">
@@ -386,7 +389,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     setCurrentChatId(chat.id);
                                     setIsMobileOpen?.(false);
                                   }}
-                                  className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-normal truncate pr-8 ${currentChatId === chat.id ? 'text-foreground dark:text-white bg-surface-hover' : 'text-foreground/60 dark:text-white dark:hover:text-white hover:bg-surface-hover/50 hover:text-foreground'}`}
+                                  className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-medium truncate pr-8 ${currentChatId === chat.id ? 'text-foreground dark:text-white bg-surface-hover' : 'text-foreground/60 dark:text-white dark:hover:text-white hover:bg-surface-hover/50 hover:text-foreground'}`}
                                   title={chat.title}
                                 >
                                   {chat.title === 'New Chat' ? (
@@ -461,7 +464,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 </div>
                 <button 
                   onClick={() => setIsChatHistoryModalOpen(true)}
-                  className={`text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-normal transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  className={`text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-medium transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                 >
                   See all
                 </button>
