@@ -2115,6 +2115,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {/* Mobile Top Scrim restricted to ChatArea */}
+      <div className="absolute top-0 left-0 right-0 h-[calc(6rem+env(safe-area-inset-top))] bg-gradient-to-b from-chat-bg via-chat-bg/80 to-transparent z-[39] pointer-events-none md:hidden" />
       <AnimatePresence>
         {isDragging && (
           <motion.div 
