@@ -2267,7 +2267,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </motion.div>
                     )}
 
-          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-base' : 'bg-transparent text-foreground text-base w-full'}`}>
+          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm' : 'bg-transparent text-foreground text-sm w-full'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full">
                           {msg.content.startsWith('Error:') ? (
