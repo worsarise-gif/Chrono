@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from 'react';
-import { Search, Compass, MessageCircle, Mic, Image as ImageIcon, ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Sun, Moon, Edit2, Check, X, Shield, Pin, PinOff, ChevronDown, Plus, Bell } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Check, X, Shield, Pin, PinOff, ChevronDown } from 'lucide-react';
 import { SearchIcon } from './icons/SearchIcon';
 import { EditIcon } from './icons/EditIcon';
 import { GalleryIcon } from './icons/GalleryIcon';
