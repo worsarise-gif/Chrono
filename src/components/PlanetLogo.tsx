@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const PlanetLogo = ({ className = "", showText = true, size = 32 }: { className?: string, showText?: boolean, size?: number }) => (
-  <div className={`font-bold tracking-tight text-black dark:text-white flex items-center justify-center select-none gap-3 ${className}`} style={{ fontSize: size ? size / 2 : 24 }}>
+  <div className={`font-bold tracking-tight text-black dark:text-white flex items-center justify-center select-none gap-3 ${className}`} style={{ fontSize: size ? size / 2 : 24, fontFamily: 'var(--font-brand)' }}>
 <svg
       width={size}
       height={size}

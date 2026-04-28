@@ -324,7 +324,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             className="flex items-center justify-between px-4 mb-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => !isCollapsed && setIsHistoryExpanded(!isHistoryExpanded)}
           >
-            <span className="text-[13px] font-semibold text-foreground dark:text-white">History</span>
+            <span className="text-sm font-semibold text-foreground dark:text-white">History</span>
             <ChevronDown 
               size={14} 
               className={`text-foreground/50 transition-transform duration-300 dark:text-white ${isHistoryExpanded ? 'rotate-180' : ''}`} 
@@ -366,7 +366,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     if (e.key === 'Enter') handleSaveTitle(chat.id);
                                     if (e.key === 'Escape') handleCancelEdit();
                                   }}
-                                  className="flex-1 bg-transparent border-none outline-none text-[13px] text-foreground py-1"
+                                  className="flex-1 bg-transparent border-none outline-none text-sm text-foreground py-1"
                                 />
                                 <button 
                                   onClick={() => handleSaveTitle(chat.id)}
@@ -389,7 +389,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     setCurrentChatId(chat.id);
                                     setIsMobileOpen?.(false);
                                   }}
-                                  className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-[13px] font-medium truncate pr-8 ${currentChatId === chat.id ? 'text-foreground dark:text-white bg-surface-hover' : 'text-foreground/60 dark:text-white dark:hover:text-white hover:bg-surface-hover/50 hover:text-foreground'}`}
+                                  className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-sm font-medium truncate pr-8 ${currentChatId === chat.id ? 'text-foreground dark:text-white bg-surface-hover' : 'text-foreground/60 dark:text-white dark:hover:text-white hover:bg-surface-hover/50 hover:text-foreground'}`}
                                   title={chat.title}
                                 >
                                   {chat.title === 'New Chat' ? (
@@ -464,7 +464,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 </div>
                 <button 
                   onClick={() => setIsChatHistoryModalOpen(true)}
-                  className={`text-left px-3 py-2 text-[13px] text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-medium transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  className={`text-left px-3 py-2 text-sm text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-medium transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
                 >
                   See all
                 </button>

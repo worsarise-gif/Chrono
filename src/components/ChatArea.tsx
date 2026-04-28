@@ -2267,7 +2267,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </motion.div>
                     )}
 
-          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-[15px] md:text-[15px]' : 'bg-transparent text-foreground text-[16px] md:text-[15px] w-full'}`}>
+          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-base' : 'bg-transparent text-foreground text-base w-full'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full">
                           {msg.content.startsWith('Error:') ? (
@@ -2465,7 +2465,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               <textarea
                                 value={editContent}
                                 onChange={(e) => setEditContent(e.target.value)}
-                                className="w-full bg-chat-bg/50 text-foreground rounded-xl p-3 text-[15px] resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
+                                className="w-full bg-chat-bg/50 text-foreground rounded-xl p-3 text-base resize-none focus:outline-none focus:ring-1 focus:ring-border border border-border/50"
                                 rows={3}
                                 autoFocus
                               />
@@ -2515,7 +2515,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   />
                 )}
                 {streamingMessage.length > 0 && (
-                  <div className="w-full relative bg-transparent text-foreground text-[16px] md:text-[15px]">
+                  <div className="w-full relative bg-transparent text-foreground text-base">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
                     </div>
@@ -2807,7 +2807,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 placeholder="Ask anything"
-                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-[16px] md:text-[15px] font-normal resize-none leading-[24px] break-words"
+                className="flex-1 bg-transparent border-none outline-none text-foreground placeholder-muted py-0 my-2 px-1 text-base font-normal resize-none leading-relaxed break-words"
                 rows={1}
                 disabled={isLoading}
                 style={{ minHeight: '24px', maxHeight: '200px' }}
@@ -2911,7 +2911,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             className="hidden md:flex absolute right-0 top-0 h-full w-[350px] border-l border-border bg-background flex-col overflow-hidden z-[60]"
           >
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
-              <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
+              <h3 className="font-medium text-foreground text-base">Sources</h3>
               <button 
                 onClick={() => setShowSourcesPanel(false)}
                 className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
@@ -2943,7 +2943,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               className="fixed bottom-0 left-0 right-0 h-[80vh] bg-background z-[101] md:hidden rounded-t-[24px] flex flex-col overflow-hidden shadow-2xl"
             >
               <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
-                <h3 className="font-medium text-foreground text-[15px]">Sources</h3>
+                <h3 className="font-medium text-foreground text-base">Sources</h3>
                 <button 
                   onClick={() => setShowSourcesPanel(false)}
                   className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
