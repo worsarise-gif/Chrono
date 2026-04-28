@@ -138,7 +138,7 @@ export default function AuthPage() {
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full bg-white mt-2 text-black rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-gray-200 transition-colors text-[15px] disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-white mt-2 text-black rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-gray-200 transition-colors text-base disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? <Loader2 size={18} className="animate-spin" /> : null}
               {mode === 'login' ? 'Continue' : mode === 'register' ? 'Sign Up' : 'Send Reset Link'}
@@ -171,7 +171,7 @@ export default function AuthPage() {
                   }
                 }}
                 disabled={isGoogleLoading || isLoading}
-                className="w-full bg-[#18181b] text-white border border-white/10 rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-white/5 transition-colors text-[15px] disabled:opacity-50"
+                className="w-full bg-[#18181b] text-white border border-white/10 rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-white/5 transition-colors text-base disabled:opacity-50"
               >
                 {isGoogleLoading ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -188,7 +188,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div className="mt-8 text-[15px] text-gray-500 w-full text-center">
+          <div className="mt-8 text-base text-gray-500 w-full text-center">
             {mode === 'login' ? (
               <p>
                 Don't have an account? <button type="button" onClick={() => { setMode('register'); resetMessages(); }} className="text-white font-medium hover:underline">Sign up</button>
@@ -202,7 +202,7 @@ export default function AuthPage() {
         </div>
 
         {/* Footer */}
-        <div className="p-6 pb-8 text-center text-[13px] text-gray-500 shrink-0">
+        <div className="p-6 pb-8 text-center text-sm text-gray-500 shrink-0">
           By continuing, you agree to Chrono's <Link href="/terms" className="text-white hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-white hover:underline">Privacy Policy</Link>.
         </div>
       </div>
