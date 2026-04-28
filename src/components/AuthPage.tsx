@@ -58,19 +58,14 @@ export default function AuthPage() {
       {/* Header */}
       <div className="flex justify-between items-center p-6 w-full shrink-0">
         <div className="flex items-center">
-          <PlanetLogo className="!text-white" showText={false} />
+          <PlanetLogo className="!text-white [&_svg]:!text-white" showText={false} />
         </div>
 
         <div className="flex items-center gap-2 text-sm text-white border border-white/10 rounded-full px-4 py-2 bg-[#18181b]">
           <span className="text-gray-300">You are signing into</span>
           <div className="flex items-center gap-1.5 font-medium">
-            <svg width="16" height="16" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ transform: 'rotate(-45deg)' }}>
-              <path d="M 2 45 L 32.7 45 A 18 18 0 0 1 67.3 45 L 85.6 45 A 36 36 0 0 0 25.3 25.3 C 17.3 33.3, 10 44, 2 45 Z" fill="currentColor" />
-              <path d="M 98 55 L 67.3 55 A 18 18 0 0 1 32.7 55 L 14.4 55 A 36 36 0 0 0 74.7 74.7 C 82.7 66.7, 90 56, 98 55 Z" fill="currentColor" />
-              <path d="M 2 98 L 98 2" stroke="currentColor" strokeWidth="6" />
-            </svg>
-            <span>Grok</span>
-            <ChevronDown size={14} className="text-gray-500" />
+            <PlanetLogo size={16} showText={false} className="!text-white [&_svg]:!text-white" />
+            <span>Chrono</span>
           </div>
         </div>
       </div>
