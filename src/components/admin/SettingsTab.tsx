@@ -38,9 +38,8 @@ export default function SettingsTab() {
       const deletePromises = listResult.items.map((itemRef) => deleteObject(itemRef));
       await Promise.all(deletePromises);
       
-      for (const prefixRef of listResult.prefixes) {
-        await deleteStorageFolder(prefixRef);
-      }
+      const folderPromises = listResult.prefixes.map((prefixRef) => deleteStorageFolder(prefixRef));
+      await Promise.all(folderPromises);
     } catch (error: any) {
       if (error.code !== 'storage/object-not-found') {
         console.error("Error deleting storage folder:", error);
@@ -59,30 +58,36 @@ export default function SettingsTab() {
     try {
       const usersSnapshot = await getDocs(collection(db, 'users'));
       
-      for (const userDoc of usersSnapshot.docs) {
+      const userDeletions = usersSnapshot.docs.map(async (userDoc) => {
         const uid = userDoc.id;
         
         // Delete generated_images
         const imagesSnapshot = await getDocs(collection(db, `users/${uid}/generated_images`));
-        for (const imgDoc of imagesSnapshot.docs) {
-          await deleteDoc(doc(db, `users/${uid}/generated_images`, imgDoc.id));
-        }
+        const imageDeletions = imagesSnapshot.docs.map((imgDoc) =>
+          deleteDoc(doc(db, `users/${uid}/generated_images`, imgDoc.id))
+        );
         
         // Delete chats and messages
         const chatsSnapshot = await getDocs(collection(db, `users/${uid}/chats`));
-        for (const chatDoc of chatsSnapshot.docs) {
+        const chatDeletions = chatsSnapshot.docs.map(async (chatDoc) => {
           const messagesSnapshot = await getDocs(collection(db, `users/${uid}/chats/${chatDoc.id}/messages`));
-          for (const msgDoc of messagesSnapshot.docs) {
-            await deleteDoc(doc(db, `users/${uid}/chats/${chatDoc.id}/messages`, msgDoc.id));
-          }
-          await deleteDoc(doc(db, `users/${uid}/chats`, chatDoc.id));
-        }
+          const messageDeletions = messagesSnapshot.docs.map((msgDoc) =>
+            deleteDoc(doc(db, `users/${uid}/chats/${chatDoc.id}/messages`, msgDoc.id))
+          );
+
+          await Promise.all(messageDeletions);
+          return deleteDoc(doc(db, `users/${uid}/chats`, chatDoc.id));
+        });
+
+        await Promise.all([...imageDeletions, ...chatDeletions]);
         
         // Delete user document, except for the super admin
         if (uid !== auth.currentUser?.uid) {
           await deleteDoc(doc(db, 'users', uid));
         }
-      }
+      });
+
+      await Promise.all(userDeletions);
       
       // Delete Storage data
       await deleteStorageFolder(ref(storage, 'profiles'));
