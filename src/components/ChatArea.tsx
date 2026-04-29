@@ -390,7 +390,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [editContent, setEditContent] = useState('');
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
-  const [activeMoreMenuId, setActiveMoreMenuId] = useState<string | null>(null);
   const [guestRequestCount, setGuestRequestCount] = useState<number>(0);
   const [showSignInModal, setShowSignInModal] = useState(false);
   const [userMenuState, setUserMenuState] = useState<{messageId: string, content: string, x: number, y: number} | null>(null);
@@ -2301,8 +2300,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
                                 </button>
 
-                                {/* Desktop Only Actions */}
-                                <div className="hidden md:flex items-center gap-1">
+                                {/* Actions */}
+                                <div className="flex items-center gap-1">
                                   <button 
                                     onClick={() => handleFeedback(msg.id, 'upvote')}
                                     className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'hover:text-foreground'}`} 
@@ -2334,72 +2333,6 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                       {speakingMessageId === msg.id ? <Square size={14} className="fill-current" /> : <Volume2 size={14} />}
                                     </button>
                                   )}
-                                </div>
-
-                                {/* More Options Dropdown */}
-                                <div className="relative">
-                                  <button 
-                                    onClick={() => setActiveMoreMenuId(activeMoreMenuId === msg.id ? null : msg.id)}
-                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground ${activeMoreMenuId === msg.id ? 'bg-surface-hover text-foreground' : ''}`} 
-                                    title="More options"
-                                  >
-                                    <MoreHorizontal size={14} />
-                                  </button>
-
-                                  <AnimatePresence>
-                                    {activeMoreMenuId === msg.id && (
-                                      <>
-                                        <div 
-                                          className="fixed inset-0 z-40" 
-                                          onClick={() => setActiveMoreMenuId(null)} 
-                                        />
-                                        <motion.div 
-                                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                          className="absolute bottom-full left-0 mb-2 z-50 bg-surface border border-border rounded-xl shadow-xl overflow-hidden min-w-[160px]"
-                                        >
-                                          <div className="flex flex-col p-1">
-                                            {/* Mobile Only Items */}
-                                            <div className="flex flex-col">
-                                              <button 
-                                                onClick={() => { handleFeedback(msg.id, 'upvote'); setActiveMoreMenuId(null); }}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'text-foreground/70 hover:text-foreground'}`}
-                                              >
-                                                <ThumbsUp size={14} className={msg.feedback === 'upvote' ? 'fill-current' : ''} />
-                                                <span>Good response</span>
-                                              </button>
-                                              <button 
-                                                onClick={() => { handleFeedback(msg.id, 'downvote'); setActiveMoreMenuId(null); }}
-                                                className={`flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] transition-colors ${msg.feedback === 'downvote' ? 'text-red-500' : 'text-foreground/70 hover:text-foreground'}`}
-                                              >
-                                                <ThumbsDown size={14} className={msg.feedback === 'downvote' ? 'fill-current' : ''} />
-                                                <span>Bad response</span>
-                                              </button>
-                                              {(!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) && (
-                                                <button 
-                                                  onClick={() => {
-                                                    setActiveMoreMenuId(null);
-                                                    if (speakingMessageId === msg.id) {
-                                                      window.speechSynthesis.cancel();
-                                                      setSpeakingMessageId(null);
-                                                    } else {
-                                                      const textToRead = cleanTTSContent(msg.content);
-                                                      speakUtteranceFemale(textToRead, () => setSpeakingMessageId(msg.id), () => setSpeakingMessageId(null));
-                                                    }
-                                                  }}
-                                                  className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-surface-hover text-[13px] text-foreground/70 hover:text-foreground transition-colors"
-                                                >
-                                                  {speakingMessageId === msg.id ? <Square size={14} /> : <Volume2 size={14} />}
-                                                  <span>{speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}</span>
-                                                </button>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </motion.div>
-                                      </>
-                                    )}
-                                  </AnimatePresence>
                                 </div>
 
                                 {(() => {
@@ -2485,7 +2418,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               >
                                 {msg.content}
                               </p>
-                              <div className="absolute -bottom-10 right-0 hidden md:flex items-center gap-1 opacity-100 transition-opacity">
+                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 opacity-100 transition-opacity">
                                 <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
