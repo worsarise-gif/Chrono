@@ -1,28 +1,29 @@
+import 'server-only';
 export const getApiKeys = (provider: 'gemini' | 'groq' | 'cerebras' | 'cloudflare' | 'tavily' | 'googleSearch'): any[] => {
   switch (provider) {
     case 'gemini':
       return [
-        process.env.NEXT_PUBLIC_GEMINI_API_KEY,
-        process.env.NEXT_PUBLIC_GEMINI_API_KEY_SECONDARY,
-        process.env.NEXT_PUBLIC_GEMINI_API_KEY_TERTIARY
+        process.env.GEMINI_API_KEY,
+        process.env.GEMINI_API_KEY_SECONDARY,
+        process.env.GEMINI_API_KEY_TERTIARY
       ].filter(Boolean) as string[];
     case 'groq':
       return [
-        process.env.NEXT_PUBLIC_GROQ_API_KEY,
-        process.env.NEXT_PUBLIC_GROQ_API_KEY_SECONDARY,
-        process.env.NEXT_PUBLIC_GROQ_API_KEY_TERTIARY
+        process.env.GROQ_API_KEY,
+        process.env.GROQ_API_KEY_SECONDARY,
+        process.env.GROQ_API_KEY_TERTIARY
       ].filter(Boolean) as string[];
     case 'cerebras':
       return [
-        process.env.NEXT_PUBLIC_CEREBRAS_API_KEY,
-        process.env.NEXT_PUBLIC_CEREBRAS_API_KEY_SECONDARY,
-        process.env.NEXT_PUBLIC_CEREBRAS_API_KEY_TERTIARY
+        process.env.CEREBRAS_API_KEY,
+        process.env.CEREBRAS_API_KEY_SECONDARY,
+        process.env.CEREBRAS_API_KEY_TERTIARY
       ].filter(Boolean) as string[];
     case 'tavily':
       return [
-        process.env.NEXT_PUBLIC_TAVILY_API_KEY || process.env.TAVILY_API_KEY,
-        process.env.NEXT_PUBLIC_TAVILY_API_KEY_SECONDARY,
-        process.env.NEXT_PUBLIC_TAVILY_API_KEY_TERTIARY
+        process.env.TAVILY_API_KEY || process.env.TAVILY_API_KEY,
+        process.env.TAVILY_API_KEY_SECONDARY,
+        process.env.TAVILY_API_KEY_TERTIARY
       ].filter(Boolean) as string[];
     case 'cloudflare':
       return [
@@ -32,9 +33,9 @@ export const getApiKeys = (provider: 'gemini' | 'groq' | 'cerebras' | 'cloudflar
       ].filter(k => k.accountId && k.token);
     case 'googleSearch':
       return [
-        { key: process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY, cx: process.env.GOOGLE_CX || process.env.NEXT_PUBLIC_GOOGLE_CX },
-        { key: process.env.GOOGLE_API_KEY_SECONDARY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY_SECONDARY, cx: process.env.GOOGLE_CX_SECONDARY || process.env.NEXT_PUBLIC_GOOGLE_CX_SECONDARY },
-        { key: process.env.GOOGLE_API_KEY_TERTIARY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY_TERTIARY, cx: process.env.GOOGLE_CX_TERTIARY || process.env.NEXT_PUBLIC_GOOGLE_CX_TERTIARY }
+        { key: process.env.GOOGLE_API_KEY || process.env.GOOGLE_API_KEY, cx: process.env.GOOGLE_CX || process.env.GOOGLE_CX },
+        { key: process.env.GOOGLE_API_KEY_SECONDARY || process.env.GOOGLE_API_KEY_SECONDARY, cx: process.env.GOOGLE_CX_SECONDARY || process.env.GOOGLE_CX_SECONDARY },
+        { key: process.env.GOOGLE_API_KEY_TERTIARY || process.env.GOOGLE_API_KEY_TERTIARY, cx: process.env.GOOGLE_CX_TERTIARY || process.env.GOOGLE_CX_TERTIARY }
       ].filter(k => k.key && k.cx);
   }
   return [];
