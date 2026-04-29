@@ -24,8 +24,8 @@ export default function PrivacyPolicyPage() {
               We collect information to provide better services to all our users. The types of information we collect include:
             </p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
-              <li>Information you create or provide to us (e.g., account details).</li>
-              <li>Information we collect as you use our services (e.g., usage data, device information).</li>
+              <li>Information you create or provide to us, including authentication details via Google Accounts.</li>
+              <li>Information we collect as you use our services, such as chat prompts, voice audio for transcription, image generation prompts, and web search queries.</li>
             </ul>
           </section>
 
@@ -58,7 +58,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc pl-5 mt-2 space-y-1">
               <li>With your consent.</li>
-              <li>For external processing by trusted partners.</li>
+              <li>For external processing by third-party API providers, including Groq, Cerebras, Google GenAI, Cloudflare, and Tavily, which are used to process user inputs. Web search queries are temporarily cached in Firebase/Firestore for up to 72 hours.</li>
               <li>For legal reasons if we have a good-faith belief that access, use, preservation, or disclosure of the information is reasonably necessary to meet any applicable law, regulation, legal process, or enforceable governmental request.</li>
             </ul>
           </section>

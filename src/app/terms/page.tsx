@@ -30,8 +30,8 @@ export default function TermsOfUsePage() {
           <section>
             <h2 className="text-xl font-medium text-white mb-3">2. Description of Service</h2>
             <p>
-              Chrono provides users with access to a rich collection of resources, including various AI communications tools, search services, and personalized content.
-              You understand and agree that the Service is provided "AS-IS" and that Chrono assumes no responsibility for the timeliness, deletion, mis-delivery, or failure to store any user communications or personalization settings.
+              Chrono provides users with access to a rich collection of resources, including specific AI services: AI chat, image generation, voice transcription, and web search functionality.
+              You understand and agree that the Service and its AI-generated content are provided "AS-IS" and may be inaccurate or subject to rate limits and API fallback mechanisms. Chrono assumes no responsibility for the timeliness, deletion, mis-delivery, or failure to store any user communications or personalization settings.
             </p>
           </section>
 
@@ -39,7 +39,7 @@ export default function TermsOfUsePage() {
             <h2 className="text-xl font-medium text-white mb-3">3. User Conduct</h2>
             <p>
               You agree to use the Service only for lawful purposes. You agree not to take any action that might compromise the security of the Service, render the Service inaccessible to others, or otherwise cause damage to the Service or the Content.
-              You agree not to add to, subtract from, or otherwise modify the Content, or to attempt to access any Content that is not intended for you.
+              You agree to not abuse API calls, such as spamming requests to exhaust rate limits, and acknowledge that services depend on third-party APIs which could fail. You agree not to add to, subtract from, or otherwise modify the Content, or to attempt to access any Content that is not intended for you.
             </p>
           </section>
 
