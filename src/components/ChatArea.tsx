@@ -2114,7 +2114,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   transition={{ duration: 0.2 }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group w-full`}
                 >
-                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[95%] md:max-w-[85%]' : 'items-start w-full'} relative`}>
+                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[95%] md:max-w-[85%] overflow-hidden' : 'items-start w-full'} relative`}>
                     {msg.role === 'user' && msg.imageUrl && (
                       <motion.div 
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -2134,7 +2134,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </motion.div>
                     )}
 
-          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm' : 'bg-transparent text-foreground text-sm w-full'}`}>
+          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm overflow-hidden' : 'bg-transparent text-foreground text-sm w-full'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full">
                           {msg.content.startsWith('Error:') ? (
@@ -2279,7 +2279,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                           ) : (
                             <>
                               <p 
-                                className="whitespace-pre-wrap leading-relaxed break-words font-medium max-md:select-none"
+                                className="whitespace-pre-wrap leading-relaxed break-words font-medium max-md:select-none break-all"
                                 onTouchStart={(e) => handleTouchStart(e, msg.id, msg.content)}
                                 onTouchEnd={clearLongPress}
                                 onTouchMove={clearLongPress}
