@@ -1,69 +1,49 @@
-import { streamText } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { createOpenAI } from '@ai-sdk/openai';
-import { getApiKeys, withFallback } from '@/lib/apiFallback';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export const maxDuration = 60;
-
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const { messages, mode, classification } = await req.json();
-    let stream;
+    const body = await req.json();
+    const { url, apiKey, model, messages, stream, ...rest } = body;
 
-    const runGroqModel = async (model: string) => {
-      const keys = getApiKeys('groq');
-      return withFallback(keys, async (apiKey) => {
-        const groq = createOpenAI({ baseURL: 'https://api.groq.com/openai/v1', apiKey });
-        const result = await streamText({ model: groq(model), messages });
-        return result.toDataStreamResponse();
-      });
-    };
-
-    const runCerebrasModel = async (model: string) => {
-      const keys = getApiKeys('cerebras');
-      return withFallback(keys, async (apiKey) => {
-        const cerebras = createOpenAI({ baseURL: 'https://api.cerebras.ai/v1', apiKey });
-        const result = await streamText({ model: cerebras(model), messages });
-        return result.toDataStreamResponse();
-      });
-    };
-
-    const runGeminiModel = async (model: string) => {
-      const keys = getApiKeys('gemini');
-      return withFallback(keys, async (apiKey) => {
-        const google = createGoogleGenerativeAI({ apiKey });
-        const result = await streamText({ model: google(model), messages });
-        return result.toDataStreamResponse();
-      });
-    };
-
-    const geminiModelStr = 'gemini-1.5-flash';
-
-    if (classification === 'image' || messages.some((m: any) => m.content && Array.isArray(m.content) && m.content.some((c:any) => c.type === 'image' || c.type === 'image_url'))) {
-      try { stream = await runGroqModel('llama-3.2-11b-vision-preview'); }
-      catch { stream = await runGeminiModel(geminiModelStr); }
-    } else if (classification === 'pro' || mode === 'pro') {
-      try { stream = await runGroqModel('llama-3.3-70b-versatile'); }
-      catch {
-        try { stream = await runGroqModel('llama-3.1-70b-versatile'); }
-        catch { stream = await runCerebrasModel('llama3.1-70b'); }
-      }
-    } else if (classification === 'search' || mode === 'search') {
-      stream = await runGeminiModel(geminiModelStr);
-    } else {
-      if (Math.random() < 0.25) {
-        try { stream = await runGroqModel('llama-3.1-8b-instant'); }
-        catch { stream = await runGeminiModel(geminiModelStr); }
-      } else {
-        try { stream = await runGeminiModel(geminiModelStr); }
-        catch { stream = await runGroqModel('llama-3.1-8b-instant'); }
-      }
+    if (!url || !apiKey || !model || !messages) {
+      return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
     }
-    if (!stream) throw new Error("All fallback mechanisms failed.");
-    return stream;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        stream: !!stream,
+        ...rest
+      }),
+      signal: req.signal
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      return NextResponse.json({ error: `API Error ${response.status}: ${errorText}` }, { status: response.status });
+    }
+
+    if (stream) {
+      // Return the stream directly
+      return new NextResponse(response.body, {
+        headers: {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    } else {
+      const data = await response.json();
+      return NextResponse.json(data);
+    }
   } catch (error: any) {
-    console.error("Chat API Error:", error.message || "Unknown error");
-    return new NextResponse(JSON.stringify({ error: "Failed to generate response." }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    console.error('Proxy error:', error);
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
