@@ -291,8 +291,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           </Link>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
-              onClick={() => setIsCollapsed?.(true)}
-              className="text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface hidden md:block"
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setIsMobileOpen?.(false);
+                } else {
+                  setIsCollapsed?.(true);
+                }
+              }}
+              className="text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white transition-colors p-1 rounded-md hover:bg-surface"
             >
               <ChevronsLeft size={16} strokeWidth={2} />
             </button>
@@ -389,6 +395,10 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     setCurrentChatId(chat.id);
                                     setIsMobileOpen?.(false);
                                   }}
+                                  onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
+                                  }}
                                   className={`w-[calc(100%-16px)] mx-2 text-left block px-3 py-2 rounded-full transition-colors text-sm font-medium truncate pr-8 ${currentChatId === chat.id ? 'text-foreground dark:text-white bg-surface-hover' : 'text-foreground/60 dark:text-white dark:hover:text-white hover:bg-surface-hover/50 hover:text-foreground'}`}
                                   title={chat.title}
                                 >
@@ -406,7 +416,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                     e.stopPropagation();
                                     setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
                                   }}
-                                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-all z-[60] flex items-center justify-center"
+                                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-all z-[60] hidden md:flex items-center justify-center"
                                   title="More options"
                                 >
                                   <div className="relative w-3.5 h-3.5 flex items-center justify-center">
@@ -462,12 +472,14 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                     </React.Fragment>
                   ))}
                 </div>
-                <button 
-                  onClick={() => setIsChatHistoryModalOpen(true)}
-                  className={`text-left px-3 py-2 text-sm text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-medium transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-                >
-                  See all
-                </button>
+                {chats.length > 5 && (
+                  <button
+                    onClick={() => setIsChatHistoryModalOpen(true)}
+                    className={`text-left px-3 py-2 text-sm text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-medium transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                  >
+                    See all
+                  </button>
+                )}
               </>
             )}
           </div>
