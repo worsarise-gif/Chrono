@@ -2478,7 +2478,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                           ) : (
                             <>
                               <p 
-                                className="whitespace-pre-wrap leading-relaxed break-words font-medium"
+                                className="whitespace-pre-wrap leading-relaxed break-words font-medium max-md:select-none"
                                 onTouchStart={(e) => handleTouchStart(e, msg.id, msg.content)}
                                 onTouchEnd={clearLongPress}
                                 onTouchMove={clearLongPress}
