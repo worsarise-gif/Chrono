@@ -25,7 +25,7 @@ export const SplashScreen = () => {
       opacity: 1,
       x: 0,
       transition: {
-        type: 'spring',
+        type: 'spring' as const,
         damping: 12,
         stiffness: 100,
       },
@@ -40,7 +40,7 @@ export const SplashScreen = () => {
           initial={{ x: 100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{
-            type: 'spring',
+            type: 'spring' as const,
             damping: 15,
             stiffness: 100,
             duration: 0.8,

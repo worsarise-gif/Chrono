@@ -18,7 +18,6 @@ import 'ldrs/react/Helix.css';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { useRouter, usePathname } from 'next/navigation';
-import { ProfileModal } from './ProfileModal';
 import { ChatHistoryModal } from './ChatHistoryModal';
 
 interface Chat {
@@ -92,7 +91,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [isSavingTitle, setIsSavingTitle] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isChatHistoryModalOpen, setIsChatHistoryModalOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -530,7 +529,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             {user ? (
               <>
                 <div 
-                  onClick={() => setIsProfileModalOpen(true)}
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                   className="w-9 h-9 rounded-full flex items-center justify-center text-white font-medium text-[14px] cursor-pointer hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto overflow-hidden"
                   style={{ 
                     backgroundColor: (user.profile?.photoURL || user.photoURL) ? 'transparent' : `hsl(${(user.email?.length || 0) * 137.5 % 360}, 60%, 50%)` 
@@ -543,6 +542,18 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                   )}
                 </div>
                 
+                {/* Profile Dropdown */}
+                {isProfileDropdownOpen && (
+                  <div className="absolute bottom-12 left-[12px] bg-surface border border-border/50 rounded-xl shadow-lg py-2 w-48 z-[10000]">
+                    <Link href="/settings" className="block px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-surface-hover transition-colors" onClick={() => setIsProfileDropdownOpen(false)}>
+                      Settings
+                    </Link>
+                    <Link href="/profile" className="block px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-surface-hover transition-colors" onClick={() => setIsProfileDropdownOpen(false)}>
+                      Profile
+                    </Link>
+                  </div>
+                )}
+
                 {/* Profile Tooltip */}
                 {isCollapsed && (
                   <div className="fixed left-[64px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[22px]">
@@ -568,12 +579,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         </div>
         </div>
       </div>
-
-      {/* Profile Modal */}
-      <ProfileModal 
-        isOpen={isProfileModalOpen} 
-        onClose={() => setIsProfileModalOpen(false)} 
-      />
 
       {/* Chat History Modal */}
       <ChatHistoryModal
