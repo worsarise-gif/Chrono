@@ -31,7 +31,6 @@ erDiagram
         string content
         timestamp createdAt
         boolean hasImage
-        boolean hasAudio
         boolean isGeneratedImage
         boolean isStreaming
         string chatId FK
@@ -72,7 +71,7 @@ flowchart TD
     UI <-->|Auth State & Reads| FirebaseClient[Firebase Auth / Firestore]
 
     API <-->|Reads & Writes| Firestore[(Firestore Database)]
-    API <-->|Primary Chat, Vision, Transcription| Groq[Groq API]
+    API <-->|Primary Chat, Vision| Groq[Groq API]
     API <-->|Summarization, Formatting| Gemini[Gemini API]
     API <-->|Image Generation| Cloudflare[Cloudflare API]
     API <-->|Chat Fallback| Cerebras[Cerebras API]
@@ -85,10 +84,7 @@ This flowchart traces the core process logic of the application from user input 
 
 ```mermaid
 flowchart TD
-    A([User Input: Message / Media]) --> B{Is Audio?}
-    B -- Yes --> C[Transcribe Audio via Groq]
-    B -- No --> D{Is Image Gen Prompt?}
-    C --> D
+    A([User Input: Message / Media]) --> D{Is Image Gen Prompt?}
 
     D -- Yes --> E[Generate Image via Cloudflare]
     E --> F[Save to Firestore: generated_images]
@@ -146,7 +142,6 @@ The application utilizes Firebase Firestore, a NoSQL document database. Below is
 * **createdAt**: `timestamp` (immutable)
 * **uid**: `string` (Foreign Key to users)
 * **hasImage**: `boolean` (optional)
-* **hasAudio**: `boolean` (optional)
 * **isGeneratedImage**: `boolean` (optional)
 * **isStreaming**: `boolean` (optional)
 
