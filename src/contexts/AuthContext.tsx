@@ -5,8 +5,7 @@ import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/fires
 import { auth, db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
-import { Helix } from 'ldrs/react';
-import 'ldrs/react/Helix.css';
+import { SplashScreen } from '../components/SplashScreen';
 
 interface UserProfile {
   uid: string;
@@ -33,6 +32,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<(User & { profile?: UserProfile }) | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
   const isAdmin = !!(
     user?.profile?.role === 'admin' || 
@@ -42,6 +42,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isBanned = !!user?.profile?.isBanned;
 
   useEffect(() => {
+    // Ensure splash screen shows for at least 2 seconds
+    const minSplashTime = 2000;
+    const splashTimeoutId = setTimeout(() => {
+      setShowSplash(false);
+    }, minSplashTime);
+
     console.log("AuthProvider: Initializing onAuthStateChanged...");
     const timeoutId = setTimeout(() => {
       if (loading) {
@@ -122,17 +128,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubscribe();
       if (unsubscribeProfile) unsubscribeProfile();
       clearTimeout(timeoutId);
+      clearTimeout(splashTimeoutId);
     };
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[100dvh] w-full bg-background text-foreground">
-        <div className="mb-4">
-          <Helix size="45" speed="2.5" color="var(--color-foreground)" />
-        </div>
-      </div>
-    );
+  if (loading || showSplash) {
+    return <SplashScreen />;
   }
 
   return (
