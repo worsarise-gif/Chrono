@@ -32,8 +32,6 @@ erDiagram
         string content
         timestamp createdAt
         boolean hasImage
-        string imageUrl
-        boolean hasAudio
         boolean isGeneratedImage
         boolean isStreaming
         string uid FK
@@ -81,6 +79,16 @@ The Context Diagram outlines the high-level interactions between the User, the s
 
 ```mermaid
 flowchart TD
+    User([User]) <-->|Interacts via UI| UI[Next.js Frontend]
+    UI <-->|API Calls & Streaming| API[Next.js API Routes / Vercel AI SDK]
+    UI <-->|Auth State & Reads| FirebaseClient[Firebase Auth / Firestore]
+
+    API <-->|Reads & Writes| Firestore[(Firestore Database)]
+    API <-->|Primary Chat, Vision| Groq[Groq API]
+    API <-->|Summarization, Formatting| Gemini[Gemini API]
+    API <-->|Image Generation| Cloudflare[Cloudflare API]
+    API <-->|Chat Fallback| Cerebras[Cerebras API]
+    API <-->|Web Search| Tavily[Tavily API]
     User([User / Browser]) <-->|Interacts via Chat UI| UI[Next.js Frontend\nReact Components]
 
     UI <-->|Auth State & Profile Sync| FirebaseAuth[Firebase Authentication]
@@ -112,79 +120,31 @@ This flowchart traces the core process logic of the application from initial pag
 
 ```mermaid
 flowchart TD
-    A([User Opens App]) --> B{Is Authenticated?}
-    B -- No --> C[Show AuthPage:\nEmail/Password or Google Sign-In]
-    C --> D[Firebase Auth]
-    D --> E{Auth Success?}
-    E -- No --> C
-    E -- Yes --> F[Load Chat Interface]
-    B -- Yes --> F
+    A([User Input: Message / Media]) --> D{Is Image Gen Prompt?}
 
-    F --> G{Is Account Banned?}
-    G -- Yes --> H[Show Banned Screen\nOffer Sign Out]
-    G -- No --> I[Render Sidebar + ChatArea\nLoad Chat History from Firestore]
+    D -- Yes --> E[Generate Image via Cloudflare]
+    E --> F[Save to Firestore: generated_images]
+    F --> G([Return Image to UI])
 
-    I --> J([User Submits Message])
+    D -- No --> H{Needs Web Search?}
+    H -- Yes --> I[Search via Tavily]
+    I --> J[Cache Search Results in Firestore]
+    J --> K[Append Context to Prompt]
+    H -- No --> K
 
-    J --> K{Is Voice Input?}
-    K -- Yes --> L[Record Audio via MediaRecorder API]
-    L --> M[POST /api/transcribe\nGroq Whisper Model]
-    M --> N[Transcribed Text]
-    K -- No --> N
+    K --> L[Send Prompt to Primary AI: Groq]
+    L --> M{Success?}
+    M -- No --> N[Send to Fallback AI: Cerebras]
+    M -- Yes --> O[Response Generated]
+    N --> O
 
-    N --> O{Has Image Attachment?}
-    O -- Yes --> P[Resize and Encode Image\nto Base64 via Canvas API]
-    P --> Q[Set hasImage flag\nPrepare vision payload]
-    O -- No --> Q
+    O --> P{Needs Formatting/Summary?}
+    P -- Yes --> Q[Process via Gemini]
+    P -- No --> R[Final Payload]
+    Q --> R
 
-    Q --> R{Detect User Intent}
-
-    R -- Image Generation Keyword --> S[POST /api/generate-image\nCloudflare SDXL-Base-1.0]
-    S --> S1{Success?}
-    S1 -- No --> S2[Retry: SDXL-Lightning\nFallback Model]
-    S1 -- Yes --> S3[Convert ArrayBuffer to Base64]
-    S2 --> S3
-    S3 --> S4[addDoc to\nusers/uid/generated_images]
-    S4 --> T([Display Generated Image\nin Chat Messages])
-
-    R -- Search Mode or Auto Web Query --> U[POST /api/search\nCheck Firestore Cache First]
-    U --> U1{Cache Hit under 72h?}
-    U1 -- Yes --> U2[Return Cached Results]
-    U1 -- No --> U3[Call Tavily API\nvia withFallback key rotation]
-    U3 --> U4{Tavily Success?}
-    U4 -- No --> U5[Fallback: Google CSE API\nvia withFallback key rotation]
-    U4 -- Yes --> U6[Write Results to\nFirestore search_cache]
-    U5 --> U6
-    U2 --> V[Inject Search Results\ninto System Prompt Context]
-    U6 --> V
-
-    R -- Standard Text Chat --> V
-
-    V --> W{Select AI Model\nBased on Mode Setting}
-    W -- Auto or Flash Mode with Image --> X[Groq: llama-3.2-11b-vision-preview]
-    W -- Auto or Flash Mode Text Only --> X2[Groq: llama-3.3-70b-versatile]
-    W -- Pro Mode --> Y[Gemini: gemini-2.5-flash]
-    W -- Cloudflare Mode --> Z[Cloudflare: llama-3-8b-instruct]
-
-    X --> AA{Stream Response\nSuccess?}
-    X2 --> AA
-    Y --> AA
-    Z --> AA
-
-    AA -- No: 429 or 5xx Error --> BB[withFallback:\nRotate to Next API Key\nCircuit Breaker Pattern]
-    BB --> CC{More Keys Available?}
-    CC -- Yes --> AA
-    CC -- No --> DD[Provider Fallback:\nCerebras llama3.1-70b\nor Groq llama-3.1-8b-instant]
-    DD --> AA
-
-    AA -- Yes --> EE[Stream Response Chunks\nto UI via SSE]
-    EE --> FF[addDoc User Message\nto Firestore Messages]
-    FF --> GG[addDoc Model Response\nto Firestore Messages]
-    GG --> HH{First Message\nin Chat?}
-    HH -- Yes --> II[Groq: Generate Chat Title\nfrom Conversation Context]
-    II --> JJ[updateDoc Chat Title\nin Firestore]
-    HH -- No --> KK([Done: Final Response Displayed])
-    JJ --> KK
+    R --> S[Save Message to Firestore]
+    S --> T([Stream Response to UI])
 ```
 
 ---
@@ -232,24 +192,14 @@ Stores individual chat sessions belonging to a user.
 ---
 
 ### 3. `messages` (Subcollection of `users/{userId}/chats/{chatId}`)
-
-Stores individual messages within a chat session, ordered by `createdAt`.
-
-| Field | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `string` | **Primary Key** (Firestore auto-generated) | Unique message ID |
-| `role` | `string` | Required, immutable; enum: `'user'` or `'model'` | Identifies the message sender |
-| `content` | `string` | Required, max 1,048,576 bytes (1MB) | Message text content; supports Markdown and LaTeX |
-| `createdAt` | `timestamp` | Required, immutable | Message creation timestamp |
-| `uid` | `string` | Optional FK → `users/{uid}`, max 128 chars | User ID of the chat owner for ownership verification |
-| `hasImage` | `boolean` | Optional | Whether an image was attached to this message |
-| `imageUrl` | `string` | Optional | Base64-encoded or URL reference for the attached image |
-| `hasAudio` | `boolean` | Optional | Whether the message originated from voice/audio input |
-| `isGeneratedImage` | `boolean` | Optional | Whether the message body contains an AI-generated image |
-| `isStreaming` | `boolean` | Optional | Live flag while the model is actively streaming the response |
-| *(path-derived)* `chatId` | — | FK → `chats/{chatId}` | Implicit foreign key derived from the document path |
-
----
+* **id**: `string` (Primary Key)
+* **role**: `string` (Enum: 'user', 'model')
+* **content**: `string` (Required, limit 1MB)
+* **createdAt**: `timestamp` (immutable)
+* **uid**: `string` (Foreign Key to users)
+* **hasImage**: `boolean` (optional)
+* **isGeneratedImage**: `boolean` (optional)
+* **isStreaming**: `boolean` (optional)
 
 ### 4. `generated_images` (Subcollection of `users/{userId}`)
 
