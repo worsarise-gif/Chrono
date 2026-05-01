@@ -27,8 +27,83 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
 
   const isImaginePage = pathname === '/imagine';
 
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    setIsResending(true);
+    setResendSuccess(null);
+    setResendError(null);
+    try {
+      const response = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email })
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send verification email');
+      }
+      setResendSuccess('Verification email sent! Please check your inbox.');
+    } catch (err: any) {
+      setResendError(err.message || 'An error occurred while sending the email.');
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   if (!user) {
     return <AuthPage />;
+  }
+
+  if (!user.emailVerified && user.providerData?.[0]?.providerId === 'password') {
+    return (
+      <div className="flex h-[100dvh] w-full relative items-center justify-center bg-background text-foreground">
+        <StarryBackground />
+        <div className="relative z-10 bg-surface border border-border p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
+          <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Verify Your Email</h2>
+          <p className="text-muted-foreground text-sm mb-6">
+            Please verify your email address ({user.email}) to continue using Chrono.
+          </p>
+
+          {resendSuccess && (
+            <div className="p-3 mb-4 text-sm text-green-400 bg-green-900/20 border border-green-500/20 rounded-xl">
+              {resendSuccess}
+            </div>
+          )}
+          {resendError && (
+            <div className="p-3 mb-4 text-sm text-red-400 bg-red-900/20 border border-red-500/20 rounded-xl">
+              {resendError}
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <button
+              onClick={handleResendVerification}
+              disabled={isResending}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background rounded-xl font-medium hover:opacity-90 transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isResending ? 'Sending...' : 'Resend Verification Email'}
+            </button>
+            <button
+              onClick={handleSwitchAccount}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-surface text-foreground border border-border rounded-xl font-medium hover:bg-white/5 transition-all"
+            >
+              <LogOut size={18} />
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (isBanned) {
