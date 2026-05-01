@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { auth, loginWithGoogle } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { ChevronDown, Mail, ArrowRight, Loader2, Key } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
@@ -34,9 +34,28 @@ export default function AuthPage() {
         if (!email || !password) throw new Error('Email and password are required.');
         if (password.length < 6) throw new Error('Password should be at least 6 characters.');
         await createUserWithEmailAndPassword(auth, email, password);
+
+        const response = await fetch('/api/auth/verify-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to send verification email');
+        }
+        setSuccess('Account created! Please check your email to verify your account.');
       } else if (mode === 'forgot_password') {
         if (!email) throw new Error('Please enter your email address.');
-        await sendPasswordResetEmail(auth, email);
+        const response = await fetch('/api/auth/reset-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to send password reset email');
+        }
         setSuccess('Password reset link sent! Check your email.');
         // Don't auto-redirect, let the user read the success message
       }
