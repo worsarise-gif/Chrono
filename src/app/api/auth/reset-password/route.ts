@@ -1,19 +1,21 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import { admin } from '@/lib/firebaseAdmin';
+import { auth } from '@/lib/firebaseAdmin';
 
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
 
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    if (!email || typeof email !== 'string') {
+      return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
     }
 
-    const resetLink = await admin.auth().generatePasswordResetLink(email, {
+    // Generate the Firebase reset password link
+    const resetLink = await auth.generatePasswordResetLink(email, {
       url: 'https://chronoaiassistant.vercel.app/reset-password',
     });
 
+    // Setup nodemailer transporter
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -22,61 +24,98 @@ export async function POST(request: Request) {
       },
     });
 
-    const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reset Password</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #ffffff;">
-    <tr>
-      <td align="center" style="padding: 40px 20px;">
-        <table width="100%" max-width="600" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px;">
-          <tr>
-            <td style="color: #333333; font-size: 24px; font-weight: bold; padding-bottom: 20px; text-align: center;">
-              Password Reset Request
-            </td>
-          </tr>
-          <tr>
-            <td style="color: #555555; font-size: 16px; line-height: 1.5; padding-bottom: 30px; text-align: center;">
-              We received a request to reset your password. Click the button below to choose a new password. If you didn't make this request, you can safely ignore this email.
-            </td>
-          </tr>
-          <tr>
-            <td align="center" style="padding-bottom: 30px;">
-              <a href="${resetLink}" style="display: inline-block; background-color: #000000; color: #ffffff; font-size: 16px; font-weight: bold; text-decoration: none; padding: 14px 28px; border-radius: 6px;">
-                Reset Password
-              </a>
-            </td>
-          </tr>
-          <tr>
-            <td style="color: #777777; font-size: 14px; line-height: 1.5; text-align: center; border-top: 1px solid #eeeeee; padding-top: 20px;">
-              If the button doesn't work, copy and paste this link into your browser:<br>
-              <a href="${resetLink}" style="color: #0066cc; word-break: break-all;">${resetLink}</a>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`;
+    // Professional HTML Email Template
+    const htmlTemplate = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Reset Your Password</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+            color: #333333;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            text-align: center;
+          }
+          .header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 24px;
+          }
+          .message {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 32px;
+          }
+          .button-container {
+            margin-bottom: 32px;
+          }
+          .button {
+            display: inline-block;
+            background-color: #000000;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+          }
+          .fallback {
+            font-size: 14px;
+            color: #666666;
+            line-height: 1.5;
+            word-break: break-all;
+          }
+          .fallback a {
+            color: #0066cc;
+            text-decoration: underline;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">Reset Your Password</div>
+          <div class="message">
+            We received a request to reset your password. Click the button below to choose a new password.
+          </div>
+          <div class="button-container">
+            <a href="${resetLink}" class="button">Reset Password</a>
+          </div>
+          <div class="fallback">
+            If the button doesn't work, copy and paste this link into your browser:<br>
+            <a href="${resetLink}">${resetLink}</a>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
 
+    // Send the email
     await transporter.sendMail({
-      from: `"Chrono" <${process.env.EMAIL_USER}>`,
+      from: `"Chrono Support" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: 'Reset your password for Chrono',
-      text: `Reset your password by clicking here: ${resetLink}`,
-      html: html,
+      subject: 'Reset Your Password - Chrono',
+      text: `We received a request to reset your password. Please copy and paste this link into your browser to choose a new password: ${resetLink}`,
+      html: htmlTemplate,
     });
 
-    return NextResponse.json({ message: 'Password reset email sent successfully' }, { status: 200 });
-
+    return NextResponse.json({ success: true, message: 'Password reset email sent successfully.' }, { status: 200 });
   } catch (error: any) {
-    console.error('Error sending password reset email:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Error sending reset password email:', error);
+
+    // Provide general 500 error, or handle specific firebase admin / nodemailer errors if needed
+    return NextResponse.json(
+      { error: error?.message || 'An error occurred while sending the password reset email.' },
+      { status: 500 }
+    );
   }
 }
