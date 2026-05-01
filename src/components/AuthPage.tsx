@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { auth, loginWithGoogle } from '../firebase';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { ChevronDown, Mail, ArrowRight, Loader2, Key } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
@@ -33,6 +33,7 @@ export default function AuthPage() {
       } else if (mode === 'register') {
         if (!email || !password) throw new Error('Email and password are required.');
         if (password.length < 6) throw new Error('Password should be at least 6 characters.');
+
         await createUserWithEmailAndPassword(auth, email, password);
 
         const response = await fetch('/api/auth/verify-email', {
