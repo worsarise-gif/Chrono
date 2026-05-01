@@ -10,9 +10,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
-    const verifyLink = await admin.auth().generateEmailVerificationLink(email, {
+    const rawVerifyLink = await admin.auth().generateEmailVerificationLink(email, {
       url: 'https://chronoaiassistant.vercel.app/verify-email',
     });
+
+    // Firebase action URL is sometimes globally configured to another path like /reset-password.
+    // Parse the generated link and force the path to be /verify-email so the flows remain separated.
+    const urlObj = new URL(rawVerifyLink);
+    urlObj.pathname = '/verify-email';
+    const verifyLink = urlObj.toString();
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
