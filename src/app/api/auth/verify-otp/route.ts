@@ -3,7 +3,7 @@ import { db, auth } from '@/lib/firebaseAdmin';
 
 export async function POST(request: Request) {
   try {
-    const { email, otp } = await request.json();
+    const { email, otp, password } = await request.json();
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
@@ -35,11 +35,27 @@ export async function POST(request: Request) {
 
     // OTP is valid and not expired, verify the user's email
     try {
-      const userRecord = await auth.getUserByEmail(email);
-      await auth.updateUser(userRecord.uid, { emailVerified: true });
+      try {
+        const userRecord = await auth.getUserByEmail(email);
+        await auth.updateUser(userRecord.uid, { emailVerified: true });
+      } catch (err: any) {
+        if (err.code === 'auth/user-not-found') {
+          // New user registration
+          if (!password || typeof password !== 'string') {
+            return NextResponse.json({ error: 'Password is required for registration.' }, { status: 400 });
+          }
+          await auth.createUser({
+            email,
+            password,
+            emailVerified: true,
+          });
+        } else {
+          throw err; // Re-throw if it's a different error
+        }
+      }
     } catch (err: any) {
-      console.error('Error updating user verification status:', err);
-      return NextResponse.json({ error: 'Failed to update user verification status.' }, { status: 500 });
+      console.error('Error updating/creating user:', err);
+      return NextResponse.json({ error: 'Failed to update or create user.' }, { status: 500 });
     }
 
     // Delete the OTP document to prevent reuse

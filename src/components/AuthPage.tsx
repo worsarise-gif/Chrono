@@ -36,8 +36,6 @@ export default function AuthPage() {
         if (!email || !password) throw new Error('Email and password are required.');
         if (password.length < 6) throw new Error('Password should be at least 6 characters.');
 
-        await createUserWithEmailAndPassword(auth, email, password);
-
         const response = await fetch('/api/auth/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -45,8 +43,14 @@ export default function AuthPage() {
         });
         const data = await response.json();
         if (!response.ok) {
+          if (data.error === 'An account with this email already exists.') {
+            throw { code: 'auth/email-already-in-use' };
+          }
           throw new Error(data.error || 'Failed to send verification email');
         }
+
+        // Persist password securely before redirecting
+        sessionStorage.setItem('pending_registration_password', password);
 
         // Immediately redirect to the verification page
         router.push('/verify-email?email=' + encodeURIComponent(email));

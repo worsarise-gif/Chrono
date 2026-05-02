@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import { db } from '@/lib/firebaseAdmin';
+import { db, auth } from '@/lib/firebaseAdmin';
 import crypto from 'crypto';
 
 export async function POST(request: Request) {
@@ -9,6 +9,22 @@ export async function POST(request: Request) {
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
+    }
+
+    try {
+      const userRecord = await auth.getUserByEmail(email);
+      if (userRecord.emailVerified) {
+        return NextResponse.json(
+          { error: 'An account with this email already exists.' },
+          { status: 400 }
+        );
+      }
+      // If user exists but is unverified, allow OTP generation to proceed
+    } catch (error: any) {
+      if (error.code !== 'auth/user-not-found') {
+        throw error;
+      }
+      // User not found, allow OTP generation to proceed for new registration
     }
 
     // Generate a secure 6-digit OTP
