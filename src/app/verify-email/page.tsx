@@ -4,6 +4,8 @@ import React, { useState, Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Loader2, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '@/firebase';
 
 function VerifyOTPHandler() {
   const searchParams = useSearchParams();
@@ -29,10 +31,12 @@ function VerifyOTPHandler() {
     setIsLoading(true);
 
     try {
+      const password = sessionStorage.getItem('pending_registration_password');
+
       const response = await fetch('/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp })
+        body: JSON.stringify({ email, otp, password: password || undefined })
       });
 
       const data = await response.json();
@@ -43,9 +47,21 @@ function VerifyOTPHandler() {
 
       setSuccess('Email verified! Redirecting...');
 
-      // Redirect to login or dashboard
+      if (password) {
+        // Automatically sign the user in
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+        } catch (signInError) {
+          console.error("Auto sign-in failed:", signInError);
+          // Let them proceed to login manually if auto sign-in fails
+        }
+      }
+
+      sessionStorage.removeItem('pending_registration_password');
+
+      // Redirect to home/dashboard if signed in, otherwise to login
       setTimeout(() => {
-        router.push('/login');
+        router.push(password ? '/' : '/login');
       }, 2000);
 
     } catch (err: any) {
