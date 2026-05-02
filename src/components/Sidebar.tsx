@@ -4,7 +4,6 @@ import { ChevronsLeft, ChevronsRight, LogIn, Trash2, MoreVertical, Check, X, Shi
 import { SearchIcon } from './icons/SearchIcon';
 import { EditIcon } from './icons/EditIcon';
 import { GalleryIcon } from './icons/GalleryIcon';
-import { AudioIcon } from './icons/AudioIcon';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
@@ -316,7 +315,6 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             />
             <NavItem icon={<EditIcon style={{ width: '18px', height: '18px' }} />} label="Chat" onClick={() => { setCurrentChatId(null); setIsMobileOpen?.(false); }} active={!currentChatId && !pathname.startsWith('/imagine')} isCollapsed={isCollapsed} index={1} />
             <NavItem icon={<GalleryIcon style={{ width: '18px', height: '18px' }} />} label="Imagined" onClick={() => { router.push('/imagine'); setIsMobileOpen?.(false); }} active={pathname.startsWith('/imagine')} hasDot isCollapsed={isCollapsed} index={2} />
-            <NavItem icon={<AudioIcon style={{ width: '18px', height: '18px' }} />} label="Voice" onClick={() => {}} isCollapsed={isCollapsed} index={3} />
           </ul>
         </nav>
 

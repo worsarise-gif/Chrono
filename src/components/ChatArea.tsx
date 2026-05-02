@@ -625,10 +625,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
         setStreamingMessage('');
         setCurrentStreamingMessageId(null);
         setIsLoading(false);
-        setAbortController(prev => {
-          if (prev) prev.abort();
-          return null;
-        });
+        setAbortController(null);
       }
       isCreatingNewChatRef.current = false;
       previousChatIdRef.current = currentChatId;
@@ -2418,7 +2415,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               >
                                 {msg.content}
                               </p>
-                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 opacity-100 transition-opacity">
+                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity">
                                 <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
