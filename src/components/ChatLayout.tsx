@@ -37,7 +37,7 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
     setResendSuccess(null);
     setResendError(null);
     try {
-      const response = await fetch('/api/auth/verify-email', {
+      const response = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: user.email })
@@ -46,7 +46,7 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
       if (!response.ok) {
         throw new Error(data.error || 'Failed to send verification email');
       }
-      setResendSuccess('Verification email sent! Please check your inbox.');
+      setResendSuccess('Verification code sent! Please check your inbox.');
     } catch (err: any) {
       setResendError(err.message || 'An error occurred while sending the email.');
     } finally {
@@ -87,11 +87,17 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
 
           <div className="space-y-3">
             <button
+              onClick={() => window.location.href = `/verify-email?email=${encodeURIComponent(user.email || '')}`}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background rounded-xl font-medium hover:opacity-90 transition-all shadow-lg"
+            >
+              Enter Verification Code
+            </button>
+            <button
               onClick={handleResendVerification}
               disabled={isResending}
-              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background rounded-xl font-medium hover:opacity-90 transition-all shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-surface text-foreground border border-border rounded-xl font-medium hover:bg-white/5 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              {isResending ? 'Sending...' : 'Resend Verification Email'}
+              {isResending ? 'Sending...' : 'Resend Verification Code'}
             </button>
             <button
               onClick={handleSwitchAccount}
