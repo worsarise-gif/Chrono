@@ -4,10 +4,12 @@ import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } f
 import { ChevronDown, Mail, ArrowRight, Loader2, Key } from 'lucide-react';
 import { PlanetLogo } from './PlanetLogo';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type AuthMode = 'login' | 'register' | 'forgot_password';
 
 export default function AuthPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,7 +38,7 @@ export default function AuthPage() {
 
         await createUserWithEmailAndPassword(auth, email, password);
 
-        const response = await fetch('/api/auth/verify-email', {
+        const response = await fetch('/api/auth/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email })
@@ -45,7 +47,10 @@ export default function AuthPage() {
         if (!response.ok) {
           throw new Error(data.error || 'Failed to send verification email');
         }
-        setSuccess('Account created! Please check your email to verify your account.');
+
+        // Immediately redirect to the verification page
+        router.push('/verify-email?email=' + encodeURIComponent(email));
+        return; // Stop execution here so we don't clear loading state prematurely
       } else if (mode === 'forgot_password') {
         if (!email) throw new Error('Please enter your email address.');
         const response = await fetch('/api/auth/reset-password', {
