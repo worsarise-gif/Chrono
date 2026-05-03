@@ -283,7 +283,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       <div className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-[101] font-sans font-normal transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[56px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
-        <div className="flex items-center pt-5 pb-4 h-[60px] relative shrink-0">
+        <div className="flex items-center pt-safe pb-4 min-h-[60px] relative shrink-0">
           <Link href="/" className="w-[56px] flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity">
             <PlanetLogo showText={false} className="text-foreground dark:text-white mx-auto" />
           </Link>
@@ -484,7 +484,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         </div>
 
         {/* Bottom Section */}
-        <div className="mt-auto relative pb-4 pt-2">
+        <div className="mt-auto relative pb-safe pt-2">
           {/* Expand Toggle Button */}
           <div className={`absolute bottom-[112px] left-0 w-[56px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
             <button
