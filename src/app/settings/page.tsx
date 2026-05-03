@@ -56,7 +56,7 @@ export default function SettingsPage() {
                   <span className="text-sm font-medium">Joined</span>
                 </div>
                 <span className="text-sm text-foreground/60">
-                  {user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently'}
+                  {user.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'Recently'}
                 </span>
               </div>
 
