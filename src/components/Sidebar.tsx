@@ -284,9 +284,28 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-safe pb-4 min-h-[60px] relative shrink-0">
-          <Link href="/" className="w-[56px] flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity">
-            <PlanetLogo showText={false} className="text-foreground dark:text-white mx-auto" />
-          </Link>
+          <div className="w-[56px] flex-shrink-0 relative flex items-center justify-center group/logo min-h-[40px]">
+            <Link
+              href="/"
+              className={`w-full flex items-center justify-center hover:opacity-80 transition-opacity ${isCollapsed ? 'opacity-100 group-hover/logo:opacity-0 group-hover/logo:pointer-events-none' : 'opacity-100'}`}
+            >
+              <PlanetLogo showText={false} className="text-foreground dark:text-white mx-auto" />
+            </Link>
+
+            <button
+              onClick={() => setIsCollapsed?.(false)}
+              className={`absolute hidden md:flex items-center justify-center text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-opacity p-2 rounded-md hover:bg-surface ${isCollapsed ? 'opacity-0 group-hover/logo:opacity-100 pointer-events-none group-hover/logo:pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+            >
+              <ChevronsRight size={20} strokeWidth={1.5} />
+            </button>
+
+            {/* Expand Tooltip */}
+            {isCollapsed && (
+              <div className="fixed hidden md:block left-[64px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover/logo:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover/logo:ml-0 top-[24px]">
+                Expand Sidebar
+              </div>
+            )}
+          </div>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
               onClick={() => {
@@ -485,22 +504,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
 
         {/* Bottom Section */}
         <div className="mt-auto relative pb-safe pt-2">
-          {/* Expand Toggle Button */}
-          <div className={`absolute bottom-[112px] left-0 w-[56px] flex justify-center transition-opacity duration-300 hidden md:flex group ${isCollapsed ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <button
-              onClick={() => setIsCollapsed?.(false)}
-              className="text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-colors p-2 rounded-full hover:bg-surface pointer-events-auto"
-            >
-              <ChevronsRight size={20} strokeWidth={1.5} />
-            </button>
-            
-            {/* Expand Tooltip */}
-            {isCollapsed && (
-              <div className="fixed left-[64px] bg-surface border border-border/50 text-foreground text-[11px] tracking-wide px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-[9999] font-medium shadow-sm transition-all duration-200 ease-out ml-[-4px] group-hover:ml-0 bottom-[118px]">
-                Expand Sidebar
-              </div>
-            )}
-          </div>
+
 
           {/* Admin Panel Link */}
           {isAdmin && (
