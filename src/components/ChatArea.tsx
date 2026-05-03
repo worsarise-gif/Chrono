@@ -805,24 +805,9 @@ Session Title Status: "false"`;
 
       let generatedTitle = '';
       try {
-        const keys = getApiKeys('gemini');
-        if (keys.length === 0) throw new Error("Missing Gemini key");
-        
-        generatedTitle = await withFallback(keys, async (apiKey) => {
-          const ai = new GoogleGenAI({ apiKey });
-          const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: prompt
-          });
-          return response.text || '';
-        });
-      } catch (e) {
-        console.warn("Gemini title generation failed, falling back to Cerebras:", e);
-        try {
-          generatedTitle = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }], undefined, addLog);
-        } catch (fallbackErr) {
-          console.error("Fallback title generation failed", fallbackErr);
-        }
+        generatedTitle = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }], undefined, addLog);
+      } catch (error) {
+        console.error("Title generation failed:", error);
       }
       
       if (generatedTitle && !generatedTitle.includes("Title already generated")) {
