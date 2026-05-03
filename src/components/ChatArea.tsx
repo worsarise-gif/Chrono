@@ -375,6 +375,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [mode, setMode] = useState<ChatMode>('auto');
   const [showModeDropdown, setShowModeDropdown] = useState(false);
+  const [showMobileModeDropdown, setShowMobileModeDropdown] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ data: string, mimeType: string } | null>(null);
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [showSourcesPanel, setShowSourcesPanel] = useState(false);
@@ -470,6 +471,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const modeDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileModeDropdownRef = useRef<HTMLDivElement>(null);
   const isCreatingNewChatRef = useRef(false);
   const previousChatIdRef = useRef<string | null>(null);
 
@@ -2106,9 +2108,12 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       if (modeDropdownRef.current && !modeDropdownRef.current.contains(event.target as Node)) {
         setShowModeDropdown(false);
       }
+      if (mobileModeDropdownRef.current && !mobileModeDropdownRef.current.contains(event.target as Node)) {
+        setShowMobileModeDropdown(false);
+      }
     };
 
-    if (showModeDropdown) {
+    if (showModeDropdown || showMobileModeDropdown) {
       document.addEventListener('mousedown', handleClickOutside);
     } else {
       document.removeEventListener('mousedown', handleClickOutside);
@@ -2117,7 +2122,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showModeDropdown]);
+  }, [showModeDropdown, showMobileModeDropdown]);
 
   const sourcesContent = (
     <div className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -2234,12 +2239,56 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               </Link>
             </div>
           ) : (
-            <button 
-              onClick={onMenuClick}
-              className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
-            >
-              <Menu size={18} />
-            </button>
+            <div className="flex items-center gap-2 pointer-events-auto md:hidden">
+              <button
+                onClick={onMenuClick}
+                className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
+              >
+                <Menu size={18} />
+              </button>
+
+              {/* Mobile Mode Selector */}
+              <div className="relative" ref={mobileModeDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowMobileModeDropdown(!showMobileModeDropdown)}
+                  className="h-9 px-3 flex items-center gap-1.5 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground text-[13px] font-medium transition-all shadow-lg"
+                >
+                  <span>{modeLabels[mode]}</span>
+                  <ChevronDown size={14} className="text-muted" />
+                </button>
+
+                {showMobileModeDropdown && (
+                  <div className="absolute top-full mt-2 left-0 w-[240px] bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
+                    {(Object.keys(modeLabels) as ChatMode[]).filter(m => m !== 'flash' && m !== 'search').map((m) => (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => { setMode(m); setShowMobileModeDropdown(false); }}
+                        className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors relative ${mode === m ? 'bg-surface-hover/50' : ''}`}
+                      >
+                        <div className={`mt-0.5 ${mode === m ? 'text-foreground' : 'text-muted'}`}>
+                          {modeIcons[m]}
+                        </div>
+                        <div className="flex-1">
+                          <div className={`text-sm font-medium ${mode === m ? 'text-foreground' : 'text-muted'}`}>
+                            {modeLabels[m]}
+                          </div>
+                          <div className="text-[11px] text-muted leading-tight mt-0.5">
+                            {modeDescriptions[m]}
+                          </div>
+                        </div>
+                        {mode === m && (
+                          <div className="text-blue-500 mt-0.5">
+                            <Check size={14} />
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
           <div className="flex-1" />
           {!user ? (
@@ -2782,7 +2831,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 h-10">
                 {/* Mode Selector */}
                 {user && (
-                  <div className="relative" ref={modeDropdownRef}>
+                  <div className="relative hidden md:block" ref={modeDropdownRef}>
                     <button 
                       type="button" 
                       onClick={() => setShowModeDropdown(!showModeDropdown)}
