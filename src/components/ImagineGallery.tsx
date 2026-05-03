@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { db } from '../firebase';
+import { db, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, getDocs, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Download, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Download, Image as ImageIcon, Loader2, Menu } from 'lucide-react';
+import Link from 'next/link';
+import { PlanetLogo } from './PlanetLogo';
 
 interface GeneratedImage {
   id: string;
@@ -139,25 +141,40 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[100dvh] relative bg-background/50 backdrop-blur-3xl">
-      {/* Header */}
-      <header className="h-[60px] flex items-center justify-between px-4 border-b border-border bg-background/80 backdrop-blur-md z-10 shrink-0">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={onMenuClick}
-            className="md:hidden p-2 -ml-2 text-muted hover:text-foreground rounded-lg hover:bg-surface transition-colors"
-          >
-            <ImageIcon size={20} />
-          </button>
-          <div className="flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-[#5c6ad2]" />
-            <h1 className="font-medium text-foreground">Imagine Gallery</h1>
-          </div>
+    <div className="flex flex-row h-full w-full relative">
+      {/* Mobile Top Scrim restricted to ImagineGallery */}
+      <div className="absolute top-0 left-0 right-0 h-[calc(6rem+env(safe-area-inset-top))] bg-gradient-to-b from-chat-bg via-chat-bg/80 to-transparent z-[39] pointer-events-none md:hidden" />
+
+      <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden font-sans">
+        {/* Sticky Floating Actions */}
+        <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
+          {!user ? (
+            <div className="flex items-center gap-2 pointer-events-auto">
+              <Link href="/">
+                <PlanetLogo className="text-foreground/60 hover:text-foreground transition-all" />
+              </Link>
+            </div>
+          ) : (
+            <button
+              onClick={onMenuClick}
+              className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
+            >
+              <Menu size={18} />
+            </button>
+          )}
+          <div className="flex-1" />
+          {!user && (
+            <button
+              onClick={loginWithGoogle}
+              className="px-4 py-2 bg-foreground text-background hover:opacity-90 rounded-full font-medium pointer-events-auto transition-all shadow-lg text-sm"
+            >
+              Sign In
+            </button>
+          )}
         </div>
-      </header>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-6 scroll-smooth relative">
         <div className="max-w-7xl mx-auto">
           {isLoading || isMigrating ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -254,6 +271,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

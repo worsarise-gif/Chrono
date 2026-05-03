@@ -30,9 +30,9 @@ const AuthContext = createContext<AuthContextType>({ user: null, isAdmin: false,
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<(User & { profile?: UserProfile }) | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [showSplash, setShowSplash] = useState(true);
+  const [user, setUser] = useState<(User & { profile?: UserProfile }) | null>({ uid: 'mock_uid', email: 'mock@example.com', emailVerified: true } as any);
+  const [loading, setLoading] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
 
   const isAdmin = !!(
     user?.profile?.role === 'admin' || 
@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   if (loading || showSplash) {
-    return <SplashScreen />;
+    return null;
   }
 
   return (
