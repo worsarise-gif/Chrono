@@ -201,7 +201,7 @@ export default function ProfilePage() {
                     </h2>
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="opacity-0 group-hover/name:opacity-100 text-foreground/40 hover:text-foreground transition-opacity"
+                      className="md:opacity-0 md:group-hover/name:opacity-100 opacity-100 text-foreground/40 hover:text-foreground transition-opacity"
                     >
                       <Edit2 size={14} />
                     </button>
