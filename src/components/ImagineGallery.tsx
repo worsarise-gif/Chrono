@@ -147,7 +147,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
 
       <div className="flex-1 flex flex-col h-full bg-transparent relative overflow-hidden font-sans">
         {/* Sticky Floating Actions */}
-        <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
+        <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pt-safe pointer-events-none shrink-0">
           {!user ? (
             <div className="flex items-center gap-2 pointer-events-auto">
               <Link href="/">

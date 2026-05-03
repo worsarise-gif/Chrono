@@ -2226,7 +2226,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           </div>
         )}
         {/* Sticky Floating Actions */}
-        <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pointer-events-none shrink-0">
+        <div className="sticky top-0 left-0 right-0 z-50 flex justify-between items-center p-4 pt-safe pointer-events-none shrink-0">
           {!user ? (
             <div className="flex items-center gap-2 pointer-events-auto">
               <Link href="/">
@@ -2675,7 +2675,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       </AnimatePresence>
 
       {/* Input Area */}
-      <div className={`absolute left-0 right-0 p-3 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0 pb-safe'}`}>
+      <div className={`absolute left-0 right-0 p-3 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0 pb-safe-only'}`}>
         {/* Scroll to Bottom Button */}
         <AnimatePresence>
           {showScrollButton && isChatStarted && (
