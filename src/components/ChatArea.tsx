@@ -900,7 +900,58 @@ Session Title Status: "false"`;
           ]);
         }
       } else {
-        await navigator.clipboard.writeText(content);
+        let textToCopy = content;
+
+        // Find the container element of the message being copied
+        // Since we map over messages, the button is rendered alongside the message
+        // We can find the DOM element via a class name that wraps the model response.
+        // But since we can't easily traverse up without an event object in this function signature,
+        // we'll assign a unique id to the model response wrapper.
+
+        const messageElement = document.getElementById(`message-content-${id}`);
+        if (messageElement) {
+          // Clone the element to safely modify it without affecting the UI
+          const clone = messageElement.cloneNode(true) as HTMLElement;
+
+          // Remove action rows (regenerate, copy, feedback)
+          const actionRows = clone.querySelectorAll('.mt-4.flex.items-center, .flex.flex-wrap.items-center.gap-1.mt-4');
+          actionRows.forEach(row => row.remove());
+
+          // Remove suggestions/recommendations
+          const suggestions = clone.querySelectorAll('.mt-5.space-y-3');
+          suggestions.forEach(row => row.remove());
+
+          // Remove Thinking Process toggle buttons
+          const thinkingButtons = clone.querySelectorAll('button.w-full.flex.items-center.justify-between');
+          thinkingButtons.forEach(btn => btn.remove());
+
+          // Remove Code block headers
+          const codeHeaders = clone.querySelectorAll('.flex.items-center.justify-between.px-4.py-2\\.5');
+          codeHeaders.forEach(header => header.remove());
+
+          // Remove Sources buttons
+          const sourcesButtons = clone.querySelectorAll('.sources-btn');
+          sourcesButtons.forEach(btn => btn.remove());
+
+          // Temporarily append to the live DOM off-screen to preserve line breaks and CSS display properties
+          // because innerText on detached nodes strips line breaks and spacing.
+          clone.style.position = 'absolute';
+          clone.style.left = '-9999px';
+          clone.style.top = '-9999px';
+          document.body.appendChild(clone);
+
+          textToCopy = clone.innerText;
+
+          // Cleanup
+          document.body.removeChild(clone);
+
+          if (!textToCopy.trim()) {
+            textToCopy = content; // Fallback
+          } else {
+            textToCopy = textToCopy.trim();
+          }
+        }
+        await navigator.clipboard.writeText(textToCopy);
       }
       setCopiedMessageId(id);
       setTimeout(() => setCopiedMessageId(null), 2000);
@@ -2265,7 +2316,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
 
           <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm overflow-hidden' : 'bg-transparent text-foreground text-sm w-full'}`}>
                       {msg.role === 'model' ? (
-                        <div className="w-full">
+                        <div className="w-full message-content-container" id={`message-content-${msg.id}`}>
                           {msg.content.startsWith('Error:') ? (
                             <div className="p-4 bg-surface-hover border border-border rounded-xl text-foreground flex items-start gap-3 mb-2">
                               <AlertCircle size={18} className="mt-0.5 shrink-0" />
