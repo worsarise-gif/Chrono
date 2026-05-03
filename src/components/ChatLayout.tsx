@@ -55,7 +55,7 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
   };
 
   if (!user) {
-    return null;
+    return <AuthPage />;
   }
 
   if (!user.emailVerified && user.providerData?.[0]?.providerId === 'password') {
