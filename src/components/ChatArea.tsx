@@ -2724,7 +2724,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       </AnimatePresence>
 
       {/* Input Area */}
-      <div className={`absolute left-0 right-0 p-3 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0 pb-safe-only'}`}>
+      <div className={`absolute left-0 right-0 p-3 md:p-6 flex flex-col items-center z-20 transition-all duration-500 ${!isChatStarted ? 'top-1/2 -translate-y-1/2' : 'bottom-0 mb-2 md:mb-0 pb-safe-only'}`}>
         {/* Scroll to Bottom Button */}
         <AnimatePresence>
           {showScrollButton && isChatStarted && (
