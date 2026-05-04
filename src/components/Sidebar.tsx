@@ -31,7 +31,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
     <li className="w-full relative group">
       <button
         onClick={onClick}
-        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-all relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-foreground dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-foreground dark:text-white' : 'text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
+        className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-colors relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-foreground dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-foreground dark:text-white' : 'text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
         {/* Stationary Icon Container */}
         <div className="w-[40px] flex-shrink-0 flex items-center justify-center relative h-full">
@@ -50,7 +50,7 @@ const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: a
         </div>
 
         {/* Label */}
-        <span className={`ml-4 font-medium text-[14px] whitespace-nowrap transition-all duration-300 flex-1 text-left ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>
+        <span className={`ml-4 font-medium text-[14px] whitespace-nowrap transition-opacity duration-300 flex-1 text-left ${isCollapsed ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 w-auto'}`}>
           {label}
         </span>
 
@@ -358,9 +358,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           onClick={() => isCollapsed && setIsCollapsed?.(false)}
         >
           {isHistoryExpanded && (
-            <div className="px-2 pb-2 flex flex-col min-h-full">
+            <div className={`px-2 pb-2 flex flex-col min-h-full transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             {isLoadingChats ? (
-              <div className={`flex justify-center py-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+              <div className="flex justify-center py-4">
                 <Helix size="24" speed="2.5" color="var(--color-foreground)" />
               </div>
             ) : chats.length > 0 && (
@@ -368,13 +368,13 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 <div className="flex-1">
                   {groupedChats.map((group, groupIndex) => (
                     <React.Fragment key={group.label}>
-                      <div className={`flex items-center gap-3 px-3 py-2 ${groupIndex > 0 ? 'mt-2' : ''} transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                      <div className={`flex items-center gap-3 px-3 py-2 ${groupIndex > 0 ? 'mt-2' : ''}`}>
                         <span className="text-[11px] text-foreground/50 dark:text-white whitespace-nowrap">{group.label}</span>
                         <div className="h-px bg-border flex-1"></div>
                       </div>
                       <ul className="space-y-0.5">
                         {group.chats.map((chat) => (
-                          <li key={chat.id} className={`group relative transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+                          <li key={chat.id} className="group relative">
                             {editingChatId === chat.id ? (
                               <div className="flex items-center gap-1 px-2 py-1 bg-surface rounded-lg border border-blue-500/50">
                                 <input
@@ -489,7 +489,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 {chats.length > 5 && (
                   <button
                     onClick={() => setIsChatHistoryModalOpen(true)}
-                    className={`text-left px-3 py-2 text-sm text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-medium transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+                    className="text-left px-3 py-2 text-sm text-foreground/40 hover:text-foreground dark:text-white dark:hover:text-white mt-2 font-medium"
                   >
                     See all
                   </button>
