@@ -79,70 +79,95 @@ erDiagram
 
 ```mermaid
 flowchart TB
-    User([End User / Admin])
-    Admin([Administrator])
-    GoogleAuth([Google OAuth Provider])
-    GeminiAPI([Google Gemini API])
-    GroqAPI([Groq API])
-    CerebrasAPI([Cerebras API])
-    CloudflareAPI([Cloudflare Workers AI])
-    TavilyAPI([Tavily Search API])
-    GoogleCSE([Google Custom Search Engine])
-    GmailSMTP([Gmail SMTP Server])
-    FirebaseAuth([Firebase Authentication])
-    Firestore[(Cloud Firestore)]
-    FirebaseStorage[(Firebase Storage)]
-
-    subgraph ChronoSystem [Chrono AI System]
-        AuthModule[Authentication Module]
-        ChatModule[Chat Engine]
-        ImageModule[Image Generation Module]
-        SearchModule[Web Search Module]
-        AdminModule[Admin Dashboard]
-        ProfileModule[Profile Management]
-        APIFallback[API Fallback / Circuit Breaker]
+    subgraph Actors [External Actors]
+        direction LR
+        User([End User])
+        Admin([Administrator])
     end
 
-    User -->|Login / Register / OTP| AuthModule
-    User -->|Send Messages| ChatModule
-    User -->|Request Image Generation| ImageModule
-    User -->|Web Search Queries| SearchModule
-    User -->|Edit Profile / Upload Avatar| ProfileModule
-    Admin -->|Manage Users / View Logs| AdminModule
+    subgraph ChronoSystem [Chrono AI System]
+        direction TB
+        subgraph CoreModules [Core Modules]
+            direction LR
+            AuthModule[Authentication]
+            ChatModule[Chat Engine]
+            ImageModule[Image Generation]
+            SearchModule[Web Search]
+            AdminModule[Admin Dashboard]
+            ProfileModule[Profile Mgmt]
+        end
+        subgraph InfraModules [Infrastructure]
+            direction LR
+            APIFallback[API Fallback / Circuit Breaker]
+        end
+    end
+
+    subgraph AuthProviders [Authentication Providers]
+        direction LR
+        GoogleAuth([Google OAuth])
+        FirebaseAuth([Firebase Auth])
+    end
+
+    subgraph AIProviders [AI Model Providers]
+        direction LR
+        GeminiAPI([Gemini API])
+        GroqAPI([Groq API])
+        CerebrasAPI([Cerebras API])
+        CloudflareAPI([Cloudflare Workers AI])
+    end
+
+    subgraph SearchProviders [Search Providers]
+        direction LR
+        TavilyAPI([Tavily Search])
+        GoogleCSE([Google Custom Search])
+    end
+
+    subgraph DataLayer [Data & Storage Layer]
+        direction LR
+        Firestore[(Cloud Firestore)]
+        FirebaseStorage[(Firebase Storage)]
+    end
+
+    subgraph EmailService [Email Service]
+        GmailSMTP([Gmail SMTP])
+    end
+
+    Actors -->|Login / Register / OTP| AuthModule
+    Actors -->|Send Messages| ChatModule
+    Actors -->|Generate Images| ImageModule
+    Actors -->|Web Search| SearchModule
+    Actors -->|Edit Profile| ProfileModule
+    Admin -->|Manage Users / Logs| AdminModule
 
     AuthModule -->|OAuth Redirect| GoogleAuth
     AuthModule -->|Verify Identity| FirebaseAuth
     AuthModule -->|Send OTP / Reset Link| GmailSMTP
     AuthModule -->|Read/Write User Data| Firestore
 
-    ChatModule -->|Primary AI Calls| GeminiAPI
-    ChatModule -->|Fallback AI Calls| GroqAPI
-    ChatModule -->|Fallback AI Calls| CerebrasAPI
-    ChatModule -->|Fallback AI Calls| CloudflareAPI
+    ChatModule -->|AI Requests| APIFallback
+    APIFallback -->|Primary| GeminiAPI
+    APIFallback -->|Fallback| GroqAPI
+    APIFallback -->|Fallback| CerebrasAPI
+    APIFallback -->|Fallback| CloudflareAPI
     ChatModule -->|Persist Messages| Firestore
     ChatModule -->|Trigger Search| SearchModule
 
     ImageModule -->|Generate Images| CloudflareAPI
-    ImageModule -->|Store Generated Images| Firestore
+    ImageModule -->|Store Images| Firestore
 
-    SearchModule -->|Primary Search| TavilyAPI
-    SearchModule -->|Fallback Search| GoogleCSE
+    SearchModule -->|Primary| TavilyAPI
+    SearchModule -->|Fallback| GoogleCSE
     SearchModule -->|Cache Results| Firestore
 
-    AdminModule -->|Read All Users / Logs| Firestore
-    AdminModule -->|Update User Role/Ban| Firestore
+    AdminModule -->|Read Users / Logs| Firestore
+    AdminModule -->|Update Role / Ban| Firestore
 
-    ProfileModule -->|Update Profile Data| Firestore
+    ProfileModule -->|Update Data| Firestore
     ProfileModule -->|Upload Avatar| FirebaseStorage
 
-    APIFallback -->|Route & Retry| GeminiAPI
-    APIFallback -->|Route & Retry| GroqAPI
-    APIFallback -->|Route & Retry| CerebrasAPI
-    APIFallback -->|Route & Retry| CloudflareAPI
-
     FirebaseAuth -->|Auth State| AuthModule
-    Firestore -->|Real-time Data| ChatModule
-    Firestore -->|Real-time Data| AdminModule
+    Firestore -->|Real-time Updates| ChatModule
+    Firestore -->|Real-time Updates| AdminModule
 ```
 
 ---
