@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
-import { GoogleGenAI, Type, Modality } from '@google/genai';
 import { PlanetLogo } from './PlanetLogo';
 import { Paperclip, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download, Edit2 } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
@@ -35,22 +34,13 @@ interface Message {
 
 type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
 
-import { getApiKeys, withFallback } from '../lib/apiFallback';
 
 const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal, addLog?: any) => {
-  const keys = getApiKeys('cerebras');
-  // Fallback to default if no keys in env
-  if (keys.length === 0) keys.push('csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c');
-
-  return withFallback(keys, async (apiKey) => {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        url: 'https://api.cerebras.ai/v1/chat/completions',
-        apiKey,
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      provider: 'cerebras',
         model,
         messages,
         stream: false,
@@ -69,25 +59,14 @@ const callCerebrasNonStream = async (model: string, messages: any[], signal?: Ab
     }
     const data = await res.json();
     return data.choices[0].message.content;
-  }, addLog);
 };
 
-const callOpenAIStream = async (url: string, provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
-  const keys = getApiKeys(provider);
-  if (keys.length === 0) {
-    if (provider === 'groq') keys.push('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');
-    if (provider === 'cerebras') keys.push('csk-p3dn42jen83vtykvwjcdpedcy5mcfnenvemhd65kx9jj6c4c');
-  }
-
-  return withFallback(keys, async (apiKey) => {
-    const response = await fetch('/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        url,
-        apiKey,
+const callOpenAIStream = async (provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
+  const response = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      provider,
         model,
         messages: msgs,
         stream: true
@@ -152,7 +131,6 @@ const callOpenAIStream = async (url: string, provider: 'groq' | 'cerebras', mode
         }
       }
     }
-  }, addLog);
 };
 
 const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
@@ -281,19 +259,13 @@ const speakUtteranceFemale = (text: string, onStart: () => void, onEnd: () => vo
 };
 
 const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any, temperature: number = 0.3) => {
-  const keys = getApiKeys('groq');
-  if (keys.length === 0) keys.push('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');
-
   const makeRequest = async (m: string) => {
-    return withFallback(keys, async (apiKey) => {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ 
-          url: 'https://api.groq.com/openai/v1/chat/completions',
-          apiKey,
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        provider: 'groq',
+        url: 'https://api.groq.com/openai/v1/chat/completions',
           model: m, 
           messages, 
           stream: false,
@@ -312,7 +284,6 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
       }
       const data = await res.json();
       return data.choices[0].message.content;
-    }, addLog);
   };
 
   try {
@@ -327,30 +298,25 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
 };
 
 const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string, prompt?: string, addLog?: any) => {
-  const keys = getApiKeys('groq');
-  if (keys.length === 0) keys.push('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');
-
   const makeRequest = async (m: string) => {
-    return withFallback(keys, async (apiKey) => {
-      const formData = new FormData();
-      const ext = audioBlob.type.includes('webm') ? 'webm' : 'wav';
-      formData.append('file', audioBlob, `audio.${ext}`);
-      formData.append('model', m);
-      formData.append('apiKey', apiKey);
-      if (prompt) {
-        formData.append('prompt', prompt);
-      }
-      const res = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: formData
-      });
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.error || `Groq Transcription Error: ${res.statusText}`);
-      }
-      const data = await res.json();
-      return data.text;
-    }, addLog);
+    const formData = new FormData();
+    const ext = audioBlob.type.includes('webm') ? 'webm' : 'wav';
+    formData.append('file', audioBlob, `audio.${ext}`);
+    formData.append('model', m);
+    if (prompt) {
+      formData.append('prompt', prompt);
+    }
+    const res = await fetch('/api/transcribe', {
+      method: 'POST',
+      body: formData,
+      headers: { 'x-provider': 'groq' }
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || `Groq Transcription Error: ${res.statusText}`);
+    }
+    const data = await res.json();
+    return data.text;
   };
 
   try {
@@ -1397,13 +1363,18 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
               summary = await callGroqChatNonStream('llama-3.3-70b-versatile', [{ role: 'user', content: summaryPrompt }], undefined, undefined, addLog);
             } catch (fallbackErr) {
               console.warn("Llama summarization failed, falling back to Gemini 1.5 Pro:", fallbackErr);
-              const keys = getApiKeys('gemini');
-              if (keys.length > 0) {
-                summary = await withFallback(keys, async (apiKey) => {
-                  const aiFallback = new GoogleGenAI({ apiKey });
-                  const response = await aiFallback.models.generateContent({ model: 'gemini-1.5-pro', contents: summaryPrompt });
-                  return response.text || '';
-                });
+              const fallbackRes = await fetch('/api/gemini', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  model: 'gemini-1.5-pro',
+                  contents: summaryPrompt,
+                  stream: false
+                })
+              });
+              if (fallbackRes.ok) {
+                const fallbackData = await fallbackRes.json();
+                summary = fallbackData.text || '';
               }
             }
           }
@@ -1823,40 +1794,67 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       let searchWebCallId: string | null = null;
 
       const runGeminiStream = async (model: string, signal: AbortSignal) => {
-        const keys = getApiKeys('gemini');
-        if (keys.length === 0) throw new Error("NEXT_PUBLIC_GEMINI_API_KEY is missing.");
+        const fallbackRes = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            contents,
+            config,
+            stream: true
+          }),
+          signal
+        });
+        if (!fallbackRes.ok) throw new Error(`Gemini API Error: ${fallbackRes.statusText}`);
 
-        return withFallback(keys, async (apiKey) => {
-          const aiFallback = new GoogleGenAI({ apiKey });
-          const res = await aiFallback.models.generateContentStream({ model, contents, config });
-          for await (const chunk of res) {
+        const reader = fallbackRes.body?.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        if (reader) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
             if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
-            if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-              const call = chunk.functionCalls[0];
-              if (call.name === 'search_web') {
-                searchWebCallArgs = call.args;
-                searchWebCallId = call.id || null;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const dataStr = line.slice(6);
+                if (dataStr === '[DONE]') continue;
+                try {
+                  const chunk = JSON.parse(dataStr);
+                  if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+                    const call = chunk.functionCalls[0];
+                    if (call.name === 'search_web') {
+                      searchWebCallArgs = call.args;
+                      searchWebCallId = call.id || null;
+                    }
+                  }
+                  if (chunk.text) handleChunk(chunk.text);
+                } catch(e) {}
               }
             }
-            if (chunk.text) handleChunk(chunk.text);
           }
-        }, addLog);
+        }
       };
 
       try {
         if (classification === 'image') {
           // Image Analysis
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.2-11b-vision-preview', openAIMessages, handleChunk, signal, addLog);
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.2-11b-vision-preview', openAIMessages, handleChunk, signal, addLog);
           await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 45000, 15000, 90000);
         } else if (classification === 'pro') {
           // Pro Mode
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal, addLog);
+          const runPrimary = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal, addLog);
           const runFallback = async (signal: AbortSignal) => {
             try {
-              await callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-70b-versatile', openAIMessages, handleChunk, signal, addLog);
+              await callOpenAIStream('groq', 'llama-3.1-70b-versatile', openAIMessages, handleChunk, signal, addLog);
             } catch (err) {
               console.warn("1st fallback failed, falling back to 2nd fallback (Cerebras)", err);
-              await callOpenAIStream('https://api.cerebras.ai/v1/chat/completions', 'cerebras', 'llama3.1-70b', openAIMessages, handleChunk, signal, addLog);
+              await callOpenAIStream('cerebras', 'llama3.1-70b', openAIMessages, handleChunk, signal, addLog);
             }
           };
           await executeWithTimeoutAndFallback(runPrimary, runFallback, 20000, 15000, 90000);
@@ -1868,12 +1866,12 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           // Fast Mode (with Load Distribution)
           const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
           if (useLlama) {
-            const runPrimary = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
+            const runPrimary = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
             const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           } else {
             const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            const runFallback = (signal: AbortSignal) => callOpenAIStream('https://api.groq.com/openai/v1/chat/completions', 'groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
+            const runFallback = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
             await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
           }
         }
@@ -1923,13 +1921,18 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 
                 let formattedSearch = "";
                 try {
-                  const keys = getApiKeys('gemini');
-                  if (keys.length > 0) {
-                    formattedSearch = await withFallback(keys, async (apiKey) => {
-                      const aiFormat = new GoogleGenAI({ apiKey });
-                      const response = await aiFormat.models.generateContent({ model: 'gemini-3-flash-preview', contents: formatPrompt });
-                      return response.text || rawSearchText;
-                    });
+                  const fallbackRes = await fetch('/api/gemini', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      model: 'gemini-3-flash-preview',
+                      contents: formatPrompt,
+                      stream: false
+                    })
+                  });
+                  if (fallbackRes.ok) {
+                    const fallbackData = await fallbackRes.json();
+                    formattedSearch = fallbackData.text || rawSearchText;
                   } else {
                     formattedSearch = rawSearchText;
                   }

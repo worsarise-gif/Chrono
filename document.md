@@ -399,15 +399,15 @@ flowchart TD
 
 | Variable | Required | Description |
 |---|---|---|
-| NEXT_PUBLIC_GEMINI_API_KEY | Yes | Primary Gemini API key |
-| NEXT_PUBLIC_GEMINI_API_KEY_SECONDARY | No | Secondary Gemini key (fallback) |
-| NEXT_PUBLIC_GEMINI_API_KEY_TERTIARY | No | Tertiary Gemini key (fallback) |
-| NEXT_PUBLIC_GROQ_API_KEY | No | Primary Groq API key |
-| NEXT_PUBLIC_GROQ_API_KEY_SECONDARY | No | Secondary Groq key |
-| NEXT_PUBLIC_GROQ_API_KEY_TERTIARY | No | Tertiary Groq key |
-| NEXT_PUBLIC_CEREBRAS_API_KEY | No | Primary Cerebras API key |
-| NEXT_PUBLIC_CEREBRAS_API_KEY_SECONDARY | No | Secondary Cerebras key |
-| NEXT_PUBLIC_CEREBRAS_API_KEY_TERTIARY | No | Tertiary Cerebras key |
+| GEMINI_API_KEY | Yes | Primary Gemini API key |
+| GEMINI_API_KEY_SECONDARY | No | Secondary Gemini key (fallback) |
+| GEMINI_API_KEY_TERTIARY | No | Tertiary Gemini key (fallback) |
+| GROQ_API_KEY | No | Primary Groq API key |
+| GROQ_API_KEY_SECONDARY | No | Secondary Groq key |
+| GROQ_API_KEY_TERTIARY | No | Tertiary Groq key |
+| CEREBRAS_API_KEY | No | Primary Cerebras API key |
+| CEREBRAS_API_KEY_SECONDARY | No | Secondary Cerebras key |
+| CEREBRAS_API_KEY_TERTIARY | No | Tertiary Cerebras key |
 | CLOUDFLARE_ACCOUNT_ID | No | Cloudflare account for Workers AI |
 | CLOUDFLARE_API_TOKEN | No | Cloudflare API token |
 | TAVILY_API_KEY | No | Tavily search API key |
