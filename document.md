@@ -176,94 +176,56 @@ flowchart TB
 
 ```mermaid
 flowchart TD
-    A([User Opens Application]) --> B{Is User Authenticated?}
-    B -->|No| C[Display Auth Page]
-    C --> D{Login Method?}
-    D -->|Email/Password| E[Submit Credentials]
-    D -->|Google OAuth| F[Redirect to Google Sign-In]
-    D -->|Register| G[Submit Email + Password]
-    G --> H[Send OTP via Email API]
-    H --> I[User Enters 6-Digit OTP]
-    I --> J[Verify OTP via API]
-    J --> K{OTP Valid?}
-    K -->|Yes| L[Create Firebase User + Mark Verified]
-    K -->|No| M[Show Error - Retry]
-    M --> I
-    E --> N{Credentials Valid?}
-    N -->|Yes| O[Sign In via Firebase Auth]
-    N -->|No| P[Show Error Message]
-    F --> Q[Google Returns Auth Token]
-    Q --> O
-    O --> R{Email Verified?}
-    R -->|No| S[Show Verification Gate]
-    S --> T[Resend OTP or Enter Code]
-    T --> J
-    R -->|Yes| U{Is User Banned?}
-    U -->|Yes| V[Show Account Suspended Screen]
-    U -->|No| W[Initialize User Document in Firestore]
-    W --> X[Load Chat Interface]
+    A([User Opens App]) --> B{Authenticated?}
+    B -->|No| C[Login / Register]
+    C --> D{Method?}
+    D -->|Email/Password| E[Verify via Firebase Auth]
+    D -->|Google OAuth| E
+    D -->|Register| F[Send OTP via Email]
+    F --> G[Verify OTP]
+    G --> E
+    E --> H{Verified?}
+    H -->|No| I[Verification Gate]
+    I --> G
+    H -->|Yes| J{Banned?}
+    J -->|Yes| K[Account Suspended]
+    J -->|No| L[Load Chat Interface]
+    B -->|Yes| L
 
-    B -->|Yes| X
+    L --> M[Display Chat Interface]
+    M --> N{User Action?}
 
-    X --> Y[Load Chat History from Firestore]
-    Y --> Z[Display Sidebar + Chat Area]
-    Z --> AA{User Action?}
+    N -->|Send Message| O[Save Message to Firestore]
+    O --> P{Mode?}
+    P -->|Chat| Q[Send to AI Provider]
+    P -->|Search| R[Web Search]
+    R --> S{Success?}
+    S -->|Yes| T[Cache + Inject into Prompt]
+    S -->|No| T
+    T --> Q
+    Q --> U{API OK?}
+    U -->|No| V[Circuit Breaker: Retry / Fallback]
+    V --> U
+    U -->|Yes| W[Stream AI Response]
+    W --> X[Save to Firestore]
+    X --> M
 
-    AA -->|Send Message| AB[Create Message Document in Firestore]
-    AB --> AC{Chat Mode?}
-    AC -->|Auto| AD[Call Gemini API]
-    AC -->|Flash| AE[Call Groq API]
-    AC -->|Pro| AF[Call Cerebras API]
-    AC -->|Search| AG[Call Web Search API]
+    N -->|Generate Image| Y[Cloudflare Workers AI]
+    Y --> Z{Generated?}
+    Z -->|No| Y
+    Z -->|Yes| AA[Save Image]
+    AA --> M
 
-    AD --> AH{API Success?}
-    AE --> AH
-    AF --> AH
-    AH -->|No - Quota/Rate Limit| AI[Circuit Breaker Bans Key for 60s]
-    AI --> AJ[Try Next API Key]
-    AJ --> AH
-    AH -->|No - All Keys Exhausted| AK[Try Fallback Provider]
-    AK --> AH
-    AH -->|Yes| AL[Stream Response to Client]
+    N -->|Gallery| AB[Load Images]
+    AB --> M
 
-    AG --> AM[Tavily Search API]
-    AM --> AN{Tavily Success?}
-    AN -->|No| AO[Google Custom Search Fallback]
-    AN -->|Yes| AP[Return Search Results]
-    AO --> AP
-    AP --> AQ[Cache Results in Firestore - 72h TTL]
-    AQ --> AR[Inject Results into AI Prompt]
-    AR --> AD
+    N -->|Admin| AC{Admin?}
+    AC -->|Yes| AD[Manage Users / Logs]
+    AD --> M
+    AC -->|No| M
 
-    AL --> AS[Save Model Response to Firestore]
-    AS --> AT[Update Chat updatedAt Timestamp]
-    AT --> Z
-
-    AA -->|Generate Image| AU[User Requests Image Generation]
-    AU --> AV[Call Cloudflare Stable Diffusion XL]
-    AV --> AW{Primary Model Success?}
-    AW -->|No| AX[Try SDXL Lightning Fallback]
-    AX --> AY{Fallback Success?}
-    AW -->|Yes| AZ[Return PNG Image Buffer]
-    AY -->|Yes| AZ
-    AY -->|No| BA[Return Generation Failed Error]
-    AZ --> BB[Save to generated_images Collection]
-    BB --> Z
-
-    AA -->|View Gallery| BC[Load Generated Images from Firestore]
-    BC --> BD[Display Image Grid with Lightbox]
-    BD --> Z
-
-    AA -->|Admin Action| BE{Is User Admin?}
-    BE -->|Yes| BF[Load Admin Dashboard]
-    BF --> BG[View Overview / Users / Logs / Database]
-    BG --> BH[Toggle User Ban / Admin Role]
-    BH --> Z
-    BE -->|No| Z
-
-    AA -->|Edit Profile| BI[Update displayName / photoURL]
-    BI --> BJ[Save to Firestore + Firebase Auth]
-    BJ --> Z
+    N -->|Profile| AE[Update Profile]
+    AE --> M
 ```
 
 ---
