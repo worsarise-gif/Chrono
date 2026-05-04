@@ -1463,9 +1463,9 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
             name: "search_web",
             description: "Search the web for up-to-date information.",
             parameters: {
-              type: Type.OBJECT,
+              type: "object",
               properties: {
-                query: { type: Type.STRING, description: "The search query" }
+                query: { type: "string", description: "The search query" }
               },
               required: ["query"]
             }
