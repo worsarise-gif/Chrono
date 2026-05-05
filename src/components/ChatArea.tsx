@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { PlanetLogo } from './PlanetLogo';
@@ -36,9 +36,13 @@ type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
 
 
 const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal, addLog?: any) => {
+  const idToken = await auth.currentUser?.getIdToken();
   const res = await fetch('/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+    },
     body: JSON.stringify({
       provider: 'cerebras',
         model,
@@ -62,9 +66,13 @@ const callCerebrasNonStream = async (model: string, messages: any[], signal?: Ab
 };
 
 const callOpenAIStream = async (provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
+  const idToken = await auth.currentUser?.getIdToken();
   const response = await fetch('/api/chat', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+    },
     body: JSON.stringify({
       provider,
         model,
@@ -135,10 +143,12 @@ const callOpenAIStream = async (provider: 'groq' | 'cerebras', model: string, ms
 
 const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
   if (addLog) addLog('info', 'Cloudflare API', `Starting stream call for model ${model}`);
+  const idToken = await auth.currentUser?.getIdToken();
   const res = await fetch('/api/cloudflare-chat', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
     },
     body: JSON.stringify({ 
       model, 
@@ -260,9 +270,13 @@ const speakUtteranceFemale = (text: string, onStart: () => void, onEnd: () => vo
 
 const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any, temperature: number = 0.3) => {
   const makeRequest = async (m: string) => {
+    const idToken = await auth.currentUser?.getIdToken();
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+      },
       body: JSON.stringify({
         provider: 'groq',
         url: 'https://api.groq.com/openai/v1/chat/completions',
@@ -299,6 +313,7 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
 
 const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackModel?: string, prompt?: string, addLog?: any) => {
   const makeRequest = async (m: string) => {
+    const idToken = await auth.currentUser?.getIdToken();
     const formData = new FormData();
     const ext = audioBlob.type.includes('webm') ? 'webm' : 'wav';
     formData.append('file', audioBlob, `audio.${ext}`);
@@ -309,7 +324,10 @@ const callGroqTranscription = async (audioBlob: Blob, model: string, fallbackMod
     const res = await fetch('/api/transcribe', {
       method: 'POST',
       body: formData,
-      headers: { 'x-provider': 'groq' }
+      headers: {
+        'x-provider': 'groq',
+        ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+      }
     });
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}));
@@ -387,7 +405,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   }, [user]);
 
-  const getAllImages = () => {
+  const allImages = useMemo(() => {
     const images: { src: string; alt?: string }[] = [];
     messages.forEach(msg => {
       if (msg.imageUrl) {
@@ -401,9 +419,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
     });
     return images;
-  };
-
-  const allImages = getAllImages();
+  }, [messages]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1227,9 +1243,13 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         addLog('info', 'Image Gen', 'Extracted dimensions', { aspect: extractedAspect, dimensions });
 
         setLoadingStatus('Creating Art...');
+        const idToken = await auth.currentUser?.getIdToken();
         const res = await fetch('/api/generate-image', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+          },
           body: JSON.stringify({ prompt: userMessage, width: dimensions.width, height: dimensions.height }),
           signal: controller.signal
         });
@@ -1363,9 +1383,13 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
               summary = await callGroqChatNonStream('llama-3.3-70b-versatile', [{ role: 'user', content: summaryPrompt }], undefined, undefined, addLog);
             } catch (fallbackErr) {
               console.warn("Llama summarization failed, falling back to Gemini 1.5 Pro:", fallbackErr);
+              const idToken = await auth.currentUser?.getIdToken();
               const fallbackRes = await fetch('/api/gemini', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+                },
                 body: JSON.stringify({
                   model: 'gemini-1.5-pro',
                   contents: summaryPrompt,
@@ -1794,9 +1818,13 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       let searchWebCallId: string | null = null;
 
       const runGeminiStream = async (model: string, signal: AbortSignal) => {
+        const idToken = await auth.currentUser?.getIdToken();
         const fallbackRes = await fetch('/api/gemini', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+          },
           body: JSON.stringify({
             model,
             contents,
@@ -1886,6 +1914,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             
             let searchResults = "Search unavailable. Rely on training data.";
             try {
+              const idToken = await auth.currentUser?.getIdToken();
               const searchRes = await fetch('/api/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1921,9 +1950,13 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 
                 let formattedSearch = "";
                 try {
+                  const idToken = await auth.currentUser?.getIdToken();
                   const fallbackRes = await fetch('/api/gemini', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                      'Content-Type': 'application/json',
+                      ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+                    },
                     body: JSON.stringify({
                       model: 'gemini-3-flash-preview',
                       contents: formatPrompt,

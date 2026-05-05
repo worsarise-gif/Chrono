@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { webSearch } from '@/lib/tools/webSearch';
+import { verifySession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
