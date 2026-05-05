@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getApiKeys, withFallback } from '@/lib/apiFallback.server';
 import { GoogleGenAI } from '@google/genai';
+import { verifySession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await verifySession(req);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const { model, contents, config, stream } = body;
 
