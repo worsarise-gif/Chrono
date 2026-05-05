@@ -55,6 +55,8 @@ export const isQuotaOrAuthError = (error: any) => {
   );
 };
 
+import { db } from './firebaseAdmin';
+
 export const isFallbackError = (error: any) => {
   const msg = error?.message?.toLowerCase() || '';
   const status = error?.status || error?.response?.status;
@@ -68,8 +70,7 @@ export const isFallbackError = (error: any) => {
   );
 };
 
-// Circuit Breaker State
-const keyBans = new Map<string, number>();
+// Circuit Breaker State (Firestore)
 const BAN_DURATION_MS = 60 * 1000; // 60 seconds
 
 const getKeyId = (key: any): string => {
@@ -78,6 +79,45 @@ const getKeyId = (key: any): string => {
     return JSON.stringify(key);
   } catch {
     return String(key);
+  }
+};
+
+async function sha256(message: string): Promise<string> {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export const isKeyBanned = async (keyIdRaw: string): Promise<boolean> => {
+  try {
+    const keyId = await sha256(keyIdRaw);
+    const docRef = db.collection('circuit_breaker_bans').doc(keyId);
+    const doc = await docRef.get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data && data.expiresAt) {
+        if (Date.now() < data.expiresAt) {
+          return true; // Still banned
+        }
+      }
+    }
+  } catch (e) {
+    console.error("Error reading key ban status from Firestore", e);
+  }
+  return false;
+};
+
+export const banKey = async (keyIdRaw: string): Promise<void> => {
+  try {
+    const keyId = await sha256(keyIdRaw);
+    const docRef = db.collection('circuit_breaker_bans').doc(keyId);
+    await docRef.set({
+      expiresAt: Date.now() + BAN_DURATION_MS,
+      createdAt: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error("Error writing key ban to Firestore", e);
   }
 };
 
@@ -91,13 +131,13 @@ export const withFallback = async <T>(
     throw new Error("No API keys available for this provider.");
   }
 
-  const now = Date.now();
+  // Filter out keys that are currently banned concurrently
+  const banChecks = await Promise.all(keys.map(async k => ({
+    key: k,
+    banned: await isKeyBanned(getKeyId(k))
+  })));
   
-  // Filter out keys that are currently banned
-  let availableKeys = keys.filter(k => {
-    const banExpiry = keyBans.get(getKeyId(k));
-    return !banExpiry || banExpiry < now;
-  });
+  let availableKeys = banChecks.filter(check => !check.banned).map(check => check.key);
 
   // If all keys are banned, throw immediately to trigger higher-level fallback
   if (availableKeys.length === 0) {
@@ -123,7 +163,7 @@ export const withFallback = async <T>(
         // Only break the circuit for this key if it's a quota or auth error
         if (isQuotaOrAuthError(error)) {
           const keyId = getKeyId(currentKey);
-          keyBans.set(keyId, Date.now() + BAN_DURATION_MS);
+          await banKey(keyId);
           console.warn(`Circuit broken for key. Banned for 60s.`);
           if (addLog) addLog('warning', 'API Fallback', `Circuit broken for key index ${i}. Banned for 60s.`);
         } else {
