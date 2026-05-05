@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { PlanetLogo } from './PlanetLogo';
@@ -387,7 +387,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
   }, [user]);
 
-  const getAllImages = () => {
+  const allImages = useMemo(() => {
     const images: { src: string; alt?: string }[] = [];
     messages.forEach(msg => {
       if (msg.imageUrl) {
@@ -401,9 +401,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
     });
     return images;
-  };
-
-  const allImages = getAllImages();
+  }, [messages]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
