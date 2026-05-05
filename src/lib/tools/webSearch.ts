@@ -1,8 +1,9 @@
+"use server";
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
 import { tavily } from '@tavily/core';
 import firebaseConfigJson from '../../../firebase-applet-config.json';
-import { getApiKeys, withFallback } from '../apiFallback';
+import { getApiKeys, withFallback } from '../apiFallback.server';
 
 // Firebase configuration: Prefer environment variables, fallback to JSON for AI Studio
 const firebaseConfig = {
@@ -95,9 +96,6 @@ export async function webSearch(query: string): Promise<string> {
 
     // 2. Primary Search: Tavily API
     const tavilyKeys = getApiKeys('tavily');
-    if (tavilyKeys.length === 0) {
-      tavilyKeys.push('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');
-    }
     
     try {
       results = await withFallback(tavilyKeys, async (tavilyApiKey) => {

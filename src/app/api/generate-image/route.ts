@@ -1,11 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getApiKeys, withFallback } from '../../../lib/apiFallback';
+import { getApiKeys, withFallback } from '@/lib/apiFallback.server';
 
 async function generateWithModel(model: string, prompt: string, width?: number, height?: number) {
   const keys = getApiKeys('cloudflare');
-  if (keys.length === 0) {
-    keys.push({ accountId: '2215383dfc48baa1df7666821342db26', token: 'cfut_0IxFXq61q0R2HHpsQ2DBoCC8M19ilcDvae9nnEZn53ed73dd' });
-  }
 
   return await withFallback(keys, async (keyObj: any) => {
     const url = `https://api.cloudflare.com/client/v4/accounts/${keyObj.accountId}/ai/run/${model}`;
@@ -32,7 +29,6 @@ async function generateWithModel(model: string, prompt: string, width?: number, 
     if (contentType.includes('application/json')) {
       const data = await response.json();
       if (data.result && data.result.image) {
-        // Convert base64 string to Uint8Array
         const buffer = Buffer.from(data.result.image, 'base64');
         return new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
       }
@@ -50,24 +46,20 @@ export async function POST(req: Request) {
 
     let imageBuffer;
     try {
-      // Primary Model
       imageBuffer = await generateWithModel('@cf/stabilityai/stable-diffusion-xl-base-1.0', prompt, width, height);
     } catch (primaryError) {
       console.warn('Primary model failed, trying fallback...', primaryError);
       try {
-        // Fallback Model
         imageBuffer = await generateWithModel('@cf/bytedance/stable-diffusion-xl-lightning', prompt, width, height);
       } catch (fallbackError: any) {
         console.error('Fallback model also failed:', fallbackError);
-        // Check for quota/rate limit
-        if (fallbackError.message.includes('429') || fallbackError.message.includes('quota')) {
+        if (fallbackError.message && (fallbackError.message.includes('429') || fallbackError.message.includes('quota'))) {
            return NextResponse.json({ error: 'QUOTA_EXCEEDED' }, { status: 429 });
         }
         return NextResponse.json({ error: 'GENERATION_FAILED' }, { status: 500 });
       }
     }
 
-    // Return the image as a PNG buffer
     return new NextResponse(imageBuffer, {
       headers: {
         'Content-Type': 'image/png',
