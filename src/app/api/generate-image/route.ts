@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getApiKeys, withFallback } from '@/lib/apiFallback.server';
+import { verifySession } from '@/lib/auth';
 
 async function generateWithModel(model: string, prompt: string, width?: number, height?: number) {
   const keys = getApiKeys('cloudflare');
@@ -39,8 +40,13 @@ async function generateWithModel(model: string, prompt: string, width?: number, 
   });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const session = await verifySession(req);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { prompt, width, height } = await req.json();
     if (!prompt) return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
 
