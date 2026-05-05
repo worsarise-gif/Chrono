@@ -65,30 +65,36 @@ function cleanSnippet(raw: string): string {
   return cleaned;
 }
 
-export async function webSearch(query: string): Promise<string> {
+export async function webSearch(query: string, forceRefresh: boolean = false): Promise<string> {
   try {
     const normalizedQuery = query.trim().toLowerCase();
     const docId = await sha256(normalizedQuery);
     const cacheRef = doc(db, 'search_cache', docId);
 
     // 1. Check Firestore Cache
-    try {
-      const cacheSnap = await getDoc(cacheRef);
-      if (cacheSnap.exists()) {
-        const cachedData = cacheSnap.data();
-        if (cachedData && cachedData.created_at) {
-          const createdAt = new Date(cachedData.created_at).getTime();
-          const now = Date.now();
-          const ageInHours = (now - createdAt) / (1000 * 60 * 60);
+    if (!forceRefresh) {
+      try {
+        const cacheSnap = await getDoc(cacheRef);
+        if (cacheSnap.exists()) {
+          const cachedData = cacheSnap.data();
+          if (cachedData && cachedData.created_at) {
+            const createdAt = new Date(cachedData.created_at).getTime();
+            const now = Date.now();
+            const ageInHours = (now - createdAt) / (1000 * 60 * 60);
 
-          // 72-hour TTL check
-          if (ageInHours < 72) {
-            return JSON.stringify(cachedData.results);
+            // Dynamic TTL check: 2 hours for time-sensitive, 24 hours for others
+            const timeSensitiveKeywords = ['news', 'weather', 'stock', 'today', 'latest', 'now', 'current'];
+            const isTimeSensitive = timeSensitiveKeywords.some(kw => normalizedQuery.includes(kw));
+            const ttlHours = isTimeSensitive ? 2 : 24;
+
+            if (ageInHours < ttlHours) {
+              return JSON.stringify(cachedData.results);
+            }
           }
         }
+      } catch (err) {
+        console.warn('Firestore cache read failed:', err);
       }
-    } catch (err) {
-      console.warn('Firestore cache read failed:', err);
     }
 
     let results: SearchResult[] = [];
@@ -101,7 +107,7 @@ export async function webSearch(query: string): Promise<string> {
       results = await withFallback(tavilyKeys, async (tavilyApiKey) => {
         const client = tavily({ apiKey: tavilyApiKey });
         const tavilyData = await client.search(query, {
-          searchDepth: "basic",
+          searchDepth: "advanced",
           maxResults: 5
         });
 

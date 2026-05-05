@@ -136,6 +136,11 @@ service cloud.firestore {
     // ===============================================================
     // Rules
     // ===============================================================
+    match /circuit_breaker_bans/{keyId} {
+      // Server-side only (accessed via Firebase Admin SDK)
+      allow read, write: if false;
+    }
+
     match /logs/{logId} {
       allow read: if isAdmin();
       allow create: if isAuthenticated();

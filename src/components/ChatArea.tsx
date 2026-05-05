@@ -1844,8 +1844,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       try {
         if (classification === 'image') {
           // Image Analysis
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.2-11b-vision-preview', openAIMessages, handleChunk, signal, addLog);
-          await executeWithTimeoutAndFallback(runPrimary, (signal) => runGeminiStream('gemini-3-flash-preview', signal), 45000, 15000, 90000);
+          const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
+          await executeWithTimeoutAndFallback(runPrimary, (signal) => callOpenAIStream('groq', 'meta-llama/llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, signal, addLog), 45000, 15000, 90000);
         } else if (classification === 'pro') {
           // Pro Mode
           const runPrimary = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal, addLog);
@@ -1889,7 +1889,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               const searchRes = await fetch('/api/search', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query: searchWebCallArgs.query }),
+                body: JSON.stringify({ query: searchWebCallArgs.query, forceRefresh: true }),
                 signal: controller.signal
               });
               if (searchRes.ok) {
