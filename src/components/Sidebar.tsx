@@ -291,6 +291,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             </Link>
 
             <button
+              aria-label="Expand sidebar"
               onClick={() => setIsCollapsed?.(false)}
               className={`absolute hidden md:flex items-center justify-center text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-opacity p-2 rounded-md hover:bg-surface ${isCollapsed ? 'opacity-0 group-hover/logo:opacity-100 pointer-events-none group-hover/logo:pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
             >
@@ -306,6 +307,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           </div>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
+              aria-label="Collapse sidebar"
               onClick={() => {
                 if (window.innerWidth < 768) {
                   setIsMobileOpen?.(false);
@@ -563,7 +565,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               </>
             ) : (
               <>
-                <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
+                <button aria-label="Login with Google" onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
                   <LogIn size={16} />
                 </button>
                 
