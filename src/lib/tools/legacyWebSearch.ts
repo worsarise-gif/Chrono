@@ -65,7 +65,7 @@ function cleanSnippet(raw: string): string {
   return cleaned;
 }
 
-export async function webSearch(query: string, forceRefresh: boolean = false): Promise<string> {
+export async function legacyWebSearch(query: string, forceRefresh: boolean = false): Promise<string> {
   try {
     const normalizedQuery = query.trim().toLowerCase();
     const docId = await sha256(normalizedQuery);
