@@ -1,4 +1,4 @@
-export const getApiKeys = (provider: 'gemini' | 'groq' | 'cerebras' | 'cloudflare' | 'tavily' | 'googleSearch'): any[] => {
+export const getApiKeys = (provider: 'gemini' | 'groq' | 'cerebras' | 'cloudflare' | 'tavily' | 'googleSearch' | 'cloudflare_vectorize'): any[] => {
   switch (provider) {
     case 'gemini':
       return [
@@ -36,6 +36,13 @@ export const getApiKeys = (provider: 'gemini' | 'groq' | 'cerebras' | 'cloudflar
         { key: process.env.GOOGLE_API_KEY_SECONDARY || process.env.GOOGLE_API_KEY_SECONDARY, cx: process.env.GOOGLE_CX_SECONDARY || process.env.GOOGLE_CX_SECONDARY },
         { key: process.env.GOOGLE_API_KEY_TERTIARY || process.env.GOOGLE_API_KEY_TERTIARY, cx: process.env.GOOGLE_CX_TERTIARY || process.env.GOOGLE_CX_TERTIARY }
       ].filter(k => k.key && k.cx);
+    case 'cloudflare_vectorize':
+      return [
+        { accountId: process.env.CLOUDFLARE_ACCOUNT_ID, token: process.env.CLOUDFLARE_API_TOKEN, indexName: process.env.CLOUDFLARE_VECTORIZE_INDEX_NAME },
+        { accountId: process.env.CLOUDFLARE_ACCOUNT_ID_SECONDARY, token: process.env.CLOUDFLARE_API_TOKEN_SECONDARY, indexName: process.env.CLOUDFLARE_VECTORIZE_INDEX_NAME_SECONDARY },
+        { accountId: process.env.CLOUDFLARE_ACCOUNT_ID_TERTIARY, token: process.env.CLOUDFLARE_API_TOKEN_TERTIARY, indexName: process.env.CLOUDFLARE_VECTORIZE_INDEX_NAME_TERTIARY }
+      ].filter(k => k.accountId && k.token && k.indexName);
+
   }
   return [];
 };
@@ -124,7 +131,8 @@ export const banKey = async (keyIdRaw: string): Promise<void> => {
 export const withFallback = async <T>(
   keys: any[],
   operation: (key: any) => Promise<T>,
-  addLog?: (type: 'info' | 'error' | 'warning' | 'success', component: string, message: string, details?: any) => void
+  addLog?: (type: 'info' | 'error' | 'warning' | 'success', component: string, message: string, details?: any) => void,
+  explicitKeyIndex?: number
 ): Promise<T> => {
   if (!keys || keys.length === 0) {
     if (addLog) addLog('error', 'API Fallback', 'No API keys available');
@@ -138,6 +146,19 @@ export const withFallback = async <T>(
   })));
   
   let availableKeys = banChecks.filter(check => !check.banned).map(check => check.key);
+
+  if (explicitKeyIndex !== undefined) {
+    if (explicitKeyIndex < 0 || explicitKeyIndex >= keys.length) {
+      if (addLog) addLog('error', 'API Fallback', 'Explicit key index out of bounds');
+      throw new Error("Specified API tier is not available.");
+    }
+    const explicitKey = keys[explicitKeyIndex];
+    if (await isKeyBanned(getKeyId(explicitKey))) {
+      if (addLog) addLog('error', 'API Fallback', 'Explicit key is currently circuit-broken');
+      throw new Error("The specified API key tier is currently circuit-broken.");
+    }
+    availableKeys = [explicitKey];
+  }
 
   // If all keys are banned, throw immediately to trigger higher-level fallback
   if (availableKeys.length === 0) {

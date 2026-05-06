@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getApiKeys, withFallback } from '@/lib/apiFallback.server';
 import { verifySession } from '@/lib/auth';
 
-async function generateWithModel(model: string, prompt: string, width?: number, height?: number) {
+async function generateWithModel(model: string, prompt: string, width?: number, height?: number, apiTier?: number) {
   const keys = getApiKeys('cloudflare');
 
   return await withFallback(keys, async (keyObj: any) => {
@@ -37,7 +37,7 @@ async function generateWithModel(model: string, prompt: string, width?: number, 
     }
 
     return await response.arrayBuffer();
-  });
+  }, undefined, apiTier);
 }
 
 export async function POST(req: NextRequest) {
@@ -47,22 +47,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { prompt, width, height } = await req.json();
+    const { prompt, width, height, apiTier } = await req.json();
     if (!prompt) return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
 
+
     let imageBuffer;
-    try {
-      imageBuffer = await generateWithModel('@cf/stabilityai/stable-diffusion-xl-base-1.0', prompt, width, height);
-    } catch (primaryError) {
-      console.warn('Primary model failed, trying fallback...', primaryError);
+
+    const configs = [
+      { model: '@cf/stabilityai/stable-diffusion-xl-base-1.0', apiTier: 0 },
+      { model: '@cf/bytedance/stable-diffusion-xl-lightning', apiTier: 0 },
+      { model: '@cf/stabilityai/stable-diffusion-xl-base-1.0', apiTier: 1 },
+      { model: '@cf/bytedance/stable-diffusion-xl-lightning', apiTier: 1 },
+      { model: '@cf/stabilityai/stable-diffusion-xl-base-1.0', apiTier: 2 },
+      { model: '@cf/bytedance/stable-diffusion-xl-lightning', apiTier: 2 }
+    ];
+
+    let lastError: any;
+    for (let i = 0; i < configs.length; i++) {
       try {
-        imageBuffer = await generateWithModel('@cf/bytedance/stable-diffusion-xl-lightning', prompt, width, height);
-      } catch (fallbackError: any) {
-        console.error('Fallback model also failed:', fallbackError);
-        if (fallbackError.message && (fallbackError.message.includes('429') || fallbackError.message.includes('quota'))) {
-           return NextResponse.json({ error: 'QUOTA_EXCEEDED' }, { status: 429 });
+        const config = configs[i];
+        imageBuffer = await generateWithModel(config.model, prompt, width, height, config.apiTier);
+        break; // Success!
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`Image generation failed for ${configs[i].model} on tier ${configs[i].apiTier}: `, err);
+        // If it's the last one, throw
+        if (i === configs.length - 1) {
+          if (err.message && (err.message.includes('429') || err.message.includes('quota'))) {
+            return NextResponse.json({ error: 'QUOTA_EXCEEDED' }, { status: 429 });
+          }
+          return NextResponse.json({ error: 'GENERATION_FAILED' }, { status: 500 });
         }
-        return NextResponse.json({ error: 'GENERATION_FAILED' }, { status: 500 });
       }
     }
 

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { model, messages, stream, ...rest } = body;
+    const { model, messages, stream, apiTier, ...rest } = body;
 
     if (!model || !messages) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         const data = await response.json();
         return NextResponse.json(data);
       }
-    });
+    }, undefined, apiTier);
   } catch (error: any) {
     console.error('Cloudflare Proxy error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });

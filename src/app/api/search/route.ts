@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { webSearch } from '@/lib/tools/webSearch';
+import { vectorSearch } from '@/lib/tools/vectorSearch';
 import { verifySession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Query is required' }, { status: 400 });
     }
 
-    const results = await webSearch(query, forceRefresh);
+    const results = await vectorSearch(query);
     return NextResponse.json({ results });
   } catch (error) {
     console.error('API search error:', error);

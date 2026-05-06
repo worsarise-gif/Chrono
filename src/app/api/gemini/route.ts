@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { model, contents, config, stream } = body;
+    const { model, contents, config, stream, apiTier } = body;
 
     if (!model || !contents) {
       return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
         const response = await ai.models.generateContent({ model, contents, config });
         return NextResponse.json({ text: response.text });
       }
-    });
+    }, undefined, apiTier);
   } catch (error: any) {
     console.error('Gemini Proxy error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });

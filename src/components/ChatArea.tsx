@@ -35,7 +35,7 @@ interface Message {
 type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
 
 
-const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal, addLog?: any) => {
+const callCerebrasNonStream = async (model: string, messages: any[], signal?: AbortSignal, addLog?: any, apiTier?: number) => {
   const idToken = await auth.currentUser?.getIdToken();
   const res = await fetch('/api/chat', {
     method: 'POST',
@@ -48,7 +48,8 @@ const callCerebrasNonStream = async (model: string, messages: any[], signal?: Ab
         model,
         messages,
         stream: false,
-        temperature: 0.3
+        temperature: 0.3,
+        apiTier
       }),
       signal
     });
@@ -65,7 +66,7 @@ const callCerebrasNonStream = async (model: string, messages: any[], signal?: Ab
     return data.choices[0].message.content;
 };
 
-const callOpenAIStream = async (provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
+const callOpenAIStream = async (provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any, apiTier?: number) => {
   const idToken = await auth.currentUser?.getIdToken();
   const response = await fetch('/api/chat', {
     method: 'POST',
@@ -141,7 +142,7 @@ const callOpenAIStream = async (provider: 'groq' | 'cerebras', model: string, ms
     }
 };
 
-const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any) => {
+const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any, apiTier?: number) => {
   if (addLog) addLog('info', 'Cloudflare API', `Starting stream call for model ${model}`);
   const idToken = await auth.currentUser?.getIdToken();
   const res = await fetch('/api/cloudflare-chat', {
@@ -154,7 +155,8 @@ const callCloudflareStream = async (model: string, messages: any[], onChunk: (te
       model, 
       messages, 
       stream: true,
-      temperature: 0.3
+      temperature: 0.3,
+        apiTier
     }),
     signal
   });
@@ -268,7 +270,7 @@ const speakUtteranceFemale = (text: string, onStart: () => void, onEnd: () => vo
   window.speechSynthesis.speak(utterance);
 };
 
-const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any, temperature: number = 0.3) => {
+const callGroqChatNonStream = async (model: string, messages: any[], fallbackModel?: string, signal?: AbortSignal, addLog?: any, temperature: number = 0.3, apiTier?: number) => {
   const makeRequest = async (m: string) => {
     const idToken = await auth.currentUser?.getIdToken();
     const res = await fetch('/api/chat', {
@@ -788,10 +790,43 @@ AI: "${aiResponse}"
 Session Title Status: "false"`;
 
       let generatedTitle = '';
-      try {
-        generatedTitle = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }], undefined, addLog);
-      } catch (error) {
-        console.error("Title generation failed:", error);
+      const titleConfigs = [
+        { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 0 },
+        { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 0 },
+        { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 1 },
+        { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 1 },
+        { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 2 },
+        { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 2 }
+      ];
+
+      for (const config of titleConfigs) {
+        try {
+          if (config.provider === 'cloudflare') {
+            const idToken = await auth.currentUser?.getIdToken();
+            const res = await fetch('/api/cloudflare-chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+              },
+              body: JSON.stringify({
+                model: config.model,
+                messages: [{ role: 'user', content: prompt }],
+                stream: false,
+                apiTier: config.apiTier
+              })
+            });
+            if (!res.ok) throw new Error("Cloudflare Title failed");
+            const data = await res.json();
+            generatedTitle = data.result?.response || '';
+            break;
+          } else if (config.provider === 'cerebras') {
+            generatedTitle = await callCerebrasNonStream(config.model, [{ role: 'user', content: prompt }], undefined, addLog, config.apiTier);
+            break;
+          }
+        } catch (error) {
+          console.warn(`Title generation failed with ${config.provider} (tier ${config.apiTier}):`, error);
+        }
       }
       
       if (generatedTitle && !generatedTitle.includes("Title already generated")) {
@@ -1225,7 +1260,29 @@ User input: "${userMessage}"
 
 Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specified, reply with "1:1".`;
 
-        const aspectResponse = await callGroqChatNonStream('llama-3.1-8b-instant', [{ role: 'user', content: aspectPrompt }], 'llama-3.1-8b-instant', controller.signal, addLog);
+        let aspectResponse: any = null;
+        const aspectConfigs = [
+          { provider: 'groq', model: 'llama-3.1-8b-instant', apiTier: 0 },
+          { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 0 },
+          { provider: 'groq', model: 'llama-3.1-8b-instant', apiTier: 1 },
+          { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 1 },
+          { provider: 'groq', model: 'llama-3.1-8b-instant', apiTier: 2 },
+          { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 2 }
+        ];
+
+        for (const config of aspectConfigs) {
+          try {
+            if (config.provider === 'groq') {
+              aspectResponse = await callGroqChatNonStream(config.model, [{ role: 'user', content: aspectPrompt }], undefined, controller.signal, addLog, 0.3, config.apiTier);
+              break;
+            } else if (config.provider === 'cerebras') {
+              aspectResponse = await callCerebrasNonStream(config.model, [{ role: 'user', content: aspectPrompt }], controller.signal, addLog, config.apiTier);
+              break;
+            }
+          } catch (error) {
+            console.warn(`Aspect extraction failed with ${config.provider} (tier ${config.apiTier}):`, error);
+          }
+        }
         const extractedAspect = (typeof aspectResponse === 'string' ? aspectResponse : (aspectResponse as any)?.choices?.[0]?.message?.content || '1:1').trim().replace(/['"]/g, '');
 
         const ASPECT_MAP: Record<string, { width: number; height: number }> = {
@@ -1710,6 +1767,43 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         }
       };
 
+
+      type ModelConfig = {
+        provider: 'groq' | 'cerebras' | 'gemini' | 'cloudflare';
+        model: string;
+        apiTier: number;
+        ttftMs?: number;
+        stallMs?: number;
+        maxTotalMs?: number;
+      };
+
+      const executeModelChain = async (configs: ModelConfig[], signal: AbortSignal) => {
+        let lastError: any;
+        for (let i = 0; i < configs.length; i++) {
+          const config = configs[i];
+          if (signal.aborted) break;
+
+          try {
+            if (config.provider === 'gemini') {
+              await runGeminiStream(config.model, signal, config.apiTier);
+            } else if (config.provider === 'cloudflare') {
+              await callCloudflareStream(config.model, openAIMessages, handleChunk, signal, addLog, config.apiTier);
+            } else {
+              await callOpenAIStream(config.provider, config.model, openAIMessages, handleChunk, signal, addLog, config.apiTier);
+            }
+            return; // Success!
+          } catch (err: any) {
+            lastError = err;
+            console.warn(`Model failed: ${config.model} (Tier: ${config.apiTier})`, err);
+            const status = err?.status || err?.response?.status;
+            if (status === 400 || status === 413) {
+              throw err; // Don't fallback on bad requests
+            }
+          }
+        }
+        throw lastError || new Error("All fallback models failed.");
+      };
+
       const executeWithTimeoutAndFallback = async (
         primaryFn: (signal: AbortSignal) => Promise<void>, 
         fallbackFn: (signal: AbortSignal) => Promise<void>, 
@@ -1817,7 +1911,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       let searchWebCallArgs: any = null;
       let searchWebCallId: string | null = null;
 
-      const runGeminiStream = async (model: string, signal: AbortSignal) => {
+      const runGeminiStream = async (model: string, signal: AbortSignal, apiTier?: number) => {
         const idToken = await auth.currentUser?.getIdToken();
         const fallbackRes = await fetch('/api/gemini', {
           method: 'POST',
@@ -1869,40 +1963,46 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         }
       };
 
+
       try {
         if (classification === 'image') {
           // Image Analysis
-          const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-          await executeWithTimeoutAndFallback(runPrimary, (signal) => callOpenAIStream('groq', 'meta-llama/llama-4-scout-17b-16e-instruct', openAIMessages, handleChunk, signal, addLog), 45000, 15000, 90000);
+          const configs: ModelConfig[] = [
+            { provider: 'gemini', model: 'gemini-2.5-flash', apiTier: 0 },
+            { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', apiTier: 0 },
+            { provider: 'gemini', model: 'gemini-2.5-flash', apiTier: 1 },
+            { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', apiTier: 1 },
+            { provider: 'gemini', model: 'gemini-2.5-flash', apiTier: 2 },
+            { provider: 'groq', model: 'meta-llama/llama-4-scout-17b-16e-instruct', apiTier: 2 }
+          ];
+          await executeModelChain(configs, controller.signal);
         } else if (classification === 'pro') {
           // Pro Mode
-          const runPrimary = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.3-70b-versatile', openAIMessages, handleChunk, signal, addLog);
-          const runFallback = async (signal: AbortSignal) => {
-            try {
-              await callOpenAIStream('groq', 'llama-3.1-70b-versatile', openAIMessages, handleChunk, signal, addLog);
-            } catch (err) {
-              console.warn("1st fallback failed, falling back to 2nd fallback (Cerebras)", err);
-              await callOpenAIStream('cerebras', 'llama3.1-70b', openAIMessages, handleChunk, signal, addLog);
-            }
-          };
-          await executeWithTimeoutAndFallback(runPrimary, runFallback, 20000, 15000, 90000);
+          const configs: ModelConfig[] = [
+            { provider: 'groq', model: 'llama-3.3-70b-versatile', apiTier: 0 },
+            { provider: 'groq', model: 'qwen/qwen3-32b', apiTier: 0 },
+            { provider: 'groq', model: 'llama-3.3-70b-versatile', apiTier: 1 },
+            { provider: 'groq', model: 'qwen/qwen3-32b', apiTier: 1 },
+            { provider: 'groq', model: 'llama-3.3-70b-versatile', apiTier: 2 },
+            { provider: 'groq', model: 'qwen/qwen3-32b', apiTier: 2 }
+          ];
+          await executeModelChain(configs, controller.signal);
         } else if (classification === 'search') {
-          // Search Mode: Manually trigger search for reliability
           setLoadingStatus('Searching the web...');
           searchWebCallArgs = { query: userMessage || "latest news" };
         } else {
-          // Fast Mode (with Load Distribution)
-          const useLlama = Math.random() < 0.25; // ~25% to Llama 3.1 8B
-          if (useLlama) {
-            const runPrimary = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
-            const runFallback = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
-          } else {
-            const runPrimary = (signal: AbortSignal) => runGeminiStream('gemini-3-flash-preview', signal);
-            const runFallback = (signal: AbortSignal) => callOpenAIStream('groq', 'llama-3.1-8b-instant', openAIMessages, handleChunk, signal, addLog);
-            await executeWithTimeoutAndFallback(runPrimary, runFallback, 10000, 10000, 45000);
-          }
+          // Fast Mode
+          const configs: ModelConfig[] = [
+            { provider: 'gemini', model: 'gemini-2.5-flash', apiTier: 0 },
+            { provider: 'groq', model: 'llama-3.1-8b-instant', apiTier: 0 },
+            { provider: 'gemini', model: 'gemini-2.5-flash', apiTier: 1 },
+            { provider: 'groq', model: 'llama-3.1-8b-instant', apiTier: 1 },
+            { provider: 'gemini', model: 'gemini-2.5-flash', apiTier: 2 },
+            { provider: 'groq', model: 'llama-3.1-8b-instant', apiTier: 2 }
+          ];
+          await executeModelChain(configs, controller.signal);
         }
+
 
         if (searchWebCallArgs && !controller.signal.aborted) {
           // If the AI model has already provided a substantial response, do not trigger search
