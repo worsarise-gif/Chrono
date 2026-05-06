@@ -1,6 +1,6 @@
 import { test, describe, beforeEach, afterEach, mock } from 'node:test';
 import assert from 'node:assert';
-import { getApiKeys, isQuotaOrAuthError, isFallbackError, withFallback } from './apiFallback.server.ts';
+import { getApiKeys, isQuotaOrAuthError, isFallbackError, withFallback } from './apiFallback.server';
 
 describe('apiFallback.server', () => {
   const originalEnv = { ...process.env };
