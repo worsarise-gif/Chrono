@@ -18,6 +18,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from 'next-themes';
 import { useRouter, usePathname } from 'next/navigation';
 import { ChatHistoryModal } from './ChatHistoryModal';
+import { ProfileModal } from './modals/ProfileModal';
+import { SettingsModal } from './modals/SettingsModal';
 
 interface Chat {
   id: string;
@@ -92,6 +94,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isChatHistoryModalOpen, setIsChatHistoryModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -273,6 +277,9 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
 
   return (
     <>
+      <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+      <SettingsModal isOpen={isSettingsModalOpen} onClose={() => setIsSettingsModalOpen(false)} />
+
       {/* Mobile Overlay */}
       <div
         className={`fixed inset-0 bg-black/60 z-[100] md:hidden transition-opacity duration-300 ${isMobileOpen ? 'opacity-100 pointer-events-auto cursor-pointer' : 'opacity-0 pointer-events-none'}`}
@@ -545,12 +552,18 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 {/* Profile Dropdown */}
                 {isProfileDropdownOpen && (
                   <div className="absolute bottom-12 left-[12px] bg-surface border border-border/50 rounded-xl shadow-lg py-2 w-48 z-[10000]">
-                    <Link href="/settings" className="block px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-surface-hover transition-colors" onClick={() => setIsProfileDropdownOpen(false)}>
+                    <button
+                      onClick={() => { setIsSettingsModalOpen(true); setIsProfileDropdownOpen(false); }}
+                      className="block w-full text-left px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
                       Settings
-                    </Link>
-                    <Link href="/profile" className="block px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-surface-hover transition-colors" onClick={() => setIsProfileDropdownOpen(false)}>
+                    </button>
+                    <button
+                      onClick={() => { setIsProfileModalOpen(true); setIsProfileDropdownOpen(false); }}
+                      className="block w-full text-left px-4 py-2 text-sm text-foreground/80 hover:text-foreground hover:bg-surface-hover transition-colors"
+                    >
                       Profile
-                    </Link>
+                    </button>
                   </div>
                 )}
 
