@@ -30,6 +30,7 @@ interface Message {
   isStreaming?: boolean;
   recommendations?: {title: string, prompt: string}[];
   feedback?: 'upvote' | 'downvote' | null;
+  isGeneratedImage?: boolean;
 }
 
 type ChatMode = 'auto' | 'flash' | 'pro' | 'search';
@@ -1136,7 +1137,27 @@ Return ONLY the JSON array.`;
 
     addLog('info', 'Chat', 'handleSubmit started', { userMessage, hasImage: !!currentImage, mode });
 
-    const isImageRequest = /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(userMessage.trim());
+    let isImageRequest = /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(userMessage.trim());
+    let effectiveUserMessage = userMessage;
+
+    // Check for parameter-only follow-ups (e.g., "--ar 1:1" or "make it 1:1")
+    // if the last bot message was a generated image
+    if (!isImageRequest && messages.length >= 2) {
+      const lastMessage = messages[messages.length - 1];
+      const isParameterOnly = /^--\w+(?:\s+[\w:-]+)?/.test(userMessage.trim()) || /^(?:make it|change to)\s+/i.test(userMessage.trim());
+
+      if (lastMessage.role === 'model' && lastMessage.isGeneratedImage && isParameterOnly) {
+        // Find the last user prompt that generated an image
+        const lastImageGenRequest = [...messages].reverse().find(m =>
+          m.role === 'user' && /^(?:please\s+)?(?:can you\s+)?(?:generate|draw|create|make|paint)\s+(?:an?\s+)?(?:image|picture|photo|drawing|art|illustration|portrait)/i.test(m.content)
+        );
+
+        if (lastImageGenRequest) {
+          isImageRequest = true;
+          effectiveUserMessage = `${lastImageGenRequest.content} ${userMessage.trim()}`;
+        }
+      }
+    }
 
     if (!user) {
       if (currentImage || isImageRequest) {
@@ -1274,7 +1295,7 @@ Return ONLY the JSON array.`;
     if (isImageRequest && !currentImage) {
       setIsGeneratingImage(true);
       setLoadingStatus('Determining dimensions...');
-      addLog('info', 'Image Gen', 'Starting image generation', { prompt: userMessage });
+      addLog('info', 'Image Gen', 'Starting image generation', { prompt: effectiveUserMessage });
       
       let finalImageResponse = '';
       let generatedImageBase64 = '';
@@ -1289,7 +1310,7 @@ Use this keyword mapping:
 "3:2" (Keywords: standard landscape)
 "21:9" (Keywords: ultrawide, cinematic)
 
-User input: "${userMessage}"
+User input: "${effectiveUserMessage}"
 
 Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specified, reply with "1:1".`;
 
@@ -1340,7 +1361,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
             'Content-Type': 'application/json',
             ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
           },
-          body: JSON.stringify({ prompt: userMessage, width: dimensions.width, height: dimensions.height }),
+          body: JSON.stringify({ prompt: effectiveUserMessage, width: dimensions.width, height: dimensions.height }),
           signal: controller.signal
         });
 
@@ -1400,7 +1421,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
           });
           
           generatedImageBase64 = compressedBase64;
-          const safeAltText = userMessage.replace(/[\r\n\[\]]/g, ' ').substring(0, 150).trim() || 'Generated Image';
+          const safeAltText = effectiveUserMessage.replace(/[\r\n\[\]]/g, ' ').substring(0, 150).trim() || 'Generated Image';
           finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${compressedBase64})`;
         }
       } catch (err: any) {
@@ -1431,7 +1452,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         // Save to dedicated images collection for the gallery
         if (generatedImageBase64) {
           await addDoc(collection(db, 'users', user!.uid, 'generated_images'), {
-            prompt: userMessage,
+            prompt: effectiveUserMessage,
             imageData: generatedImageBase64,
             createdAt: serverTimestamp()
           });
@@ -1445,6 +1466,18 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         }
       }
       
+      if (!user) {
+        // Guest mode fallback to update local state directly since Firestore isn't used
+        const newMsg: Message = {
+          id: Date.now().toString(),
+          role: 'model',
+          content: finalImageResponse,
+          createdAt: new Date(),
+          isGeneratedImage: true
+        };
+        setMessages(prev => [...prev, newMsg]);
+      }
+
       setIsGeneratingImage(false);
       setIsLoading(false);
       return;
@@ -1457,12 +1490,20 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
       // Add previous messages for context, ensuring alternating roles
       // Memory Summarization via Groq
       let contextText = "";
-      const recentMessages = messages.slice(-6); // Keep last 6 messages intact
-      const olderMessages = messages.slice(0, -6);
+
+      // Ensure we strip Base64 data from messages to prevent context overflow and summarization crashes
+      const cleanedMessages = messages.map(m => ({
+        ...m,
+        content: m.content ? m.content.replace(/!\[(.*?)\]\(data:image\/[^;]+;base64,[^)]+\)/g, '[Generated Image: $1]') : m.content
+      }));
+
+      const recentMessages = cleanedMessages.slice(-6); // Keep last 6 messages intact
+      const olderMessages = cleanedMessages.slice(0, -6);
 
       if (olderMessages.length > 0) {
-        const historyText = olderMessages.map(m => `${m.role}: ${m.content}`).join('\n');
-        const summaryPrompt = `Summarize the following conversation history, keeping only important details to reduce token usage while retaining context for future responses:\n\n${historyText}`;
+        // Summarize the *entire* conversation history (including recent ones) to ensure no context is lost
+        const fullHistoryText = cleanedMessages.map(m => `${m.role}: ${m.content}`).join('\n');
+        const summaryPrompt = `Summarize the following conversation history, keeping only important details to reduce token usage while retaining context for future responses:\n\n${fullHistoryText}`;
         try {
           let summary = '';
           const summaryConfigs = [
