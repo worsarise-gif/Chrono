@@ -27,6 +27,10 @@ const sanitizeSchema = {
     code: [...(defaultSchema.attributes?.code || []), 'className', 'style'],
     pre: [...(defaultSchema.attributes?.pre || []), 'className', 'style'],
     div: [...(defaultSchema.attributes?.div || []), 'className', 'style'],
+  },
+  protocols: {
+    ...defaultSchema.protocols,
+    src: [...(defaultSchema.protocols?.src || []), 'data']
   }
 };
 
