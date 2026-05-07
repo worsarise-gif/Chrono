@@ -3,6 +3,8 @@ import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -16,6 +18,17 @@ interface ResponseFormatterProps {
 }
 
 let globalMounted = false;
+
+const sanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    span: [...(defaultSchema.attributes?.span || []), 'className', 'style'],
+    code: [...(defaultSchema.attributes?.code || []), 'className', 'style'],
+    pre: [...(defaultSchema.attributes?.pre || []), 'className', 'style'],
+    div: [...(defaultSchema.attributes?.div || []), 'className', 'style'],
+  }
+};
 
 const CodeBlock = ({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
@@ -126,7 +139,7 @@ const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreamin
               <div className="prose prose-sm dark:prose-invert max-w-none italic prose-p:text-foreground prose-li:text-foreground">
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm, remarkMath]}
-                  rehypePlugins={[rehypeKatex]}
+                  rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex]}
                   urlTransform={(url) => {
                     if (url.startsWith('data:image/')) return url;
                     return defaultUrlTransform(url);
@@ -311,14 +324,35 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
         </h3>
       );
     },
+    h4({ node, children, ...props }: any) {
+      return <h4 className="text-sm font-semibold mt-2 mb-2 text-foreground" {...props}>{children}</h4>;
+    },
+    h5({ node, children, ...props }: any) {
+      return <h5 className="text-sm font-medium mt-2 mb-2 text-foreground" {...props}>{children}</h5>;
+    },
+    h6({ node, children, ...props }: any) {
+      return <h6 className="text-xs font-semibold mt-2 mb-2 text-foreground uppercase tracking-wide" {...props}>{children}</h6>;
+    },
     p({ node, children, ...props }: any) {
       return <p className="text-foreground font-normal leading-relaxed mb-3 last:mb-0 mt-0" {...props}>{children}</p>;
     },
     strong({ node, children, ...props }: any) {
       return <strong className="font-medium text-foreground" {...props}>{children}</strong>;
     },
+    em({ node, children, ...props }: any) {
+      return <em className="italic text-foreground" {...props}>{children}</em>;
+    },
+    del({ node, children, ...props }: any) {
+      return <del className="line-through text-foreground/60" {...props}>{children}</del>;
+    },
+    ul({ node, children, ...props }: any) {
+      return <ul className="list-disc list-outside ml-5 mb-4 text-foreground marker:text-foreground/70" {...props}>{children}</ul>;
+    },
+    ol({ node, children, ...props }: any) {
+      return <ol className="list-decimal list-outside ml-5 mb-4 text-foreground marker:text-foreground/70" {...props}>{children}</ol>;
+    },
     li({ node, children, ...props }: any) {
-      return <li className="text-foreground font-normal" {...props}>{children}</li>;
+      return <li className="text-foreground font-normal mb-1 last:mb-0 leading-relaxed" {...props}>{children}</li>;
     },
     img({ node, src, alt, ...props }: any) {
       return <ImageRenderer src={src} alt={alt} onImageClick={(s: string) => onImageClickRef.current?.(s)} {...props} />;
@@ -394,13 +428,27 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
 
       if (isInline) {
         return (
-          <code className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50" {...props}>
+          <code className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50 break-words" {...props}>
             {children}
           </code>
         );
       }
 
       return <CodeBlock language={language} value={String(children).replace(/\n$/, '')} />;
+    },
+    details({ node, children, ...props }: any) {
+      return (
+        <details className="my-4 border border-border/50 rounded-xl bg-surface/10 overflow-hidden" {...props}>
+          {children}
+        </details>
+      );
+    },
+    summary({ node, children, ...props }: any) {
+      return (
+        <summary className="px-4 py-3 cursor-pointer hover:bg-surface/20 transition-colors font-medium text-foreground select-none" {...props}>
+          {children}
+        </summary>
+      );
     }
   }), []);
 
@@ -443,7 +491,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
           <ReactMarkdown 
             key={index}
             remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
+            rehypePlugins={[rehypeRaw, [rehypeSanitize, sanitizeSchema], rehypeKatex]}
             components={markdownComponents}
             urlTransform={(url) => {
               if (url.startsWith('data:image/')) return url;
