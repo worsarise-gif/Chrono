@@ -56,7 +56,7 @@ erDiagram
 ```mermaid
 flowchart TD
     User([User])
-    System[Chris AI System]
+    System[Chrono AI System]
     Firebase[Firebase Auth & Firestore]
     NextJSAPI[Next.js Server APIs]
     AIProviders[AI Providers: Groq, Gemini, Cloudflare, Cerebras]
