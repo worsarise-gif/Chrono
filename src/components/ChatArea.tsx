@@ -142,6 +142,39 @@ const callOpenAIStream = async (provider: 'groq' | 'cerebras', model: string, ms
     }
 };
 
+const callCloudflareNonStream = async (model: string, messages: any[], signal?: AbortSignal, addLog?: any, apiTier?: number) => {
+  if (addLog) addLog('info', 'Cloudflare API', `Starting non-stream call for model ${model}`);
+  const idToken = await auth.currentUser?.getIdToken();
+  const res = await fetch('/api/cloudflare-chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+    },
+    body: JSON.stringify({
+      model,
+      messages,
+      stream: false,
+      temperature: 0.3,
+      apiTier
+    }),
+    signal
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    try {
+      const errorJson = JSON.parse(errorText);
+      throw new Error(errorJson.error || errorJson.message || `Cloudflare Error ${res.status}: ${errorText}`);
+    } catch {
+      throw new Error(`Cloudflare Error ${res.status}: ${errorText}`);
+    }
+  }
+
+  const data = await res.json();
+  return data.result?.response || '';
+};
+
 const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any, apiTier?: number) => {
   if (addLog) addLog('info', 'Cloudflare API', `Starting stream call for model ${model}`);
   const idToken = await auth.currentUser?.getIdToken();
@@ -1432,14 +1465,38 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         const summaryPrompt = `Summarize the following conversation history, keeping only important details to reduce token usage while retaining context for future responses:\n\n${historyText}`;
         try {
           let summary = '';
-          try {
-            summary = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: summaryPrompt }], undefined, addLog);
-          } catch (e) {
-            console.warn("Cerebras summarization failed, falling back to Llama 3.3 70B:", e);
+          const summaryConfigs = [
+            { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 0 },
+            { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 0 },
+            { provider: 'groq', model: 'llama-3.3-70b-versatile', apiTier: 0 },
+            { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 1 },
+            { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 1 },
+            { provider: 'groq', model: 'llama-3.3-70b-versatile', apiTier: 1 },
+            { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 2 },
+            { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 2 },
+            { provider: 'groq', model: 'llama-3.3-70b-versatile', apiTier: 2 }
+          ];
+
+          for (const config of summaryConfigs) {
             try {
-              summary = await callGroqChatNonStream('llama-3.3-70b-versatile', [{ role: 'user', content: summaryPrompt }], undefined, undefined, addLog);
-            } catch (fallbackErr) {
-              console.warn("Llama summarization failed, falling back to Gemini 1.5 Pro:", fallbackErr);
+              if (config.provider === 'cloudflare') {
+                summary = await callCloudflareNonStream(config.model, [{ role: 'user', content: summaryPrompt }], undefined, addLog, config.apiTier);
+                if (summary) break;
+              } else if (config.provider === 'cerebras') {
+                summary = await callCerebrasNonStream(config.model, [{ role: 'user', content: summaryPrompt }], undefined, addLog, config.apiTier);
+                if (summary) break;
+              } else if (config.provider === 'groq') {
+                summary = await callGroqChatNonStream(config.model, [{ role: 'user', content: summaryPrompt }], undefined, undefined, addLog, 0.3, config.apiTier);
+                if (summary) break;
+              }
+            } catch (err) {
+              console.warn(`Summarization failed with ${config.provider} (tier ${config.apiTier}):`, err);
+            }
+          }
+
+          if (!summary) {
+            console.warn("All primary/secondary summarization providers failed, falling back to Gemini 1.5 Pro-002");
+            try {
               const idToken = await auth.currentUser?.getIdToken();
               const fallbackRes = await fetch('/api/gemini', {
                 method: 'POST',
@@ -1448,7 +1505,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
                   ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
                 },
                 body: JSON.stringify({
-                  model: 'gemini-1.5-pro',
+                  model: 'gemini-1.5-pro-002',
                   contents: summaryPrompt,
                   stream: false
                 })
@@ -1457,6 +1514,8 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
                 const fallbackData = await fallbackRes.json();
                 summary = fallbackData.text || '';
               }
+            } catch (fallbackErr) {
+              console.error("Final fallback to Gemini 1.5 Pro-002 failed:", fallbackErr);
             }
           }
           contextText = `[Summary of older conversation: ${summary}]\n\n`;
