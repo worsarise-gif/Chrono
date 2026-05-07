@@ -1,26 +1,27 @@
-"use client";
-
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { Camera, Save, Loader2, Check, Edit2, LogOut, ChevronLeft } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
+import { Camera, Edit2, Check, Loader2, Save, LogOut, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { logout, auth, db } from '../../firebase';
-import { updateProfile } from 'firebase/auth';
+import { db, auth, logout } from '../../firebase';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
-import Link from 'next/link';
+import { updateProfile } from 'firebase/auth';
+import { AnimatePresence, motion } from 'motion/react';
 
-export default function ProfilePage() {
+interface ProfileModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
   const { user } = useAuth();
-
-  const [displayName, setDisplayName] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [displayName, setDisplayName] = useState(user?.profile?.displayName || user?.displayName || '');
   const [isSaving, setIsSaving] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -28,23 +29,18 @@ export default function ProfilePage() {
     }
   }, [user]);
 
-  if (!user) {
-    return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background text-foreground p-4">
-        <Loader2 className="animate-spin text-foreground/50" size={32} />
-      </div>
-    );
-  }
+  if (!isOpen || !user) return null;
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
-      setIsLoggingOut(true);
       await logout();
-      setShowLogoutConfirm(false);
-      window.location.href = '/';
+      onClose();
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error('Logout error', error);
+    } finally {
       setIsLoggingOut(false);
+      setShowLogoutConfirm(false);
     }
   };
 
@@ -144,13 +140,12 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-background text-foreground p-4">
-      <div className="w-full max-w-sm">
-        <Link href="/" className="inline-flex items-center gap-2 text-foreground/60 hover:text-foreground mb-6 transition-colors">
-          <ChevronLeft size={20} />
-          <span>Back</span>
-        </Link>
-        <div className="bg-surface border border-border/40 rounded-2xl shadow-xl overflow-hidden">
+    <>
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div className="bg-surface border border-border/40 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden relative">
+          <button onClick={onClose} className="absolute top-4 right-4 text-foreground/50 hover:text-foreground z-10">
+            <X size={20} />
+          </button>
           <div className="p-8">
             <div className="flex flex-col items-center text-center">
               <div className="relative group mb-6">
@@ -288,6 +283,6 @@ export default function ProfilePage() {
           </div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
-}
+};
