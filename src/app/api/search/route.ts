@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
         // In our case vectorSearch returns stringified JSON, so if it fails, it's likely an error msg
         shouldFallback = true;
       }
-    } else if (Array.isArray(results) && results.length === 0) {
+    } else if (Array.isArray(results) && (results as any[]).length === 0) {
         shouldFallback = true;
     }
 
