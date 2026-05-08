@@ -14,6 +14,7 @@ interface UserProfile {
   photoURL?: string;
   role?: 'admin' | 'user';
   isBanned?: boolean;
+  systemPrompt?: string;
   createdAt: any;
   updatedAt?: any;
 }

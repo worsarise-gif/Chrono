@@ -1638,6 +1638,38 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
       }
 
       const tools: any[] = [];
+      const generateImageTool = {
+        functionDeclarations: [
+          {
+            name: "generate_image",
+            description: "Generate an image based on a prompt.",
+            parameters: {
+              type: "object",
+              properties: {
+                prompt: { type: "string", description: "The image generation prompt" },
+                aspect_ratio: { type: "string", description: "The aspect ratio (e.g. 1:1, 16:9, 9:16, 4:3, 3:4, 2:3, 3:2, 21:9)" }
+              },
+              required: ["prompt", "aspect_ratio"]
+            }
+          }
+        ]
+      };
+
+      const analyzeImageTool = {
+        functionDeclarations: [
+          {
+            name: "analyze_image",
+            description: "Analyze an image that is present in the conversation context. Use this if the user asks questions about a previous image but there's no new image uploaded.",
+            parameters: {
+              type: "object",
+              properties: {
+                query: { type: "string", description: "The question or prompt regarding the image" }
+              },
+              required: ["query"]
+            }
+          }
+        ]
+      };
       const searchWebTool = {
         functionDeclarations: [
           {
@@ -1656,8 +1688,15 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
 
       if (mode === 'search') {
         tools.push(searchWebTool);
+        tools.push(generateImageTool);
+        tools.push(analyzeImageTool);
       } else if (mode === 'auto' || mode === 'pro') {
         tools.push(searchWebTool);
+        tools.push(generateImageTool);
+        tools.push(analyzeImageTool);
+      } else {
+        tools.push(generateImageTool);
+        tools.push(analyzeImageTool);
       }
 
       let systemInstruction = `You are a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
@@ -2016,6 +2055,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
 
       let searchWebCallArgs: any = null;
       let searchWebCallId: string | null = null;
+      let generateImageCallArgs: any = null;
+      let analyzeImageCallArgs: any = null;
 
       const runGeminiStream = async (model: string, signal: AbortSignal, apiTier?: number) => {
         const idToken = await auth.currentUser?.getIdToken();
@@ -2059,6 +2100,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     if (call.name === 'search_web') {
                       searchWebCallArgs = call.args;
                       searchWebCallId = call.id || null;
+                    } else if (call.name === 'generate_image') {
+                      generateImageCallArgs = call.args;
+                    } else if (call.name === 'analyze_image') {
+                      analyzeImageCallArgs = call.args;
                     }
                   }
                   if (chunk.text) handleChunk(chunk.text);
@@ -2109,6 +2154,215 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           await executeModelChain(configs, controller.signal);
         }
 
+
+        if (generateImageCallArgs && !controller.signal.aborted) {
+          setIsGeneratingImage(true);
+          setLoadingStatus('Creating Art...');
+          const prompt = generateImageCallArgs.prompt || userMessage;
+          const extractedAspect = generateImageCallArgs.aspect_ratio || "1:1";
+          addLog('info', 'Image Gen', 'Tool called for image generation', { prompt, aspect: extractedAspect });
+
+          const ASPECT_MAP: Record<string, { width: number; height: number }> = {
+            "1:1": { width: 1024, height: 1024 },
+            "16:9": { width: 1344, height: 768 },
+            "9:16": { width: 768, height: 1344 },
+            "4:3": { width: 1152, height: 864 },
+            "3:4": { width: 864, height: 1152 },
+            "2:3": { width: 832, height: 1216 },
+            "3:2": { width: 1216, height: 832 },
+            "21:9": { width: 1536, height: 640 }
+          };
+
+          const dimensions = ASPECT_MAP[extractedAspect] || ASPECT_MAP["1:1"];
+
+          let finalImageResponse = '';
+          let generatedImageBase64 = '';
+          try {
+            const idToken = await auth.currentUser?.getIdToken();
+            const res = await fetch('/api/generate-image', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+              },
+              body: JSON.stringify({ prompt: prompt, width: dimensions.width, height: dimensions.height }),
+              signal: controller.signal
+            });
+
+            if (!res.ok) {
+              const errData = await res.json().catch(() => ({}));
+              if (res.status === 429 || errData.error === 'QUOTA_EXCEEDED') {
+                finalImageResponse = "I'm sorry, but it looks like we've reached our image generation quota for now. Please try again later!";
+              } else {
+                finalImageResponse = "I'm sorry, I encountered an error while generating the image. Please try again.";
+              }
+            } else {
+              const blob = await res.blob();
+              const compressedBase64 = await new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  const MAX_WIDTH = 800;
+                  const MAX_HEIGHT = 800;
+                  let width = img.width;
+                  let height = img.height;
+
+                  if (width > height) {
+                    if (width > MAX_WIDTH) {
+                      height *= MAX_WIDTH / width;
+                      width = MAX_WIDTH;
+                    }
+                  } else {
+                    if (height > MAX_HEIGHT) {
+                      width *= MAX_HEIGHT / height;
+                      height = MAX_HEIGHT;
+                    }
+                  }
+                  canvas.width = width;
+                  canvas.height = height;
+                  const ctx = canvas.getContext('2d');
+                  ctx?.drawImage(img, 0, 0, width, height);
+                  resolve(canvas.toDataURL('image/jpeg', 0.8));
+                };
+                img.onerror = reject;
+                img.src = URL.createObjectURL(blob);
+              });
+
+              generatedImageBase64 = compressedBase64 as string;
+              const safeAltText = prompt.replace(/[\r\n\[\]]/g, ' ').substring(0, 150).trim() || 'Generated Image';
+              finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${compressedBase64})`;
+            }
+          } catch (err: any) {
+             if (err.name === 'AbortError' || controller.signal.aborted) {
+                finalImageResponse = "You stop the response!";
+             } else {
+                finalImageResponse = "I'm sorry, I encountered a network error while generating the image.";
+             }
+          }
+
+          fullResponse = finalImageResponse;
+          setStreamingMessage(fullResponse);
+          setIsGeneratingImage(false);
+          if (user) {
+            try {
+              if (aiMessageRef) {
+                await updateDoc(aiMessageRef, { content: fullResponse, isGeneratedImage: true });
+              }
+              if (generatedImageBase64) {
+                await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
+                  prompt: prompt,
+                  imageData: generatedImageBase64,
+                  createdAt: serverTimestamp()
+                });
+              }
+            } catch(e) {}
+          } else {
+            setMessages(prev => prev.map(m => m.id === 'streaming' ? { ...m, content: fullResponse, isGeneratedImage: true } : m));
+          }
+
+          setStreamingMessage('');
+          setIsLoading(false);
+          return;
+        } else if (analyzeImageCallArgs && !controller.signal.aborted) {
+          setLoadingStatus('Analyzing Image...');
+          const recentImageMsg = recentMessages.slice().reverse().find(m => (m.hasImage && !!m.imageUrl) || m.isGeneratedImage);
+          if (recentImageMsg) {
+             const sysContent = config.systemInstruction;
+             let imageContent: any[] = [];
+             try {
+                const url = recentImageMsg.imageUrl;
+                if (recentImageMsg.isGeneratedImage) {
+                  const match = recentImageMsg.content.match(/\!\[.*?\]\((data:image\/.*?base64,.*?)\)/);
+                  if (match && match[1]) {
+                     imageContent = [
+                        { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
+                        { type: 'image_url', image_url: { url: match[1] } }
+                     ];
+                  } else {
+                     throw new Error("Could not extract image data.");
+                  }
+                } else if (url && url.startsWith('data:')) {
+                  imageContent = [
+                     { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
+                     { type: 'image_url', image_url: { url: url } }
+                  ];
+                } else if (url) {
+                  const response = await fetch(url);
+                  const blob = await response.blob();
+                  const reader = new FileReader();
+                  const base64data = await new Promise((resolve) => {
+                     reader.onloadend = () => resolve(reader.result as string);
+                     reader.readAsDataURL(blob);
+                  });
+                  imageContent = [
+                     { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
+                     { type: 'image_url', image_url: { url: base64data } }
+                  ];
+                }
+
+                const newOpenAIMessages = [
+                  { role: 'system', content: sysContent },
+                  { role: 'user', content: imageContent as any }
+                ];
+
+                fullResponse = '';
+                setStreamingMessage('');
+
+                const fallbackRes = await fetch('/api/gemini', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify({
+                    model: 'gemini-2.5-flash',
+                    contents: [
+                      {
+                        role: 'user',
+                        parts: [
+                          { text: analyzeImageCallArgs.query || "What is in this image?" },
+                          {
+                             inlineData: {
+                                data: (imageContent[1].image_url.url as string).split(',')[1],
+                                mimeType: (imageContent[1].image_url.url as string).match(/data:(.*?);base64,/)?.[1] || 'image/jpeg'
+                             }
+                          }
+                        ]
+                      }
+                    ],
+                    stream: true
+                  }),
+                  signal: controller.signal
+                });
+                if (fallbackRes.ok && fallbackRes.body) {
+                   const reader = fallbackRes.body.getReader();
+                   const decoder = new TextDecoder();
+                   let buffer = '';
+                   while (true) {
+                      const { done, value } = await reader.read();
+                      if (done) break;
+                      buffer += decoder.decode(value, { stream: true });
+                      const lines = buffer.split('\n');
+                      buffer = lines.pop() || '';
+                      for (const line of lines) {
+                         if (line.startsWith('data: ')) {
+                            const dataStr = line.slice(6);
+                            if (dataStr === '[DONE]') continue;
+                            try {
+                               const chunk = JSON.parse(dataStr);
+                               if (chunk.text) handleChunk(chunk.text);
+                            } catch(e) {}
+                         }
+                      }
+                   }
+                }
+
+             } catch (e) {
+                fullResponse = "I couldn't analyze the image.";
+             }
+          } else {
+             fullResponse = "I'm sorry, I couldn't find an image to analyze in our recent conversation.";
+          }
+        }
 
         if (searchWebCallArgs && !controller.signal.aborted) {
           // If the AI model has already provided a substantial response, do not trigger search
