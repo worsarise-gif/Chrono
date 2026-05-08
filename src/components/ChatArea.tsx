@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { PlanetLogo } from './PlanetLogo';
@@ -16,6 +16,7 @@ import { handleError, ErrorSeverity } from '../utils/errorHandler';
 
 import ResponseIconIndicator from './ResponseIconIndicator';
 
+import { streamStore } from '../lib/streamStore';
 import { Helix } from 'ldrs/react';
 import 'ldrs/react/Helix.css';
 
@@ -390,9 +391,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const { addLog } = useDebug();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
+
   const [mode, setMode] = useState<ChatMode>('auto');
   const [showModeDropdown, setShowModeDropdown] = useState(false);
   const [showMobileModeDropdown, setShowMobileModeDropdown] = useState(false);
@@ -400,11 +401,38 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [playingAudioId, setPlayingAudioId] = useState<string | null>(null);
   const [showSourcesPanel, setShowSourcesPanel] = useState(false);
   const [currentSources, setCurrentSources] = useState<{ title: string, link: string, snippet?: string }[]>([]);
-  const [streamingMessage, setStreamingMessage] = useState<string>('');
-  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+
   const [isSearching, setIsSearching] = useState(false);
-  const [loadingStatus, setLoadingStatus] = useState('Thinking...');
-  const [currentStreamingMessageId, setCurrentStreamingMessageId] = useState<string | null>(null);
+
+
+  const streamState = useSyncExternalStore(
+    streamStore.subscribe,
+    () => streamStore.getStream(currentChatId || 'default'),
+    () => undefined
+  );
+
+  const isLoading = streamState?.isLoading || false;
+  const streamingMessage = streamState?.content || '';
+  const currentStreamingMessageId = streamState?.messageId || null;
+  const abortController = streamState?.abortController || null;
+  const isGeneratingImage = streamState?.isGeneratingImage || false;
+  const loadingStatus = streamState?.loadingStatus || 'Thinking...';
+
+  const setIsLoading = (loading: boolean) => streamStore.setStream(currentChatId || 'default', { isLoading: loading });
+  const setStreamingMessage = (content: string | ((prev: string) => string)) => {
+    if (typeof content === 'function') {
+      const prev = streamStore.getStream(currentChatId || 'default')?.content || '';
+      streamStore.setStream(currentChatId || 'default', { content: content(prev) });
+    } else {
+      streamStore.setStream(currentChatId || 'default', { content });
+    }
+  };
+  const setCurrentStreamingMessageId = (messageId: string | null) => streamStore.setStream(currentChatId || 'default', { messageId });
+  const setAbortController = (ac: AbortController | null) => streamStore.setStream(currentChatId || 'default', { abortController: ac });
+  const setIsGeneratingImage = (isGen: boolean) => streamStore.setStream(currentChatId || 'default', { isGeneratingImage: isGen });
+  const setLoadingStatus = (status: string) => streamStore.setStream(currentChatId || 'default', { loadingStatus: status });
+
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
@@ -1947,7 +1975,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         
         // Throttle UI updates to ~30fps (33ms) to prevent layout thrashing
         if (now - lastUIUpdateTime > 33) {
-          setStreamingMessage(fullResponse);
+          streamStore.setStream(chatId || 'default', { content: fullResponse });
           lastUIUpdateTime = now;
         }
         
@@ -2291,7 +2319,17 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           if (user) {
             try {
               if (aiMessageRef) {
-                await updateDoc(aiMessageRef, { content: fullResponse, isGeneratedImage: true });
+                await setDoc(aiMessageRef, {
+                  role: 'model',
+                  uid: user.uid,
+                  content: fullResponse,
+                  createdAt: serverTimestamp(),
+                  updatedAt: serverTimestamp(),
+                  isGeneratedImage: true
+                });
+                await updateDoc(doc(db, 'users', user.uid), {
+                  totalMessages: increment(1)
+                });
               }
               if (generatedImageBase64) {
                 await addDoc(collection(db, 'users', user.uid, 'generated_images'), {

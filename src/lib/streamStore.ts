@@ -4,6 +4,8 @@ export interface StreamState {
   content: string;
   isLoading: boolean;
   abortController: AbortController | null;
+  isGeneratingImage?: boolean;
+  loadingStatus?: string;
 }
 
 type Listener = () => void;
