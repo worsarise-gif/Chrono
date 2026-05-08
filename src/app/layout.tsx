@@ -44,7 +44,7 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400..900&display=swap" rel="stylesheet" />
       </head>
-      <body className="bg-background text-foreground font-sans overflow-hidden selection:bg-gray-800 selection:text-white relative">
+      <body className="bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30 selection:text-foreground relative">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

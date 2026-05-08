@@ -204,9 +204,9 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 )}
                 <p className="text-sm text-foreground/50">{user.email}</p>
 
-                {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
+                {error && <p className="text-sm text-destructive mt-2">{error}</p>}
                 {success && (
-                  <p className="text-sm text-green-500 mt-2 flex items-center justify-center gap-1">
+                  <p className="text-sm text-success mt-2 flex items-center justify-center gap-1">
                     <Check size={14} /> Saved
                   </p>
                 )}
@@ -226,7 +226,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
                 <button
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="w-full flex items-center justify-center gap-2 py-3 px-4 text-red-500/80 hover:text-red-500 hover:bg-red-500/10 rounded-xl text-sm font-medium transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 text-destructive/80 hover:text-destructive hover:bg-destructive/10 text-destructive rounded-xl text-sm font-medium transition-colors"
                 >
                   <LogOut size={16} />
                   Sign Out
@@ -272,7 +272,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <button
                     onClick={handleLogout}
                     disabled={isLoggingOut}
-                    className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 px-4 bg-destructive text-destructive-foreground hover:bg-destructive/90 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                   >
                     {isLoggingOut ? <Loader2 size={16} className="animate-spin" /> : null}
                     {isLoggingOut ? 'Signing out...' : 'Sign Out'}

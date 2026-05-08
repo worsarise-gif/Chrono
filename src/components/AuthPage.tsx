@@ -83,17 +83,17 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#0a0a0a] text-white font-[family-name:var(--font-auth)] font-normal overflow-y-auto">
+    <div className="flex flex-col h-[100dvh] w-full bg-[#0a0a0a] text-foreground font-[family-name:var(--font-auth)] font-normal overflow-y-auto">
       {/* Header */}
       <div className="flex justify-between items-center p-6 w-full shrink-0">
         <div className="flex items-center">
-          <PlanetLogo className="!text-white [&_svg]:!text-white" showText={false} />
+          <PlanetLogo className="!text-foreground [&_svg]:!text-foreground" showText={false} />
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-white border border-white/10 rounded-full px-4 py-2 bg-[#18181b]">
+        <div className="flex items-center gap-2 text-sm text-foreground border border-border rounded-full px-4 py-2 bg-surface">
           <span className="text-gray-300">You are signing into</span>
           <div className="flex items-center gap-1.5 font-medium">
-            <PlanetLogo size={16} showText={false} className="!text-white [&_svg]:!text-white" />
+            <PlanetLogo size={16} showText={false} className="!text-foreground [&_svg]:!text-foreground" />
             <span>Chrono</span>
           </div>
         </div>
@@ -102,7 +102,7 @@ export default function AuthPage() {
       <div className="w-full max-w-[420px] pb-6 sm:pb-12 flex-1 flex flex-col justify-center relative z-10 bg-[#0a0a0a] mx-auto">
         {/* Main Content */}
         <div className="flex flex-col items-center justify-center px-4 sm:px-8 w-full mt-0 sm:mt-[-40px]">
-          <h1 className="text-2xl sm:text-[32px] font-normal mb-4 sm:mb-8 text-center text-white">
+          <h1 className="text-2xl sm:text-[32px] font-normal mb-4 sm:mb-8 text-center text-foreground">
             {mode === 'login' && 'Log into your account'}
             {mode === 'register' && 'Create an account'}
             {mode === 'forgot_password' && 'Reset your password'}
@@ -110,13 +110,13 @@ export default function AuthPage() {
           
           <form className="w-full space-y-3 sm:space-y-4" onSubmit={handleSubmit}>
             {error && (
-              <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-500/20 rounded-xl">
+              <div className="p-3 text-sm text-destructive bg-red-900/20 border border-red-500/20 rounded-xl">
                 {error}
               </div>
             )}
             
             {success && (
-              <div className="p-3 text-sm text-green-400 bg-green-900/20 border border-green-500/20 rounded-xl">
+              <div className="p-3 text-sm text-success bg-success/20 border border-green-500/20 rounded-xl">
                 {success}
               </div>
             )}
@@ -126,7 +126,7 @@ export default function AuthPage() {
                 <label className="text-sm font-medium text-gray-300">Email address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail size={18} className="text-gray-500" />
+                    <Mail size={18} className="text-foreground-subtle" />
                   </div>
                   <input 
                     type="email" 
@@ -134,7 +134,7 @@ export default function AuthPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="w-full pl-10 pr-4 py-3 bg-[#18181b] border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent transition-all outline-none text-white placeholder-gray-500"
+                    className="w-full pl-10 pr-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all outline-none text-foreground placeholder-gray-500"
                     placeholder="Enter your email"
                   />
                 </div>
@@ -148,7 +148,7 @@ export default function AuthPage() {
                       <button 
                         type="button" 
                         onClick={() => { setMode('forgot_password'); resetMessages(); }}
-                        className="text-xs text-gray-500 hover:text-white transition-colors"
+                        className="text-xs text-foreground-subtle hover:text-foreground transition-colors"
                       >
                         Forgot?
                       </button>
@@ -156,7 +156,7 @@ export default function AuthPage() {
                    </div>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <Key size={18} className="text-gray-500" />
+                      <Key size={18} className="text-foreground-subtle" />
                     </div>
                     <input 
                       type="password" 
@@ -164,7 +164,7 @@ export default function AuthPage() {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="w-full pl-10 pr-4 py-3 bg-[#18181b] border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-transparent transition-all outline-none text-white placeholder-gray-500"
+                      className="w-full pl-10 pr-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all outline-none text-foreground placeholder-gray-500"
                       placeholder="Enter your password"
                     />
                   </div>
@@ -175,7 +175,7 @@ export default function AuthPage() {
             <button 
               type="submit" 
               disabled={isLoading}
-              className="w-full bg-white mt-8 text-black rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-gray-200 transition-colors text-base disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full bg-surface-elevated mt-8 text-foreground rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-gray-200 transition-colors text-base disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? <Loader2 size={18} className="animate-spin" /> : null}
               {mode === 'login' ? 'Continue' : mode === 'register' ? 'Sign Up' : 'Send Reset Link'}
@@ -186,9 +186,9 @@ export default function AuthPage() {
           {mode !== 'forgot_password' && (
             <div className="w-full mt-4 sm:mt-6">
               <div className="flex items-center my-2 sm:my-4 w-full">
-                <div className="flex-1 border-t border-white/10"></div>
-                <span className="px-4 text-sm text-gray-500 bg-[#0a0a0a]">OR</span>
-                <div className="flex-1 border-t border-white/10"></div>
+                <div className="flex-1 border-t border-border"></div>
+                <span className="px-4 text-sm text-foreground-subtle bg-[#0a0a0a]">OR</span>
+                <div className="flex-1 border-t border-border"></div>
               </div>
 
               <button 
@@ -208,7 +208,7 @@ export default function AuthPage() {
                   }
                 }}
                 disabled={isGoogleLoading || isLoading}
-                className="w-full bg-[#18181b] text-white border border-white/10 rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-white/5 transition-colors text-base disabled:opacity-50"
+                className="w-full bg-surface text-foreground border border-border rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-surface-elevated/5 transition-colors text-base disabled:opacity-50"
               >
                 {isGoogleLoading ? (
                   <Loader2 size={18} className="animate-spin" />
@@ -225,22 +225,22 @@ export default function AuthPage() {
             </div>
           )}
 
-          <div className="mt-4 sm:mt-8 text-base text-gray-500 w-full text-center">
+          <div className="mt-4 sm:mt-8 text-base text-foreground-subtle w-full text-center">
             {mode === 'login' ? (
               <p>
-                Don't have an account? <button type="button" onClick={() => { setMode('register'); resetMessages(); }} className="text-white font-medium hover:underline">Sign up</button>
+                Don't have an account? <button type="button" onClick={() => { setMode('register'); resetMessages(); }} className="text-foreground font-medium hover:underline">Sign up</button>
               </p>
             ) : (
               <p>
-                Already have an account? <button type="button" onClick={() => { setMode('login'); resetMessages(); }} className="text-white font-medium hover:underline">Log in</button>
+                Already have an account? <button type="button" onClick={() => { setMode('login'); resetMessages(); }} className="text-foreground font-medium hover:underline">Log in</button>
               </p>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 pb-6 sm:p-6 sm:pb-8 text-center text-sm text-gray-500 shrink-0">
-          By continuing, you agree to Chrono's <Link href="/terms" className="text-white hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-white hover:underline">Privacy Policy</Link>.
+        <div className="p-4 pb-6 sm:p-6 sm:pb-8 text-center text-sm text-foreground-subtle shrink-0">
+          By continuing, you agree to Chrono's <Link href="/terms" className="text-foreground hover:underline">Terms of Service</Link> and <Link href="/privacy" className="text-foreground hover:underline">Privacy Policy</Link>.
         </div>
       </div>
     </div>

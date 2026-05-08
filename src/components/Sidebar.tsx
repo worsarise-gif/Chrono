@@ -398,13 +398,13 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                 <button 
                                   onClick={() => handleSaveTitle(chat.id)}
                                   disabled={isSavingTitle}
-                                  className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors"
+                                  className="p-1 text-success hover:bg-success/10 rounded transition-colors"
                                 >
                                   <Check size={14} />
                                 </button>
                                 <button 
                                   onClick={handleCancelEdit}
-                                  className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                  className="p-1 text-destructive hover:bg-destructive/10 text-destructive rounded transition-colors"
                                 >
                                   <X size={14} />
                                 </button>
@@ -477,7 +477,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                         onClick={(e) => {
                                           handleDeleteChat(e, chat.id, chat.title);
                                         }}
-                                        className="w-full text-left px-3 py-1.5 text-[12px] text-red-400 hover:bg-surface-hover flex items-center gap-2 transition-colors"
+                                        className="w-full text-left px-3 py-1.5 text-[12px] text-destructive hover:bg-surface-hover flex items-center gap-2 transition-colors"
                                       >
                                         <Trash2 size={12} />
                                         Delete
@@ -626,7 +626,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               className="relative bg-surface border border-border w-full max-w-[360px] rounded-[24px] p-6 shadow-2xl overflow-hidden"
             >
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+                <div className="w-12 h-12 rounded-full bg-destructive/10 text-destructive flex items-center justify-center text-destructive mb-2">
                   <Trash2 size={24} />
                 </div>
                 <div className="space-y-2">
@@ -638,7 +638,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                 <div className="flex flex-col w-full gap-2 pt-2">
                   <button
                     onClick={confirmDeleteChat}
-                    className="w-full py-3 px-4 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors"
+                    className="w-full py-3 px-4 bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl font-medium transition-colors"
                   >
                     Delete
                   </button>

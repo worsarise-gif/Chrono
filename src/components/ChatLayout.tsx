@@ -63,24 +63,24 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
       <div className="flex h-[100dvh] w-full relative items-center justify-center bg-background text-foreground">
         <StarryBackground />
         <div className="relative z-10 bg-surface border border-border p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
-          <div className="w-16 h-16 bg-blue-500/10 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-info/10 text-info rounded-full flex items-center justify-center mx-auto mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
               <polyline points="22,6 12,13 2,6"></polyline>
             </svg>
           </div>
           <h2 className="text-2xl font-bold mb-2">Verify Your Email</h2>
-          <p className="text-muted-foreground text-sm mb-6">
+          <p className="text-foreground-muted text-sm mb-6">
             Please verify your email address ({user.email}) to continue using Chrono.
           </p>
 
           {resendSuccess && (
-            <div className="p-3 mb-4 text-sm text-green-400 bg-green-900/20 border border-green-500/20 rounded-xl">
+            <div className="p-3 mb-4 text-sm text-success bg-success/20 border border-green-500/20 rounded-xl">
               {resendSuccess}
             </div>
           )}
           {resendError && (
-            <div className="p-3 mb-4 text-sm text-red-400 bg-red-900/20 border border-red-500/20 rounded-xl">
+            <div className="p-3 mb-4 text-sm text-destructive bg-red-900/20 border border-red-500/20 rounded-xl">
               {resendError}
             </div>
           )}
@@ -117,11 +117,11 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
       <div className="flex h-[100dvh] w-full relative items-center justify-center bg-background text-foreground">
         <StarryBackground />
         <div className="relative z-10 bg-surface border border-border p-8 rounded-2xl max-w-md text-center shadow-2xl">
-          <div className="w-16 h-16 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>
           </div>
           <h2 className="text-2xl font-bold mb-2">Account Suspended</h2>
-          <p className="text-muted-foreground text-sm mb-6">
+          <p className="text-foreground-muted text-sm mb-6">
             Your account has been suspended by an administrator. You can no longer access this application.
           </p>
           <button 

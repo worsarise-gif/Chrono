@@ -2866,7 +2866,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                           </div>
                         </div>
                         {mode === m && (
-                          <div className="text-blue-500 mt-0.5">
+                          <div className="text-info mt-0.5">
                             <Check size={14} />
                           </div>
                         )}
@@ -2966,7 +2966,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                   title="Copy"
                                 >
-                                  {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                  {copiedMessageId === msg.id ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                 </button>
 
                                 {/* Actions */}
@@ -2980,7 +2980,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   </button>
                                   <button 
                                     onClick={() => handleFeedback(msg.id, 'downvote')}
-                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'downvote' ? 'text-red-500' : 'hover:text-foreground'}`} 
+                                    className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'downvote' ? 'text-destructive' : 'hover:text-foreground'}`}
                                     title="Bad response"
                                   >
                                     <ThumbsDown size={14} className={msg.feedback === 'downvote' ? 'fill-current' : ''} />
@@ -3092,7 +3092,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   <Edit2 size={14} />
                                 </button>
                                 <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
-                                  {copiedMessageId === msg.id ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+                                  {copiedMessageId === msg.id ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                 </button>
                               </div>
                             </>
@@ -3450,7 +3450,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               </div>
                             </div>
                             {mode === m && (
-                              <div className="text-blue-500 mt-0.5">
+                              <div className="text-info mt-0.5">
                                 <Check size={14} />
                               </div>
                             )}

@@ -63,7 +63,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   // Sleek dark mode background: existing surface/50
   const containerBg = 'bg-transparent';
   const headerBg = currentTheme === 'dark' ? 'bg-surface/20' : 'bg-surface/10';
-  const borderColor = currentTheme === 'dark' ? 'border-border/30' : 'border-gray-200';
+  const borderColor = currentTheme === 'dark' ? 'border-border/30' : 'border-border';
 
   return (
     <div className={`relative group my-6 rounded-2xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
@@ -73,7 +73,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
           onClick={handleCopy}
           className="flex items-center gap-1.5 text-[11px] text-foreground/40 hover:text-foreground transition-colors font-medium"
         >
-          {copied ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+          {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
@@ -120,7 +120,7 @@ const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreamin
       >
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center">
-            <div className={`absolute inset-0 rounded-full blur-sm transition-opacity duration-500 ${isOpen ? 'bg-blue-500/20 opacity-100' : 'bg-transparent opacity-0'}`} />
+            <div className={`absolute inset-0 rounded-full blur-sm transition-opacity duration-500 ${isOpen ? 'bg-info/20 opacity-100' : 'bg-transparent opacity-0'}`} />
             <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 relative z-10 ${isOpen ? 'bg-blue-500 scale-125' : 'bg-foreground/20'}`} />
           </div>
           <span className={`tracking-wide uppercase text-[10px] transition-colors duration-300 text-foreground/40`}>
@@ -371,7 +371,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
             href={href} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-medium bg-blue-500/20 text-blue-500 rounded-full ml-1 hover:bg-blue-500/40 transition-colors no-underline align-super border border-blue-500/30"
+            className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-medium bg-info/20 text-info rounded-full ml-1 hover:bg-blue-500/40 transition-colors no-underline align-super border border-blue-500/30"
             title={href}
             {...props}
           >
@@ -380,7 +380,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
         );
       }
       return (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 underline decoration-blue-500/30 underline-offset-2 transition-colors font-medium" {...props}>
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-info hover:text-info underline decoration-blue-500/30 underline-offset-2 transition-colors font-medium" {...props}>
           {children}
         </a>
       );
@@ -393,7 +393,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
       );
     },
     hr({ node, ...props }: any) {
-      return <hr className="border-t border-gray-500/70 my-6" {...props} />;
+      return <hr className="border-t border-border/70 my-6" {...props} />;
     },
     table({ node, children, ...props }: any) {
       return (

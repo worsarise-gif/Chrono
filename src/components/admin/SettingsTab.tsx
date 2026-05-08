@@ -109,7 +109,7 @@ export default function SettingsTab() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">
       {toast && (
-        <div className="fixed bottom-6 right-6 bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-5">
+        <div className="fixed bottom-6 right-6 bg-success text-success-foreground px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 z-50 animate-in slide-in-from-bottom-5">
           <CheckCircle2 size={18} />
           <span className="text-sm font-medium">{toast}</span>
         </div>
@@ -117,19 +117,19 @@ export default function SettingsTab() {
 
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-foreground">System Settings</h2>
-        <p className="text-muted-foreground text-sm">Dynamically adjust user experience parameters without redeploying.</p>
+        <p className="text-foreground-muted text-sm">Dynamically adjust user experience parameters without redeploying.</p>
       </div>
 
       <div className="space-y-6">
         {/* Maintenance Mode */}
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-red-500/10 text-red-500 rounded-lg">
+            <div className="p-2 bg-destructive/10 text-destructive rounded-lg">
               <ShieldAlert size={20} />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground">Maintenance Mode</h3>
-              <p className="text-sm text-muted-foreground">Temporarily disable access to the application for all non-admin users.</p>
+              <p className="text-sm text-foreground-muted">Temporarily disable access to the application for all non-admin users.</p>
             </div>
           </div>
           
@@ -137,7 +137,7 @@ export default function SettingsTab() {
             <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
               <div>
                 <span className="font-medium text-foreground block">Enable Maintenance Mode</span>
-                <span className="text-xs text-muted-foreground">Users will see the maintenance message instead of the app.</span>
+                <span className="text-xs text-foreground-muted">Users will see the maintenance message instead of the app.</span>
               </div>
               <div className="relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out" style={{ backgroundColor: settings.maintenanceMode ? '#ef4444' : 'var(--color-border)' }}>
                 <input 
@@ -166,12 +166,12 @@ export default function SettingsTab() {
         {/* AI Parameters */}
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-blue-500/10 text-blue-500 rounded-lg">
+            <div className="p-2 bg-info/10 text-info rounded-lg">
               <Sliders size={20} />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground">Default AI Parameters</h3>
-              <p className="text-sm text-muted-foreground">Adjust the default behavior and limits for AI models.</p>
+              <p className="text-sm text-foreground-muted">Adjust the default behavior and limits for AI models.</p>
             </div>
           </div>
 
@@ -179,7 +179,7 @@ export default function SettingsTab() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium text-foreground">Temperature</label>
-                <span className="text-xs font-mono text-muted-foreground">{settings.defaultTemperature}</span>
+                <span className="text-xs font-mono text-foreground-muted">{settings.defaultTemperature}</span>
               </div>
               <input 
                 type="range" 
@@ -188,7 +188,7 @@ export default function SettingsTab() {
                 onChange={(e) => setSettings({...settings, defaultTemperature: parseFloat(e.target.value)})}
                 className="w-full accent-foreground"
               />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-[10px] text-foreground-muted">
                 <span>Precise</span>
                 <span>Creative</span>
               </div>
@@ -197,7 +197,7 @@ export default function SettingsTab() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <label className="text-sm font-medium text-foreground">Max Output Tokens</label>
-                <span className="text-xs font-mono text-muted-foreground">{settings.maxTokens}</span>
+                <span className="text-xs font-mono text-foreground-muted">{settings.maxTokens}</span>
               </div>
               <input 
                 type="range" 
@@ -206,7 +206,7 @@ export default function SettingsTab() {
                 onChange={(e) => setSettings({...settings, maxTokens: parseInt(e.target.value)})}
                 className="w-full accent-foreground"
               />
-              <div className="flex justify-between text-[10px] text-muted-foreground">
+              <div className="flex justify-between text-[10px] text-foreground-muted">
                 <span>Short</span>
                 <span>Long</span>
               </div>
@@ -217,7 +217,7 @@ export default function SettingsTab() {
             <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
               <div>
                 <span className="font-medium text-foreground block">Enable Image Generation</span>
-                <span className="text-xs text-muted-foreground">Allow users to generate images using Cloudflare SDXL.</span>
+                <span className="text-xs text-foreground-muted">Allow users to generate images using Cloudflare SDXL.</span>
               </div>
               <div className="relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out" style={{ backgroundColor: settings.enableImageGeneration ? '#10b981' : 'var(--color-border)' }}>
                 <input 
@@ -233,7 +233,7 @@ export default function SettingsTab() {
             <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
               <div>
                 <span className="font-medium text-foreground block">Enable Web Search</span>
-                <span className="text-xs text-muted-foreground">Allow the AI to use Tavily/Google for real-time information.</span>
+                <span className="text-xs text-foreground-muted">Allow the AI to use Tavily/Google for real-time information.</span>
               </div>
               <div className="relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out" style={{ backgroundColor: settings.enableWebSearch ? '#10b981' : 'var(--color-border)' }}>
                 <input 
@@ -251,12 +251,12 @@ export default function SettingsTab() {
         {/* System Prompt Override */}
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-purple-500/10 text-purple-500 rounded-lg">
+            <div className="p-2 bg-primary/10 text-primary rounded-lg">
               <Bot size={20} />
             </div>
             <div>
               <h3 className="text-lg font-semibold text-foreground">System Prompt Override</h3>
-              <p className="text-sm text-muted-foreground">Append custom instructions to the base system prompt for all models.</p>
+              <p className="text-sm text-foreground-muted">Append custom instructions to the base system prompt for all models.</p>
             </div>
           </div>
           
@@ -267,7 +267,7 @@ export default function SettingsTab() {
               placeholder="e.g., Always answer in the style of a pirate..."
               className="w-full bg-background border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 h-32 resize-none font-mono"
             />
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <p className="text-xs text-foreground-muted flex items-center gap-1">
               <AlertTriangle size={12} /> Leave blank to use the default system prompt.
             </p>
           </div>
@@ -287,27 +287,27 @@ export default function SettingsTab() {
         {/* Danger Zone - Super Admin Only */}
         {isSuperAdmin && (
           <div className="mt-12 border-t border-border pt-8">
-            <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-6 shadow-sm">
+            <div className="bg-destructive/5 border border-destructive/20 rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-3 mb-6">
-                <div className="p-2 bg-red-500/10 text-red-500 rounded-lg">
+                <div className="p-2 bg-destructive/10 text-destructive rounded-lg">
                   <AlertTriangle size={20} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-red-500">Danger Zone</h3>
-                  <p className="text-sm text-red-500/80">Irreversible, destructive actions for the system.</p>
+                  <h3 className="text-lg font-semibold text-destructive">Danger Zone</h3>
+                  <p className="text-sm text-destructive/80">Irreversible, destructive actions for the system.</p>
                 </div>
               </div>
 
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-red-500/20 rounded-lg bg-background/50">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 border border-destructive/20 rounded-lg bg-background/50">
                 <div>
                   <span className="font-medium text-foreground block">Clear All System Data</span>
-                  <span className="text-xs text-muted-foreground">Permanently deletes all users, chats, messages, and uploaded images. Your super admin account will be preserved.</span>
+                  <span className="text-xs text-foreground-muted">Permanently deletes all users, chats, messages, and uploaded images. Your super admin account will be preserved.</span>
                 </div>
                 
                 {!showClearConfirm ? (
                   <button 
                     onClick={() => setShowClearConfirm(true)}
-                    className="flex items-center justify-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors whitespace-nowrap"
+                    className="flex items-center justify-center gap-2 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-destructive/90 transition-colors whitespace-nowrap"
                   >
                     <Trash2 size={16} />
                     Clear All Data
@@ -324,7 +324,7 @@ export default function SettingsTab() {
                     <button 
                       onClick={handleClearAllData}
                       disabled={clearingData}
-                      className="flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 transition-colors whitespace-nowrap disabled:opacity-70"
+                      className="flex items-center justify-center gap-2 bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-destructive/90 transition-colors whitespace-nowrap disabled:opacity-70"
                     >
                       {clearingData ? <RefreshCw size={16} className="animate-spin" /> : <AlertTriangle size={16} />}
                       Confirm Deletion
