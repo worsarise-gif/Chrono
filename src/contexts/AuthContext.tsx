@@ -17,6 +17,7 @@ interface UserProfile {
   systemPrompt?: string;
   createdAt: any;
   updatedAt?: any;
+  systemPrompt?: string;
 }
 
 interface AuthContextType {
