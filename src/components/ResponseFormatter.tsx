@@ -68,7 +68,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   return (
     <div className={`relative group my-6 rounded-2xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
       <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}/50 backdrop-blur-sm rounded-t-2xl`}>
-        <span className="text-[11px] font-mono text-foreground uppercase tracking-wider font-semibold">{language || 'text'}</span>
+        <span style={{ fontFamily: 'var(--font-google-sans-code)' }} className="text-[11px] text-foreground uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
           className="flex items-center gap-1.5 text-[11px] text-foreground/40 hover:text-foreground transition-colors font-medium"
@@ -91,6 +91,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
           codeTagProps={{
             style: {
               background: 'transparent',
+              fontFamily: 'var(--font-google-sans-code)',
             }
           }}
           PreTag="div"
@@ -432,7 +433,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
 
       if (isInline) {
         return (
-          <code className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm font-mono before:content-none after:content-none border border-border/50 break-words" {...props}>
+          <code style={{ fontFamily: 'var(--font-google-sans-code)' }} className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm before:content-none after:content-none border border-border/50 break-words" {...props}>
             {children}
           </code>
         );

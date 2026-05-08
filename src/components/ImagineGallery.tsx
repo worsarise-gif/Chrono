@@ -258,17 +258,48 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
               setShowPrompt(false);
             }}
           >
-            {/* Global Close Button */}
-            <button
-              onClick={() => {
-                setSelectedImage(null);
-                setShowPrompt(false);
-              }}
-              className="absolute top-4 right-4 md:top-6 md:right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors z-[110]"
-              aria-label="Close"
-            >
-              <X size={24} />
-            </button>
+            {/* Top Right Controls Container */}
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-3 z-[110]">
+              <button
+                onClick={() => setShowPrompt(!showPrompt)}
+                className={`group relative p-2 rounded-full backdrop-blur-md transition-all duration-300 shadow-lg flex items-center justify-center ${
+                  showPrompt
+                    ? 'bg-white text-black'
+                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20'
+                }`}
+                aria-label={showPrompt ? "Hide Prompt" : "Show Prompt"}
+              >
+                <Info size={20} />
+                {/* Tooltip */}
+                <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap backdrop-blur-md border border-white/10">
+                  {showPrompt ? "Hide Prompt" : "Show Prompt"}
+                </div>
+              </button>
+
+              <button
+                onClick={() => handleDownload(selectedImage)}
+                className="group relative p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all duration-300 shadow-lg border border-white/10 hover:border-white/20 flex items-center justify-center"
+                aria-label="Download Image"
+              >
+                <Download size={20} />
+                {/* Tooltip */}
+                <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap backdrop-blur-md border border-white/10">
+                  Download
+                </div>
+              </button>
+
+              {/* Global Close Button */}
+              <button
+                onClick={() => {
+                  setSelectedImage(null);
+                  setShowPrompt(false);
+                }}
+                className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors"
+                aria-label="Close"
+              >
+                <X size={24} />
+              </button>
+            </div>
 
             <div className="relative max-w-5xl w-full flex justify-center items-center h-full max-h-[90vh]">
               <div className="relative inline-flex max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
@@ -278,37 +309,6 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
                   alt={selectedImage.prompt}
                   className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
                 />
-
-                {/* Floating Action Buttons */}
-                <div className="absolute top-4 right-4 flex flex-col gap-3">
-                  <button
-                    onClick={() => setShowPrompt(!showPrompt)}
-                    className={`group relative p-3 rounded-full backdrop-blur-md transition-all duration-300 shadow-lg flex items-center justify-center ${
-                      showPrompt
-                        ? 'bg-white text-black'
-                        : 'bg-black/40 hover:bg-black/60 text-white border border-white/10 hover:border-white/20'
-                    }`}
-                    aria-label={showPrompt ? "Hide Prompt" : "Show Prompt"}
-                  >
-                    <Info size={20} />
-                    {/* Tooltip */}
-                    <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap backdrop-blur-md border border-white/10">
-                      {showPrompt ? "Hide Prompt" : "Show Prompt"}
-                    </div>
-                  </button>
-
-                  <button
-                    onClick={() => handleDownload(selectedImage)}
-                    className="group relative p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all duration-300 shadow-lg border border-white/10 hover:border-white/20 flex items-center justify-center"
-                    aria-label="Download Image"
-                  >
-                    <Download size={20} />
-                    {/* Tooltip */}
-                    <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap backdrop-blur-md border border-white/10">
-                      Download
-                    </div>
-                  </button>
-                </div>
 
                 {/* Glassmorphic Prompt Overlay */}
                 <AnimatePresence>

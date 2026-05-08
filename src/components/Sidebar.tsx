@@ -285,7 +285,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
         className={`fixed inset-0 bg-black/60 z-[100] md:hidden transition-opacity duration-300 ${isMobileOpen ? 'opacity-100 pointer-events-auto cursor-pointer' : 'opacity-0 pointer-events-none'}`}
         onClick={() => setIsMobileOpen?.(false)}
       />
-      <div className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-[101] font-sans font-normal transition-transform md:transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[56px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <div style={{ fontFamily: 'var(--font-google-sans-flex)' }} className={`h-[100dvh] bg-sidebar-bg text-foreground border-r border-border z-[101] font-normal transition-transform md:transition-all duration-300 ease-in-out fixed md:relative shrink-0 ${isCollapsed ? 'w-[56px] overflow-hidden' : 'w-[250px] overflow-hidden'} ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="w-[250px] h-full flex flex-col">
         {/* Header / Logo Section */}
         <div className="flex items-center pt-safe pb-4 min-h-[60px] relative shrink-0">
