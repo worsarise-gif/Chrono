@@ -419,19 +419,20 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const isGeneratingImage = streamState?.isGeneratingImage || false;
   const loadingStatus = streamState?.loadingStatus || 'Thinking...';
 
-  const setIsLoading = (loading: boolean) => streamStore.setStream(currentChatId || 'default', { isLoading: loading });
-  const setStreamingMessage = (content: string | ((prev: string) => string)) => {
+  const setIsLoading = (loading: boolean, id?: string) => streamStore.setStream(id || currentChatId || 'default', { isLoading: loading });
+  const setStreamingMessage = (content: string | ((prev: string) => string), id?: string) => {
+    const targetId = id || currentChatId || 'default';
     if (typeof content === 'function') {
-      const prev = streamStore.getStream(currentChatId || 'default')?.content || '';
-      streamStore.setStream(currentChatId || 'default', { content: content(prev) });
+      const prev = streamStore.getStream(targetId)?.content || '';
+      streamStore.setStream(targetId, { content: content(prev) });
     } else {
-      streamStore.setStream(currentChatId || 'default', { content });
+      streamStore.setStream(targetId, { content });
     }
   };
-  const setCurrentStreamingMessageId = (messageId: string | null) => streamStore.setStream(currentChatId || 'default', { messageId });
-  const setAbortController = (ac: AbortController | null) => streamStore.setStream(currentChatId || 'default', { abortController: ac });
-  const setIsGeneratingImage = (isGen: boolean) => streamStore.setStream(currentChatId || 'default', { isGeneratingImage: isGen });
-  const setLoadingStatus = (status: string) => streamStore.setStream(currentChatId || 'default', { loadingStatus: status });
+  const setCurrentStreamingMessageId = (messageId: string | null, id?: string) => streamStore.setStream(id || currentChatId || 'default', { messageId });
+  const setAbortController = (ac: AbortController | null, id?: string) => streamStore.setStream(id || currentChatId || 'default', { abortController: ac });
+  const setIsGeneratingImage = (isGen: boolean, id?: string) => streamStore.setStream(id || currentChatId || 'default', { isGeneratingImage: isGen });
+  const setLoadingStatus = (status: string, id?: string) => streamStore.setStream(id || currentChatId || 'default', { loadingStatus: status });
 
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
@@ -1252,29 +1253,29 @@ Return ONLY the JSON array.`;
       }
     }
 
+    let chatId = currentChatId;
+
     if (!text) setInput('');
     if (!image) setSelectedImage(null);
-    setIsLoading(true);
-    setStreamingMessage('');
+    setIsLoading(true, chatId || undefined);
+    setStreamingMessage('', chatId || undefined);
     
     const controller = new AbortController();
-    setAbortController(controller);
+    setAbortController(controller, chatId || undefined);
     
     // Quick classification for loader text
     const lowerMsg = userMessage.toLowerCase();
     if (mode === 'search' || /search|find|lookup|who is|what is|current|latest/i.test(lowerMsg)) {
-      setLoadingStatus('Searching...');
+      setLoadingStatus('Searching...', chatId || undefined);
     } else if (/code|debug|function|class|implement|script|programming|syntax/i.test(lowerMsg)) {
-      setLoadingStatus('Crafting Code...');
+      setLoadingStatus('Crafting Code...', chatId || undefined);
     } else if (/analyze|explain|reason|complex|calculate|solve/i.test(lowerMsg)) {
-      setLoadingStatus('Analyzing...');
+      setLoadingStatus('Analyzing...', chatId || undefined);
     } else if (currentImage) {
-      setLoadingStatus('Viewing Image...');
+      setLoadingStatus('Viewing Image...', chatId || undefined);
     } else {
-      setLoadingStatus('Thinking...');
+      setLoadingStatus('Thinking...', chatId || undefined);
     }
-
-    let chatId = currentChatId;
     let isNewChat = false;
 
     if (user) {
@@ -1287,10 +1288,17 @@ Return ONLY the JSON array.`;
             updatedAt: serverTimestamp()
           });
           chatId = chatRef.id;
+
+          const defaultState = streamStore.getStream('default');
+          if (defaultState) {
+            streamStore.setStream(chatId, defaultState);
+            streamStore.removeStream('default');
+          }
+
           isCreatingNewChatRef.current = true;
           setCurrentChatId(chatId);
         } catch (error) {
-          setIsLoading(false);
+          setIsLoading(false, chatId || undefined);
           try {
             handleFirestoreError(error, OperationType.CREATE, `users/${user.uid}/chats`);
           } catch (e) {
@@ -1323,7 +1331,7 @@ Return ONLY the JSON array.`;
           totalMessages: increment(1)
         });
       } catch (error) {
-        setIsLoading(false);
+        setIsLoading(false, chatId || undefined);
         try {
           handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}/chats/${chatId}/messages`);
         } catch (e) {
@@ -1366,8 +1374,8 @@ Return ONLY the JSON array.`;
     }
 
     if (isImageRequest && !currentImage) {
-      setIsGeneratingImage(true);
-      setLoadingStatus('Determining dimensions...');
+      setIsGeneratingImage(true, chatId || undefined);
+      setLoadingStatus('Determining dimensions...', chatId || undefined);
       addLog('info', 'Image Gen', 'Starting image generation', { prompt: effectiveUserMessage });
       
       let finalImageResponse = '';
@@ -1426,7 +1434,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         const dimensions = ASPECT_MAP[extractedAspect] || ASPECT_MAP["1:1"];
         addLog('info', 'Image Gen', 'Extracted dimensions', { aspect: extractedAspect, dimensions });
 
-        setLoadingStatus('Creating Art...');
+        setLoadingStatus('Creating Art...', chatId || undefined);
         const idToken = await auth.currentUser?.getIdToken();
         const res = await fetch('/api/generate-image', {
           method: 'POST',
@@ -1551,8 +1559,8 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         setMessages(prev => [...prev, newMsg]);
       }
 
-      setIsGeneratingImage(false);
-      setIsLoading(false);
+      setIsGeneratingImage(false, chatId || undefined);
+      setIsLoading(false, chatId || undefined);
       return;
     }
 
@@ -1828,9 +1836,9 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
 
       if (currentImage || hasRecentImage) {
         classification = 'image';
-        setLoadingStatus(currentImage ? 'Analyzing Image...' : 'Reviewing Image Context...');
+        setLoadingStatus(currentImage ? 'Analyzing Image...' : 'Reviewing Image Context...', chatId || undefined);
       } else if (mode === 'auto') {
-        setLoadingStatus('Routing...');
+        setLoadingStatus('Routing...', chatId || undefined);
         try {
           const routingContext = contents.slice(-4, -1).map((m: any) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.parts?.[0]?.text || ''}`).join('\n');
           
@@ -1858,18 +1866,18 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           
           if (route.includes('PRO')) {
             classification = 'pro';
-            setLoadingStatus('Crafting Code...');
+            setLoadingStatus('Crafting Code...', chatId || undefined);
           } else if (route.includes('SEARCH')) {
             classification = 'search';
-            setLoadingStatus('Searching...');
+            setLoadingStatus('Searching...', chatId || undefined);
           } else {
             classification = 'fast';
-            setLoadingStatus('Thinking...');
+            setLoadingStatus('Thinking...', chatId || undefined);
           }
         } catch (err) {
           console.warn("Semantic routing failed, falling back to fast mode", err);
           classification = 'fast';
-          setLoadingStatus('Thinking...');
+          setLoadingStatus('Thinking...', chatId || undefined);
         }
       } else {
         classification = mode;
@@ -1954,7 +1962,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         try {
           const ref = doc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'));
           aiMessageRef = ref;
-          setCurrentStreamingMessageId(ref.id);
+          setCurrentStreamingMessageId(ref.id, chatId || undefined);
         } catch (e) {
           console.error("Failed to create placeholder message ref", e);
         }
@@ -1975,7 +1983,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         
         // Throttle UI updates to ~30fps (33ms) to prevent layout thrashing
         if (now - lastUIUpdateTime > 33) {
-          streamStore.setStream(chatId || 'default', { content: fullResponse });
+          setStreamingMessage(fullResponse, chatId || undefined);
           lastUIUpdateTime = now;
         }
         
@@ -2212,7 +2220,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ];
           await executeModelChain(configs, controller.signal);
         } else if (classification === 'search') {
-          setLoadingStatus('Searching the web...');
+          setLoadingStatus('Searching the web...', chatId || undefined);
           searchWebCallArgs = { query: userMessage || "latest news" };
         } else {
           // Fast Mode
@@ -2229,8 +2237,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
 
 
         if (generateImageCallArgs && !controller.signal.aborted) {
-          setIsGeneratingImage(true);
-          setLoadingStatus('Creating Art...');
+          setIsGeneratingImage(true, chatId || undefined);
+          setLoadingStatus('Creating Art...', chatId || undefined);
           const prompt = generateImageCallArgs.prompt || userMessage;
           const extractedAspect = generateImageCallArgs.aspect_ratio || "1:1";
           addLog('info', 'Image Gen', 'Tool called for image generation', { prompt, aspect: extractedAspect });
@@ -2314,8 +2322,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           }
 
           fullResponse = finalImageResponse;
-          setStreamingMessage(fullResponse);
-          setIsGeneratingImage(false);
+          setStreamingMessage(fullResponse, chatId || undefined);
+          setIsGeneratingImage(false, chatId || undefined);
           if (user) {
             try {
               if (aiMessageRef) {
@@ -2343,11 +2351,11 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             setMessages(prev => prev.map(m => m.id === 'streaming' ? { ...m, content: fullResponse, isGeneratedImage: true } : m));
           }
 
-          setStreamingMessage('');
-          setIsLoading(false);
+          setStreamingMessage('', chatId || undefined);
+          setIsLoading(false, chatId || undefined);
           return;
         } else if (analyzeImageCallArgs && !controller.signal.aborted) {
-          setLoadingStatus('Analyzing Image...');
+          setLoadingStatus('Analyzing Image...', chatId || undefined);
           const recentImageMsg = recentMessages.slice().reverse().find(m => (m.hasImage && !!m.imageUrl) || m.isGeneratedImage);
           if (recentImageMsg) {
              const sysContent = config.systemInstruction;
@@ -2389,7 +2397,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 ];
 
                 fullResponse = '';
-                setStreamingMessage('');
+                setStreamingMessage('', chatId || undefined);
 
                 const fallbackRes = await fetch('/api/gemini', {
                   method: 'POST',
@@ -2453,7 +2461,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             console.log("AI already provided a response, skipping search.");
           } else {
             setIsSearching(true);
-            setLoadingStatus('Searching...');
+            setLoadingStatus('Searching...', chatId || undefined);
             
             let searchResults = "Search unavailable. Rely on training data.";
             try {
@@ -2537,7 +2545,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 fullResponse += `\n\n*No results found for "${searchWebCallArgs.query}".*\n\n`;
               }
               setIsSearching(false);
-              setStreamingMessage(fullResponse);
+              setStreamingMessage(fullResponse, chatId || undefined);
             }
           }
         }
@@ -2637,17 +2645,17 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         }
       } finally {
         if (writeSuccessful) {
-          setStreamingMessage(fullResponse);
+          setStreamingMessage(fullResponse, chatId || undefined);
         } else {
-          setStreamingMessage('');
-          setCurrentStreamingMessageId(null);
+          setStreamingMessage('', chatId || undefined);
+          setCurrentStreamingMessageId(null, chatId || undefined);
         }
-        setIsLoading(false);
+        setIsLoading(false, chatId || undefined);
         setIsSearching(false);
         addLog('success', 'Chat', 'Response completed successfully', { length: fullResponse.length });
       }
     } catch (error: any) {
-      setIsLoading(false);
+      setIsLoading(false, chatId || undefined);
       addLog('error', 'Chat', 'Error in handleSubmit', { error: error.message || String(error), stack: error.stack });
       handleError(error, "Failed to process request");
     }
