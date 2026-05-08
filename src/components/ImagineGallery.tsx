@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { db, loginWithGoogle } from '../firebase';
 import { collection, query, orderBy, onSnapshot, getDocs, doc, getDoc, setDoc, addDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Download, Image as ImageIcon, Loader2, Menu } from 'lucide-react';
+import { Download, Image as ImageIcon, Loader2, Menu, Info, X } from 'lucide-react';
 import Link from 'next/link';
 import { PlanetLogo } from './PlanetLogo';
 
@@ -22,6 +22,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
   const [isLoading, setIsLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [isMigrating, setIsMigrating] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   // Migration logic to pull old images from chat messages
   useEffect(() => {
@@ -204,7 +205,10 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.2 }}
                     className="group relative aspect-square rounded-xl overflow-hidden bg-surface border border-border hover:border-[#5c6ad2]/50 transition-colors cursor-pointer shadow-sm hover:shadow-md"
-                    onClick={() => setSelectedImage(img)}
+                    onClick={() => {
+                      setSelectedImage(img);
+                      setShowPrompt(false);
+                    }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -213,20 +217,25 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                      <p className="text-white text-sm line-clamp-2 mb-3 font-medium">
-                        {img.prompt}
-                      </p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownload(img);
-                        }}
-                        className="flex items-center justify-center gap-2 w-full py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md text-white rounded-lg transition-colors text-sm font-medium"
-                      >
-                        <Download size={16} />
-                        Download
-                      </button>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
+                      <div className="flex justify-end translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(img);
+                          }}
+                          className="flex items-center justify-center p-2 bg-black/40 hover:bg-black/60 backdrop-blur-md text-white rounded-full transition-colors"
+                          title="Download"
+                          aria-label="Download"
+                        >
+                          <Download size={16} />
+                        </button>
+                      </div>
+                      <div className="translate-y-[10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-75">
+                        <p className="text-white text-sm line-clamp-3 font-medium drop-shadow-md">
+                          {img.prompt}
+                        </p>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -243,29 +252,80 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 md:p-8"
-            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 md:p-8"
+            onClick={() => {
+              setSelectedImage(null);
+              setShowPrompt(false);
+            }}
           >
-            <div className="relative max-w-5xl w-full max-h-full flex flex-col items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={selectedImage.imageData}
-                alt={selectedImage.prompt}
-                className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-              />
-              <div 
-                className="mt-6 bg-surface/80 backdrop-blur-md border border-border p-4 rounded-xl max-w-2xl w-full text-center"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <p className="text-foreground font-medium mb-4">{selectedImage.prompt}</p>
-                <button
-                  onClick={() => handleDownload(selectedImage)}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-[#5c6ad2] hover:bg-[#4b56b2] text-white rounded-lg transition-colors font-medium"
-                >
-                  <Download size={18} />
-                  Download High-Res
-                </button>
+            {/* Global Close Button */}
+            <button
+              onClick={() => {
+                setSelectedImage(null);
+                setShowPrompt(false);
+              }}
+              className="absolute top-4 right-4 md:top-6 md:right-6 p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors z-[110]"
+              aria-label="Close"
+            >
+              <X size={24} />
+            </button>
+
+            <div className="relative max-w-5xl w-full flex justify-center items-center h-full max-h-[90vh]">
+              <div className="relative inline-flex max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selectedImage.imageData}
+                  alt={selectedImage.prompt}
+                  className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+                />
+
+                {/* Floating Action Buttons */}
+                <div className="absolute top-4 right-4 flex flex-col gap-3">
+                  <button
+                    onClick={() => setShowPrompt(!showPrompt)}
+                    className={`group relative p-3 rounded-full backdrop-blur-md transition-all duration-300 shadow-lg flex items-center justify-center ${
+                      showPrompt
+                        ? 'bg-white text-black'
+                        : 'bg-black/40 hover:bg-black/60 text-white border border-white/10 hover:border-white/20'
+                    }`}
+                    aria-label={showPrompt ? "Hide Prompt" : "Show Prompt"}
+                  >
+                    <Info size={20} />
+                    {/* Tooltip */}
+                    <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap backdrop-blur-md border border-white/10">
+                      {showPrompt ? "Hide Prompt" : "Show Prompt"}
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleDownload(selectedImage)}
+                    className="group relative p-3 rounded-full bg-black/40 hover:bg-black/60 text-white backdrop-blur-md transition-all duration-300 shadow-lg border border-white/10 hover:border-white/20 flex items-center justify-center"
+                    aria-label="Download Image"
+                  >
+                    <Download size={20} />
+                    {/* Tooltip */}
+                    <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap backdrop-blur-md border border-white/10">
+                      Download
+                    </div>
+                  </button>
+                </div>
+
+                {/* Glassmorphic Prompt Overlay */}
+                <AnimatePresence>
+                  {showPrompt && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 p-4 sm:p-6 bg-black/60 backdrop-blur-xl border border-white/10 rounded-xl sm:rounded-2xl shadow-2xl"
+                    >
+                      <p className="text-white text-sm sm:text-base leading-relaxed font-medium drop-shadow-md">
+                        {selectedImage.prompt}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </motion.div>
