@@ -16,6 +16,7 @@ interface UserProfile {
   isBanned?: boolean;
   createdAt: any;
   updatedAt?: any;
+  systemPrompt?: string;
 }
 
 interface AuthContextType {
