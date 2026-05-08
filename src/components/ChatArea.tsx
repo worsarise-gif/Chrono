@@ -3499,7 +3499,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             </div>
           </motion.div>
         </form>
-        <p className="text-center text-xs text-foreground/60 mt-2">Chrono can make mistakes. Check important info.</p>
+        <p className="text-center text-[10px] sm:text-xs text-foreground/60 mt-2">Chrono can make mistakes. Check important info.</p>
       </div>
       </div>
 
