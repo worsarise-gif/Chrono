@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+const fs = require('fs');
+
+const code = `import { NextRequest, NextResponse } from 'next/server';
 import { getApiKeys, withFallback } from '@/lib/apiFallback.server';
 import { verifySession } from '@/lib/auth';
 import { withRetry } from '@/lib/withRetry';
@@ -8,7 +10,7 @@ async function generateWithModel(model: string, prompt: string, width?: number, 
   const keys = getApiKeys('cloudflare');
 
   return await withFallback(keys, async (keyObj: any) => {
-    const url = `https://api.cloudflare.com/client/v4/accounts/${keyObj.accountId}/ai/run/${model}`;
+    const url = \`https://api.cloudflare.com/client/v4/accounts/\${keyObj.accountId}/ai/run/\${model}\`;
     const payload: any = { prompt };
     if (width) payload.width = width;
     if (height) payload.height = height;
@@ -16,7 +18,7 @@ async function generateWithModel(model: string, prompt: string, width?: number, 
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${keyObj.token}`,
+        'Authorization': \`Bearer \${keyObj.token}\`,
         'Content-Type': 'application/json',
         'Accept': 'image/png'
       },
@@ -26,7 +28,7 @@ async function generateWithModel(model: string, prompt: string, width?: number, 
     if (!response.ok) {
       const err = await response.text();
       // To trigger rate limit logic properly, attach status
-      throw Object.assign(new Error(`Cloudflare API error (${response.status}): ${err}`), { status: response.status });
+      throw Object.assign(new Error(\`Cloudflare API error (\${response.status}): \${err}\`), { status: response.status });
     }
 
     const contentType = response.headers.get('content-type') || '';
@@ -89,3 +91,7 @@ export async function POST(req: NextRequest) {
     });
   }
 }
+`;
+
+fs.writeFileSync('src/app/api/generate-image/route.ts', code);
+console.log('src/app/api/generate-image/route.ts updated');
