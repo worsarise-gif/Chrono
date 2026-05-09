@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import ChatArea from './ChatArea';
 import ImagineGallery from './ImagineGallery';
@@ -9,12 +9,15 @@ import AuthPage from './AuthPage';
 import { useAuth } from '../contexts/AuthContext';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { auth } from '../firebase';
-import { LogOut } from 'lucide-react';
+import { auth, db } from '../firebase';
+import { LogOut, ShieldAlert } from 'lucide-react';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 export default function ChatLayout({ children }: { children?: React.ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const { user, isBanned, loading } = useAuth();
+  const { user, isBanned, loading, isAdmin } = useAuth();
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceMessage, setMaintenanceMessage] = useState('We are currently undergoing scheduled maintenance. Please check back later.');
   const pathname = usePathname();
 
   const handleSwitchAccount = async () => {
@@ -30,6 +33,19 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState<string | null>(null);
   const [resendError, setResendError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const docRef = doc(db, 'system_settings', 'main');
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setMaintenanceMode(data.maintenanceMode || false);
+        setMaintenanceMessage(data.maintenanceMessage || 'We are currently undergoing scheduled maintenance. Please check back later.');
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleResendVerification = async () => {
     if (!user?.email) return;
@@ -130,6 +146,30 @@ export default function ChatLayout({ children }: { children?: React.ReactNode })
           >
             <LogOut size={18} />
             Login with another account
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (maintenanceMode && !isAdmin) {
+    return (
+      <div className="flex h-[100dvh] w-full relative items-center justify-center bg-background text-foreground">
+        <StarryBackground />
+        <div className="relative z-10 bg-surface border border-border p-8 rounded-2xl max-w-md text-center shadow-2xl">
+          <div className="w-16 h-16 bg-info/10 text-info rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert size={32} />
+          </div>
+          <h2 className="text-2xl font-bold mb-2">Maintenance Mode</h2>
+          <p className="text-foreground-muted text-sm mb-6">
+            {maintenanceMessage}
+          </p>
+          <button
+            onClick={handleSwitchAccount}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-foreground text-background rounded-xl font-medium hover:opacity-90 transition-all shadow-lg"
+          >
+            <LogOut size={18} />
+            Logout
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, ChevronDown, ChevronUp, AlertCircle, Info, AlertTriangle, Terminal } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, AlertCircle, Info, AlertTriangle, Terminal, Trash2 } from 'lucide-react';
 import { db } from '../../firebase';
-import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, getDocs, deleteDoc, doc } from 'firebase/firestore';
 
 export default function LogsTab() {
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
@@ -10,6 +10,7 @@ export default function LogsTab() {
   const [searchTerm, setSearchTerm] = useState('');
   const [realLogs, setRealLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clearingLogs, setClearingLogs] = useState(false);
 
   useEffect(() => {
     const q = query(
@@ -73,6 +74,22 @@ export default function LogsTab() {
     }
   };
 
+  const handleClearLogs = async () => {
+    if (window.confirm("Are you sure you want to delete all system logs? This action cannot be undone.")) {
+      setClearingLogs(true);
+      try {
+        const logsSnapshot = await getDocs(collection(db, 'logs'));
+        const deletePromises = logsSnapshot.docs.map(docSnap => deleteDoc(doc(db, 'logs', docSnap.id)));
+        await Promise.all(deletePromises);
+        console.log("All logs cleared successfully.");
+      } catch (error) {
+        console.error("Error clearing logs:", error);
+      } finally {
+        setClearingLogs(false);
+      }
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -112,6 +129,15 @@ export default function LogsTab() {
             <option value="ui">UI</option>
             <option value="auth">Auth</option>
           </select>
+          <button
+            onClick={handleClearLogs}
+            disabled={clearingLogs || realLogs.length === 0}
+            className="flex items-center gap-2 bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/20 rounded-lg px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+            title="Clear all logs"
+          >
+            <Trash2 size={16} />
+            <span className="hidden md:inline">{clearingLogs ? 'Clearing...' : 'Clear All'}</span>
+          </button>
         </div>
       </div>
 

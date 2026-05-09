@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, Save, AlertTriangle, CheckCircle2, RefreshCw, Sliders, ShieldAlert, Bot, Trash2 } from 'lucide-react';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
 import { ref, listAll, deleteObject } from 'firebase/storage';
 import { db, storage, auth } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -15,21 +15,49 @@ export default function SettingsTab() {
   const [settings, setSettings] = useState({
     maintenanceMode: false,
     maintenanceMessage: 'We are currently undergoing scheduled maintenance. Please check back later.',
-    defaultTemperature: 0.7,
-    maxTokens: 4096,
-    systemPromptOverride: '',
     enableImageGeneration: true,
     enableWebSearch: true,
   });
 
-  const handleSave = () => {
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const docRef = doc(db, 'system_settings', 'main');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setSettings(prev => ({
+            ...prev,
+            maintenanceMode: data.maintenanceMode || false,
+            maintenanceMessage: data.maintenanceMessage || 'We are currently undergoing scheduled maintenance. Please check back later.',
+            enableImageGeneration: data.enableImageGeneration !== undefined ? data.enableImageGeneration : true,
+            enableWebSearch: data.enableWebSearch !== undefined ? data.enableWebSearch : true,
+          }));
+        }
+      } catch (error) {
+        console.error("Error fetching system settings:", error);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSave = async () => {
     setSaving(true);
-    // Simulate saving to Firestore
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      await setDoc(doc(db, 'system_settings', 'main'), {
+        maintenanceMode: settings.maintenanceMode,
+        maintenanceMessage: settings.maintenanceMessage,
+        enableImageGeneration: settings.enableImageGeneration,
+        enableWebSearch: settings.enableWebSearch,
+      }, { merge: true });
       setToast('System settings updated successfully.');
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      setToast('Failed to save settings.');
+    } finally {
+      setSaving(false);
       setTimeout(() => setToast(null), 3000);
-    }, 1000);
+    }
   };
 
   const deleteStorageFolder = async (folderRef: any) => {
@@ -163,57 +191,19 @@ export default function SettingsTab() {
           </div>
         </div>
 
-        {/* AI Parameters */}
+        {/* Additional Features */}
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-info/10 text-info rounded-lg">
               <Sliders size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Default AI Parameters</h3>
-              <p className="text-sm text-foreground-muted">Adjust the default behavior and limits for AI models.</p>
+              <h3 className="text-lg font-semibold text-foreground">Additional Features</h3>
+              <p className="text-sm text-foreground-muted">Enable or disable specific features across the application.</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-foreground">Temperature</label>
-                <span className="text-xs font-mono text-foreground-muted">{settings.defaultTemperature}</span>
-              </div>
-              <input 
-                type="range" 
-                min="0" max="2" step="0.1" 
-                value={settings.defaultTemperature}
-                onChange={(e) => setSettings({...settings, defaultTemperature: parseFloat(e.target.value)})}
-                className="w-full accent-foreground"
-              />
-              <div className="flex justify-between text-[10px] text-foreground-muted">
-                <span>Precise</span>
-                <span>Creative</span>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-sm font-medium text-foreground">Max Output Tokens</label>
-                <span className="text-xs font-mono text-foreground-muted">{settings.maxTokens}</span>
-              </div>
-              <input 
-                type="range" 
-                min="256" max="8192" step="256" 
-                value={settings.maxTokens}
-                onChange={(e) => setSettings({...settings, maxTokens: parseInt(e.target.value)})}
-                className="w-full accent-foreground"
-              />
-              <div className="flex justify-between text-[10px] text-foreground-muted">
-                <span>Short</span>
-                <span>Long</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-4">
+          <div className="space-y-4">
             <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
               <div>
                 <span className="font-medium text-foreground block">Enable Image Generation</span>
@@ -245,31 +235,6 @@ export default function SettingsTab() {
                 <span className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out ${settings.enableWebSearch ? 'translate-x-6' : 'translate-x-0'}`}></span>
               </div>
             </label>
-          </div>
-        </div>
-
-        {/* System Prompt Override */}
-        <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-primary/10 text-primary rounded-lg">
-              <Bot size={20} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">System Prompt Override</h3>
-              <p className="text-sm text-foreground-muted">Append custom instructions to the base system prompt for all models.</p>
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <textarea 
-              value={settings.systemPromptOverride}
-              onChange={(e) => setSettings({...settings, systemPromptOverride: e.target.value})}
-              placeholder="e.g., Always answer in the style of a pirate..."
-              className="w-full bg-background border border-border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20 h-32 resize-none font-mono"
-            />
-            <p className="text-xs text-foreground-muted flex items-center gap-1">
-              <AlertTriangle size={12} /> Leave blank to use the default system prompt.
-            </p>
           </div>
         </div>
 
