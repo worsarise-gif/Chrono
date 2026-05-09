@@ -4,7 +4,7 @@
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: var(--font-google-sans-code), -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-sans: 'Google Sans Flex', var(--font-google-sans-code), -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --font-brand: var(--font-montserrat);
   --font-auth: 'Google Sans', sans-serif;
   --font-google-sans-flex: 'Google Sans Flex', sans-serif;
@@ -15,7 +15,7 @@
   --color-sidebar-bg: var(--color-surface);
   --color-chat-bg: var(--color-background);
 
-  --color-foreground: #0f1115;
+  --color-foreground: #27272a;
   --color-foreground-muted: #52525b;
   --color-foreground-subtle: #71717a;
 
@@ -38,18 +38,18 @@
 }
 
 .dark {
-  --color-background: #0e0f12;
+  --color-background: #09090b;
   --color-surface: #18181b;
   --color-surface-elevated: #27272a;
   --color-sidebar-bg: var(--color-surface);
   --color-chat-bg: var(--color-background);
 
-  --color-foreground: #f3f4f6;
+  --color-foreground: #e4e4e7;
   --color-foreground-muted: #a1a1aa;
   --color-foreground-subtle: #71717a;
 
   --color-surface-hover: #27272a;
-  --color-border: #3f3f46;
+  --color-border: #27272a;
   --color-muted: var(--color-foreground-muted);
   --color-stars: rgba(255, 255, 255, 0.03);
 
