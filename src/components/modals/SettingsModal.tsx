@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from 'next-themes';
 import { db } from '../../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
+import { toast } from 'sonner';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
       await updateDoc(userRef, {
         systemPrompt: systemPrompt
       });
+      toast.success('System prompt saved successfully');
     } catch (error) {
       console.error('Error saving system prompt:', error);
     } finally {

@@ -83,7 +83,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-[#0a0a0a] text-foreground font-[family-name:var(--font-auth)] font-normal overflow-y-auto">
+    <div className="dark flex flex-col h-[100dvh] w-full bg-[#0a0a0a] text-foreground font-[family-name:var(--font-auth)] font-normal overflow-y-auto">
       {/* Header */}
       <div className="flex justify-between items-center p-6 w-full shrink-0">
         <div className="flex items-center">

@@ -252,30 +252,14 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 md:p-8"
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 md:p-8"
             onClick={() => {
               setSelectedImage(null);
               setShowPrompt(false);
             }}
           >
             {/* Top Right Controls Container */}
-            <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-3 z-[110]">
-              <button
-                onClick={() => setShowPrompt(!showPrompt)}
-                className={`group relative p-2 rounded-full backdrop-blur-md transition-all duration-300 shadow-lg flex items-center justify-center ${
-                  showPrompt
-                    ? 'bg-white text-black'
-                    : 'bg-white/10 hover:bg-white/20 text-white border border-white/10 hover:border-white/20'
-                }`}
-                aria-label={showPrompt ? "Hide Prompt" : "Show Prompt"}
-              >
-                <Info size={20} />
-                {/* Tooltip */}
-                <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-black/80 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap backdrop-blur-md border border-white/10">
-                  {showPrompt ? "Hide Prompt" : "Show Prompt"}
-                </div>
-              </button>
-
+            <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-3 z-[210]">
               <button
                 onClick={() => handleDownload(selectedImage)}
                 className="group relative p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all duration-300 shadow-lg border border-white/10 hover:border-white/20 flex items-center justify-center"
