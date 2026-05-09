@@ -2,11 +2,9 @@
 
 import React, { useState } from 'react';
 import AdminGuard from '../../components/AdminGuard';
-import { LayoutDashboard, Users, Server, Database, Terminal, Settings, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, Server, Database, Terminal, Settings, Menu, X } from 'lucide-react';
 import { PlanetLogo } from '../../components/PlanetLogo';
 import { useAuth } from '../../contexts/AuthContext';
-import { auth } from '../../firebase';
-import { signOut } from 'firebase/auth';
 import Link from 'next/link';
 
 // Import Tab Components
@@ -20,14 +18,6 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
 
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -64,7 +54,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Sidebar */}
-        <aside className={`fixed md:relative top-0 left-0 h-full w-64 bg-surface border-r border-border flex flex-col z-40 transition-transform duration-300 ease-in-out shrink-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+        <aside className={`fixed md:relative top-0 left-0 h-full w-64 bg-surface border-r border-border flex flex-col z-[101] md:z-40 transition-transform duration-300 ease-in-out shrink-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
           <div className="p-6 hidden md:flex items-center gap-3">
             <PlanetLogo className="text-foreground" />
             <span className="text-xl font-bold tracking-tight text-foreground">Admin</span>
@@ -93,13 +83,6 @@ export default function AdminDashboard() {
             >
               Back to App
             </Link>
-            <button 
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 text-destructive transition-colors"
-            >
-              <LogOut size={16} />
-              Sign Out
-            </button>
           </div>
         </aside>
 
@@ -113,7 +96,7 @@ export default function AdminDashboard() {
         {/* Mobile Overlay */}
         {mobileMenuOpen && (
           <div 
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30 md:hidden"
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] md:hidden"
             onClick={() => setMobileMenuOpen(false)}
           />
         )}

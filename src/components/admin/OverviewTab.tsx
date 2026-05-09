@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { Activity, Users, MessageSquare, Zap, Loader2 } from 'lucide-react';
+import { Users, MessageSquare, Loader2 } from 'lucide-react';
 import { collection, onSnapshot, query, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 
@@ -9,8 +9,6 @@ export default function OverviewTab() {
   const [chartData, setChartData] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalUsers: 0, totalChats: 0 });
   const [loading, setLoading] = useState(true);
-  const [avgResponseTime, setAvgResponseTime] = useState(0);
-  const [healthStatus, setHealthStatus] = useState("100%");
 
   useEffect(() => {
     let isMounted = true;
@@ -39,21 +37,6 @@ export default function OverviewTab() {
           }
         }));
         
-        // Calculate dynamic response time and health from recent logs
-        const logsSnap = await getDocs(collection(db, 'logs'));
-        const errorLogs = logsSnap.docs.filter(doc => (doc.data().severity === 'error' || doc.data().severity === 'warning'));
-        
-        const errorRate = logsSnap.size > 0 ? (errorLogs.length / logsSnap.size) * 100 : 0;
-        const health = Math.max(0, 100 - errorRate).toFixed(1);
-        
-        if (isMounted) {
-          setHealthStatus(`${health}%`);
-          // Randomize avg response time between 400 and 1200ms dynamically based on active load to simulate real APM logic if no telemetry exists
-          const simulatedPing = 600 + Math.floor(Math.random() * 400);
-          setAvgResponseTime(simulatedPing);
-        }
-
-        if (!isMounted) return;
 
         setStats({ totalUsers: usersSnap.size, totalChats: totalChatsCount });
 
@@ -149,33 +132,6 @@ export default function OverviewTab() {
           </div>
         </div>
 
-        <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-foreground-muted">Avg Response Time</p>
-              <h3 className="text-2xl font-bold text-foreground mt-1">
-                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-foreground-muted" /> : `${avgResponseTime}ms`}
-              </h3>
-            </div>
-            <div className="p-2 rounded-lg bg-background border border-border text-warning">
-              <Zap size={18} />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-sm font-medium text-foreground-muted">System Health</p>
-              <h3 className="text-2xl font-bold text-foreground mt-1">
-                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-foreground-muted" /> : healthStatus}
-              </h3>
-            </div>
-            <div className="p-2 rounded-lg bg-background border border-border text-success">
-              <Activity size={18} />
-            </div>
-          </div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6">

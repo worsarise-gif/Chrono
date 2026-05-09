@@ -15,8 +15,6 @@ export default function SettingsTab() {
   const [settings, setSettings] = useState({
     maintenanceMode: false,
     maintenanceMessage: 'We are currently undergoing scheduled maintenance. Please check back later.',
-    enableImageGeneration: true,
-    enableWebSearch: true,
   });
 
   useEffect(() => {
@@ -30,8 +28,6 @@ export default function SettingsTab() {
             ...prev,
             maintenanceMode: data.maintenanceMode || false,
             maintenanceMessage: data.maintenanceMessage || 'We are currently undergoing scheduled maintenance. Please check back later.',
-            enableImageGeneration: data.enableImageGeneration !== undefined ? data.enableImageGeneration : true,
-            enableWebSearch: data.enableWebSearch !== undefined ? data.enableWebSearch : true,
           }));
         }
       } catch (error) {
@@ -47,8 +43,6 @@ export default function SettingsTab() {
       await setDoc(doc(db, 'system_settings', 'main'), {
         maintenanceMode: settings.maintenanceMode,
         maintenanceMessage: settings.maintenanceMessage,
-        enableImageGeneration: settings.enableImageGeneration,
-        enableWebSearch: settings.enableWebSearch,
       }, { merge: true });
       setToast('System settings updated successfully.');
     } catch (error) {
@@ -172,7 +166,17 @@ export default function SettingsTab() {
                   type="checkbox" 
                   className="opacity-0 w-0 h-0" 
                   checked={settings.maintenanceMode}
-                  onChange={(e) => setSettings({...settings, maintenanceMode: e.target.checked})}
+                  onChange={async (e) => {
+                    const newMode = e.target.checked;
+                    setSettings({...settings, maintenanceMode: newMode});
+                    try {
+                      await setDoc(doc(db, 'system_settings', 'main'), { maintenanceMode: newMode }, { merge: true });
+                      setToast('Maintenance mode updated successfully.');
+                    } catch (error) {
+                      console.error("Error saving maintenance mode:", error);
+                      setToast('Failed to update maintenance mode.');
+                    }
+                  }}
                 />
                 <span className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out ${settings.maintenanceMode ? 'translate-x-6' : 'translate-x-0'}`}></span>
               </div>
@@ -188,53 +192,6 @@ export default function SettingsTab() {
                 />
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Additional Features */}
-        <div className="bg-surface border border-border rounded-xl p-6 shadow-sm">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-info/10 text-info rounded-lg">
-              <Sliders size={20} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-foreground">Additional Features</h3>
-              <p className="text-sm text-foreground-muted">Enable or disable specific features across the application.</p>
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
-              <div>
-                <span className="font-medium text-foreground block">Enable Image Generation</span>
-                <span className="text-xs text-foreground-muted">Allow users to generate images using Cloudflare SDXL.</span>
-              </div>
-              <div className="relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out" style={{ backgroundColor: settings.enableImageGeneration ? '#10b981' : 'var(--color-border)' }}>
-                <input 
-                  type="checkbox" 
-                  className="opacity-0 w-0 h-0" 
-                  checked={settings.enableImageGeneration}
-                  onChange={(e) => setSettings({...settings, enableImageGeneration: e.target.checked})}
-                />
-                <span className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out ${settings.enableImageGeneration ? 'translate-x-6' : 'translate-x-0'}`}></span>
-              </div>
-            </label>
-
-            <label className="flex items-center justify-between p-4 border border-border rounded-lg bg-background cursor-pointer hover:bg-background/80 transition-colors">
-              <div>
-                <span className="font-medium text-foreground block">Enable Web Search</span>
-                <span className="text-xs text-foreground-muted">Allow the AI to use Tavily/Google for real-time information.</span>
-              </div>
-              <div className="relative inline-block w-12 h-6 rounded-full transition-colors duration-200 ease-in-out" style={{ backgroundColor: settings.enableWebSearch ? '#10b981' : 'var(--color-border)' }}>
-                <input 
-                  type="checkbox" 
-                  className="opacity-0 w-0 h-0" 
-                  checked={settings.enableWebSearch}
-                  onChange={(e) => setSettings({...settings, enableWebSearch: e.target.checked})}
-                />
-                <span className={`absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform duration-200 ease-in-out ${settings.enableWebSearch ? 'translate-x-6' : 'translate-x-0'}`}></span>
-              </div>
-            </label>
           </div>
         </div>
 
