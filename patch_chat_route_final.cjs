@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+const fs = require('fs');
+
+const code = `import { NextRequest, NextResponse } from 'next/server';
 import { getApiKeys, withFallback } from '@/lib/apiFallback.server';
 import { verifySession } from '@/lib/auth';
 import { enqueueChat, enqueueFront, queueDepth } from '@/lib/chatQueue';
@@ -10,13 +12,13 @@ import { db } from '@/lib/firebaseAdmin';
 async function openAIProviderStream(url: string, apiKey: string, model: string, messages: any[], signal?: AbortSignal) {
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    headers: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${apiKey}\` },
     body: JSON.stringify({ model, messages, stream: true }),
     signal
   });
   if (!res.ok) {
     const errorText = await res.text();
-    throw Object.assign(new Error(`API Error ${res.status}: ${errorText}`), { status: res.status });
+    throw Object.assign(new Error(\`API Error \${res.status}: \${errorText}\`), { status: res.status });
   }
 
   return (async function* () {
@@ -28,7 +30,7 @@ async function openAIProviderStream(url: string, apiKey: string, model: string, 
       const { done, value } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
+      const lines = buffer.split('\\n');
       buffer = lines.pop() || '';
       for (const line of lines) {
         const trimmedLine = line.trim();
@@ -62,7 +64,7 @@ async function googleProviderStream(apiKey: string, model: string, messages: any
 
 const getFirstKey = (provider: 'groq' | 'gemini' | 'cerebras' | 'cloudflare') => {
   const keys = getApiKeys(provider as any);
-  if (!keys || keys.length === 0) throw new Error(`No keys for ${provider}`);
+  if (!keys || keys.length === 0) throw new Error(\`No keys for \${provider}\`);
   const keyObj = keys[0];
   if (provider === 'cloudflare') return { accountId: keyObj.accountId, apiKey: keyObj.token };
   return { apiKey: typeof keyObj === 'string' ? keyObj : keyObj.key };
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
       const encoder = new TextEncoder();
       const silent = new ReadableStream({
         start(controller) {
-          controller.enqueue(encoder.encode(`data: [DONE]\n\n`));
+          controller.enqueue(encoder.encode(\`data: [DONE]\\n\\n\`));
           controller.close();
         }
       });
@@ -126,14 +128,14 @@ export async function POST(req: NextRequest) {
             () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqKey, 'llama3-8b-8192', messages, req.signal),
             () => googleProviderStream(geminiKey, 'gemini-2.5-flash', messages, req.signal),
             () => openAIProviderStream('https://api.cerebras.ai/v1/chat/completions', cerebrasKey, 'llama3.1-8b', messages, req.signal),
-            () => openAIProviderStream(`https://api.cloudflare.com/client/v4/accounts/${cfCreds.accountId}/ai/v1/chat/completions`, cfCreds.apiKey as string, '@cf/meta/llama-3-8b-instruct', messages, req.signal),
+            () => openAIProviderStream(\`https://api.cloudflare.com/client/v4/accounts/\${cfCreds.accountId}/ai/v1/chat/completions\`, cfCreds.apiKey as string, '@cf/meta/llama-3-8b-instruct', messages, req.signal),
           ])
         );
 
         for await (const chunk of aiStream) {
           accumulatedContent += chunk;
           if (controllerInstance) {
-            controllerInstance.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`));
+            controllerInstance.enqueue(encoder.encode(\`data: \${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\\n\\n\`));
           }
         }
 
@@ -144,7 +146,7 @@ export async function POST(req: NextRequest) {
         }
 
         if (controllerInstance) {
-          controllerInstance.enqueue(encoder.encode(`data: [DONE]\n\n`));
+          controllerInstance.enqueue(encoder.encode(\`data: [DONE]\\n\\n\`));
           controllerInstance.close();
         }
         resolveTaskFn();
@@ -165,7 +167,7 @@ export async function POST(req: NextRequest) {
             .catch(() => {});
         }
         if (controllerInstance) {
-          controllerInstance.enqueue(encoder.encode(`data: [DONE]\n\n`));
+          controllerInstance.enqueue(encoder.encode(\`data: [DONE]\\n\\n\`));
           controllerInstance.close();
         }
         resolveTaskFn();
@@ -180,7 +182,7 @@ export async function POST(req: NextRequest) {
     // If enqueue immediately failed (e.g., race condition), return empty done stream
     enqueuePromise.catch(e => {
        if (controllerInstance) {
-          controllerInstance.enqueue(encoder.encode(`data: [DONE]\n\n`));
+          controllerInstance.enqueue(encoder.encode(\`data: [DONE]\\n\\n\`));
           controllerInstance.close();
        }
     });
@@ -198,3 +200,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
+`;
+
+fs.writeFileSync('src/app/api/chat/route.ts', code);
+console.log('src/app/api/chat/route.ts updated for frontend requirements');

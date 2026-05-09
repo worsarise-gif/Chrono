@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+const fs = require('fs');
+
+const code = `import { NextRequest, NextResponse } from 'next/server';
 import { vectorSearch } from '@/lib/tools/vectorSearch';
 import { legacyWebSearch } from '@/lib/tools/legacyWebSearch';
 import { verifySession } from '@/lib/auth';
@@ -53,3 +55,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ results: [] });
   }
 }
+`;
+
+fs.writeFileSync('src/app/api/search/route.ts', code);
+console.log('src/app/api/search/route.ts updated');
