@@ -717,17 +717,6 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return () => unsubscribe();
   }, [user?.uid, currentChatId]);
 
-  const checkFileAccessPermission = () => {
-    if (localStorage.getItem('fileAccessPermissionGranted') === 'true') {
-      return true;
-    }
-    if (window.confirm("Do you allow Chrono to access your files?")) {
-      localStorage.setItem('fileAccessPermissionGranted', 'true');
-      return true;
-    }
-    return false;
-  };
-
   const processImageFile = (file: File) => {
     // Validate file size limit (e.g., 20MB)
     if (file.size > 20 * 1024 * 1024) {
@@ -783,9 +772,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (checkFileAccessPermission()) {
-        processImageFile(file);
-      }
+      processImageFile(file);
       e.target.value = ''; // Reset to allow re-selection of the same file
     }
   };
@@ -798,9 +785,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       if (items[i].type.indexOf('image') !== -1) {
         const file = items[i].getAsFile();
         if (file) {
-          if (checkFileAccessPermission()) {
-            processImageFile(file);
-          }
+          processImageFile(file);
           e.preventDefault();
           break;
         }
@@ -843,9 +828,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
       if (file.type.startsWith('image/')) {
-        if (checkFileAccessPermission()) {
-          processImageFile(file);
-        }
+        processImageFile(file);
       } else {
         handleError(new Error("Unsupported file type"), "Only image files are supported for drag and drop.", { severity: ErrorSeverity.WARNING });
       }
