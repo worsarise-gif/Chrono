@@ -85,7 +85,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
             margin: 0,
             padding: '1.25rem',
             background: 'transparent',
-            fontSize: '13.5px',
+            fontSize: '12.5px',
             lineHeight: '1.6',
           }}
           codeTagProps={{
@@ -330,10 +330,10 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
       );
     },
     h4({ node, children, ...props }: any) {
-      return <h4 className="text-sm font-semibold mt-2 mb-2 text-foreground" {...props}>{children}</h4>;
+      return <h4 className="text-[13px] font-semibold mt-2 mb-2 text-foreground" {...props}>{children}</h4>;
     },
     h5({ node, children, ...props }: any) {
-      return <h5 className="text-sm font-medium mt-2 mb-2 text-foreground" {...props}>{children}</h5>;
+      return <h5 className="text-[13px] font-medium mt-2 mb-2 text-foreground" {...props}>{children}</h5>;
     },
     h6({ node, children, ...props }: any) {
       return <h6 className="text-xs font-semibold mt-2 mb-2 text-foreground uppercase tracking-wide" {...props}>{children}</h6>;
@@ -398,7 +398,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
     table({ node, children, ...props }: any) {
       return (
         <div className="w-full overflow-x-auto my-8 rounded-xl border border-border/40 shadow-sm bg-surface/10">
-          <table className="w-full text-sm text-left border-collapse !m-0" {...props}>
+          <table className="w-full text-[13px] text-left border-collapse !m-0" {...props}>
             {children}
           </table>
         </div>
@@ -433,7 +433,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
 
       if (isInline) {
         return (
-          <code style={{ fontFamily: 'var(--font-google-sans-code)' }} className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm before:content-none after:content-none border border-border/50 break-words" {...props}>
+          <code style={{ fontFamily: 'var(--font-google-sans-code)' }} className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-[13px] before:content-none after:content-none border border-border/50 break-words" {...props}>
             {children}
           </code>
         );
@@ -481,7 +481,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`w-full prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-foreground max-w-none font-normal break-words text-foreground prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:font-semibold prose-strong:text-foreground prose-code:text-foreground text-sm ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`w-full prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-foreground max-w-none font-normal break-words text-foreground prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:font-semibold prose-strong:text-foreground prose-code:text-foreground text-[13px] ${isStreaming ? 'streaming-content' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
