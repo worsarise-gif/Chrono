@@ -15,6 +15,7 @@ import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandl
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
 
 import ResponseIconIndicator from './ResponseIconIndicator';
+import ImageGeneratingLoader from './ImageGeneratingLoader';
 
 import { streamStore } from '../lib/streamStore';
 import { Helix } from 'ldrs/react';
@@ -3152,23 +3153,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   exit={{ opacity: 0, y: -10 }}
                   className="flex justify-start group w-full"
                 >
-                  <div className="w-full max-w-lg rounded-2xl overflow-hidden relative aspect-square border border-border bg-surface">
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent -translate-x-full" style={{ animation: 'shimmer-skeleton 2s infinite' }} />
-                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted">
-                      <motion.div
-                        animate={{ scale: [1, 1.1, 1], opacity: [0.5, 1, 0.5] }}
-                        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                      >
-                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-muted/30 flex items-center justify-center">
-                          <span className="text-xl">✨</span>
-                        </div>
-                      </motion.div>
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-sm font-medium">Creating Art...</span>
-                        <span className="text-xs opacity-70">This usually takes a few seconds</span>
-                      </div>
-                    </div>
-                  </div>
+                  <ImageGeneratingLoader />
                 </motion.div>
               )}
             </AnimatePresence>
