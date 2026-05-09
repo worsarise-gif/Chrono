@@ -1768,17 +1768,20 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         ]
       };
 
+      // Determine if there is a recent image (we check here so we can skip adding the tool if it exists)
+      const hasRecentImageInTools = recentMessages.some(m => m.hasImage && !!m.imageUrl);
+
       if (mode === 'search') {
         tools.push(searchWebTool);
         tools.push(generateImageTool);
-        tools.push(analyzeImageTool);
+        if (!currentImage && !hasRecentImageInTools) tools.push(analyzeImageTool);
       } else if (mode === 'auto' || mode === 'pro') {
         tools.push(searchWebTool);
         tools.push(generateImageTool);
-        tools.push(analyzeImageTool);
+        if (!currentImage && !hasRecentImageInTools) tools.push(analyzeImageTool);
       } else {
         tools.push(generateImageTool);
-        tools.push(analyzeImageTool);
+        if (!currentImage && !hasRecentImageInTools) tools.push(analyzeImageTool);
       }
 
       let systemInstruction = `You are a helpful, intelligent, and friendly AI assistant. You maintain conversation history and provide clear, concise, and accurate answers.
@@ -2357,40 +2360,57 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           return;
         } else if (analyzeImageCallArgs && !controller.signal.aborted) {
           setLoadingStatus('Analyzing Image...', chatId || undefined);
-          const recentImageMsg = recentMessages.slice().reverse().find(m => (m.hasImage && !!m.imageUrl) || m.isGeneratedImage);
-          if (recentImageMsg) {
-             const sysContent = config.systemInstruction;
-             let imageContent: any[] = [];
-             try {
-                const url = recentImageMsg.imageUrl;
-                if (recentImageMsg.isGeneratedImage) {
-                  const match = recentImageMsg.content.match(/\!\[.*?\]\((data:image\/.*?base64,.*?)\)/);
-                  if (match && match[1]) {
+
+          let imageContent: any[] = [];
+
+          if (currentImage) {
+             imageContent = [
+                { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
+                { type: 'image_url', image_url: { url: `data:${currentImage.mimeType};base64,${currentImage.data}` } }
+             ];
+          } else {
+             // Look in the original messages array to avoid base64 data stripped from recentMessages
+             const recentImageMsg = messages.slice().reverse().find(m => (m.hasImage && !!m.imageUrl) || m.isGeneratedImage);
+             if (recentImageMsg) {
+                try {
+                   const url = recentImageMsg.imageUrl;
+                   if (recentImageMsg.isGeneratedImage) {
+                     const match = recentImageMsg.content.match(/\!\[.*?\]\((data:image\/.*?base64,.*?)\)/);
+                     if (match && match[1]) {
+                        imageContent = [
+                           { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
+                           { type: 'image_url', image_url: { url: match[1] } }
+                        ];
+                     } else {
+                        throw new Error("Could not extract image data.");
+                     }
+                   } else if (url && url.startsWith('data:')) {
                      imageContent = [
                         { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
-                        { type: 'image_url', image_url: { url: match[1] } }
+                        { type: 'image_url', image_url: { url: url } }
                      ];
-                  } else {
-                     throw new Error("Could not extract image data.");
-                  }
-                } else if (url && url.startsWith('data:')) {
-                  imageContent = [
-                     { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
-                     { type: 'image_url', image_url: { url: url } }
-                  ];
-                } else if (url) {
-                  const response = await fetch(url);
-                  const blob = await response.blob();
-                  const reader = new FileReader();
-                  const base64data = await new Promise((resolve) => {
-                     reader.onloadend = () => resolve(reader.result as string);
-                     reader.readAsDataURL(blob);
-                  });
-                  imageContent = [
-                     { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
-                     { type: 'image_url', image_url: { url: base64data } }
-                  ];
+                   } else if (url) {
+                     const response = await fetch(url);
+                     const blob = await response.blob();
+                     const reader = new FileReader();
+                     const base64data = await new Promise((resolve) => {
+                        reader.onloadend = () => resolve(reader.result as string);
+                        reader.readAsDataURL(blob);
+                     });
+                     imageContent = [
+                        { type: 'text', text: analyzeImageCallArgs.query || "What is in this image?" },
+                        { type: 'image_url', image_url: { url: base64data } }
+                     ];
+                   }
+                } catch (e) {
+                   console.error("Failed to extract image for analysis tool", e);
                 }
+             }
+          }
+
+          if (imageContent.length > 0) {
+             const sysContent = config.systemInstruction;
+             try {
 
                 const newOpenAIMessages = [
                   { role: 'system', content: sysContent },
