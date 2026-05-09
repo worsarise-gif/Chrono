@@ -59,12 +59,12 @@ export default function AdminLoginPage() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-start gap-3"
+            className="mb-8 p-4 bg-destructive/10 text-destructive border border-red-500/20 rounded-2xl flex items-start gap-3"
           >
-            <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
+            <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-red-500">Access Denied</p>
-              <p className="text-xs text-red-500/80 mt-1">
+              <p className="text-sm font-semibold text-destructive">Access Denied</p>
+              <p className="text-xs text-destructive/80 mt-1">
                 Your account ({user.email}) does not have administrative privileges. Please contact the system owner.
               </p>
             </div>

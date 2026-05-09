@@ -39,7 +39,7 @@ const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, set
   }, [user.id]);
 
   return (
-    <tr className={`hover:bg-background/50 transition-colors ${user.isBanned ? 'opacity-60 bg-red-500/5' : ''}`}>
+    <tr className={`hover:bg-background/50 transition-colors ${user.isBanned ? 'opacity-60 bg-destructive/5' : ''}`}>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           {user.photoURL ? (
@@ -52,31 +52,31 @@ const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, set
           <div>
             <div className="font-medium text-foreground flex items-center gap-2">
               {user.displayName || 'Unknown User'}
-              {user.isBanned && <span className="text-[10px] uppercase tracking-wider bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold">Banned</span>}
+              {user.isBanned && <span className="text-[10px] uppercase tracking-wider bg-destructive/20 text-destructive text-destructive px-1.5 py-0.5 rounded font-bold">Banned</span>}
             </div>
-            <div className="text-xs text-muted-foreground">{user.email}</div>
-            <div className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{user.id}</div>
+            <div className="text-xs text-foreground-muted">{user.email}</div>
+            <div className="text-[10px] text-foreground-muted/60 font-mono mt-0.5">{user.id}</div>
           </div>
         </div>
       </td>
       <td className="px-6 py-4">
-        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${user.role === 'admin' ? 'bg-purple-500/10 text-purple-500 border border-purple-500/20' : 'bg-surface border border-border text-muted-foreground'}`}>
+        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${user.role === 'admin' ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-surface border border-border text-foreground-muted'}`}>
           {user.role === 'admin' ? 'Admin' : 'User'}
         </span>
       </td>
       <td className="px-6 py-4 text-foreground font-medium">
-        {chatCount !== null ? chatCount : <Loader2 className="animate-spin w-4 h-4 text-muted-foreground" />}
+        {chatCount !== null ? chatCount : <Loader2 className="animate-spin w-4 h-4 text-foreground-muted" />}
       </td>
       <td className="px-6 py-4 text-foreground font-medium">
         {user.totalMessages !== undefined ? user.totalMessages : 0}
       </td>
-      <td className="px-6 py-4 text-muted-foreground">
+      <td className="px-6 py-4 text-foreground-muted">
         {user.createdAt?.toDate ? user.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}
       </td>
       <td className="px-6 py-4 text-right relative">
         <button 
           onClick={() => setActionMenuOpen(actionMenuOpen === user.id ? null : user.id)}
-          className="p-2 hover:bg-border rounded-md text-muted-foreground transition-colors"
+          className="p-2 hover:bg-border rounded-md text-foreground-muted transition-colors"
         >
           <MoreVertical size={16} />
         </button>
@@ -94,7 +94,7 @@ const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, set
               </button>
               <button 
                 onClick={() => handleToggleBan(user.id, user.isBanned)}
-                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-background flex items-center gap-2 transition-colors ${user.isBanned ? 'text-green-500' : 'text-red-500'}`}
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-background flex items-center gap-2 transition-colors ${user.isBanned ? 'text-success' : 'text-destructive'}`}
               >
                 {user.isBanned ? <CheckCircle2 size={14} /> : <Ban size={14} />}
                 {user.isBanned ? 'Unban User' : 'Ban User'}
@@ -178,10 +178,10 @@ export default function UsersTab() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">User Management</h2>
-          <p className="text-muted-foreground text-sm">Monitor and moderate user accounts in real-time.</p>
+          <p className="text-foreground-muted text-sm">Monitor and moderate user accounts in real-time.</p>
         </div>
         <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground-muted" size={16} />
           <input 
             type="text" 
             placeholder="Search users by email, name, or ID..." 
@@ -195,7 +195,7 @@ export default function UsersTab() {
       <div className="bg-surface border border-border rounded-xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-background border-b border-border text-muted-foreground">
+            <thead className="bg-background border-b border-border text-foreground-muted">
               <tr>
                 <th className="px-6 py-4 font-medium">User</th>
                 <th className="px-6 py-4 font-medium">Role</th>
@@ -219,7 +219,7 @@ export default function UsersTab() {
                 ))
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">No users found matching your search.</td>
+                  <td colSpan={6} className="px-6 py-8 text-center text-foreground-muted">No users found matching your search.</td>
                 </tr>
               ) : (
                 filteredUsers.map((user) => (

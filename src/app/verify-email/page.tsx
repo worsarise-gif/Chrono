@@ -72,22 +72,22 @@ function VerifyOTPHandler() {
   };
 
   return (
-    <div className="w-full max-w-[400px] p-8 mx-auto bg-[#18181b] border border-white/10 rounded-xl font-[family-name:var(--font-auth)]">
-      <h2 className="text-2xl font-medium text-white mb-6 text-center">Verify your email</h2>
+    <div className="w-full max-w-[400px] p-8 mx-auto bg-surface border border-border rounded-xl font-[family-name:var(--font-auth)]">
+      <h2 className="text-2xl font-medium text-foreground mb-6 text-center">Verify your email</h2>
 
-      <p className="text-sm text-gray-400 mb-6 text-center">
+      <p className="text-sm text-foreground-muted mb-6 text-center">
         We sent a 6-digit verification code to your email.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 text-sm text-red-400 bg-red-900/20 border border-red-500/20 rounded-xl">
+          <div className="p-3 text-sm text-destructive bg-red-900/20 border border-red-500/20 rounded-xl">
             {error}
           </div>
         )}
 
         {success && (
-          <div className="p-3 text-sm text-green-400 bg-green-900/20 border border-green-500/20 rounded-xl">
+          <div className="p-3 text-sm text-success bg-success/20 border border-green-500/20 rounded-xl">
             {success}
           </div>
         )}
@@ -100,7 +100,7 @@ function VerifyOTPHandler() {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={!!emailParam || isLoading}
-            className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-white placeholder-gray-500 disabled:opacity-50"
+            className="w-full px-4 py-3 bg-[#0a0a0a] border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring transition-all text-foreground placeholder-gray-500 disabled:opacity-50"
             placeholder="Enter your email"
           />
         </div>
@@ -113,7 +113,7 @@ function VerifyOTPHandler() {
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
             required
             disabled={isLoading}
-            className="w-full px-4 py-3 bg-[#0a0a0a] border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-white/20 transition-all text-white placeholder-gray-500 text-center tracking-widest text-lg font-mono"
+            className="w-full px-4 py-3 bg-[#0a0a0a] border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring transition-all text-foreground placeholder-gray-500 text-center tracking-widest text-lg font-mono"
             placeholder="000000"
             maxLength={6}
           />
@@ -122,7 +122,7 @@ function VerifyOTPHandler() {
         <button
           type="submit"
           disabled={isLoading || otp.length !== 6 || !email}
-          className="w-full bg-white mt-4 text-black rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-gray-200 transition-colors text-base disabled:opacity-70 disabled:cursor-not-allowed"
+          className="w-full bg-surface-elevated mt-4 text-foreground rounded-xl py-3 flex items-center justify-center gap-2 font-medium hover:bg-gray-200 transition-colors text-base disabled:opacity-70 disabled:cursor-not-allowed"
         >
           {isLoading ? <Loader2 size={18} className="animate-spin" /> : null}
           Verify Code
@@ -131,7 +131,7 @@ function VerifyOTPHandler() {
       </form>
 
       <div className="mt-6 text-center">
-        <Link href="/" className="text-sm text-gray-500 hover:text-white transition-colors">
+        <Link href="/" className="text-sm text-foreground-subtle hover:text-foreground transition-colors">
           Return to Login
         </Link>
       </div>
@@ -141,10 +141,10 @@ function VerifyOTPHandler() {
 
 export default function VerifyEmailPage() {
   return (
-    <div className="flex h-[100dvh] w-full items-center justify-center bg-[#0a0a0a] p-4 text-white font-[family-name:var(--font-auth)] font-normal overflow-y-auto">
+    <div className="flex h-[100dvh] w-full items-center justify-center bg-[#0a0a0a] p-4 text-foreground font-[family-name:var(--font-auth)] font-normal overflow-y-auto">
       <Suspense fallback={
-        <div className="w-full max-w-[400px] p-8 mx-auto bg-[#18181b] border border-white/10 rounded-xl flex justify-center items-center h-64">
-           <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        <div className="w-full max-w-[400px] p-8 mx-auto bg-surface border border-border rounded-xl flex justify-center items-center h-64">
+           <Loader2 className="w-8 h-8 animate-spin text-foreground-muted" />
         </div>
       }>
         <VerifyOTPHandler />

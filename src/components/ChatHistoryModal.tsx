@@ -243,13 +243,13 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 <button 
                                   onClick={(e) => handleSaveTitle(e, chat.id)}
                                   disabled={isSaving}
-                                  className="p-1 text-green-500 hover:bg-green-500/10 rounded transition-colors"
+                                  className="p-1 text-success hover:bg-success/10 rounded transition-colors"
                                 >
                                   <Check size={16} />
                                 </button>
                                 <button 
                                   onClick={(e) => handleCancelEdit(e)}
-                                  className="p-1 text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                  className="p-1 text-destructive hover:bg-destructive/10 text-destructive rounded transition-colors"
                                 >
                                   <X size={16} />
                                 </button>
@@ -259,7 +259,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 <h3 className="font-semibold text-foreground line-clamp-2 leading-tight flex items-center gap-2">
                                   {chat.title}
                                   {chat.isPinned && (
-                                    <Pin size={12} className="text-blue-500 fill-blue-500/20 shrink-0" />
+                                    <Pin size={12} className="text-info fill-blue-500/20 shrink-0" />
                                   )}
                                 </h3>
                                 {currentChatId === chat.id && (
@@ -288,7 +288,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                   onClick={(e) => handleTogglePin(e, chat.id, !!chat.isPinned)}
                                   className={`p-2 rounded-lg transition-all ${
                                     chat.isPinned 
-                                      ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' 
+                                      ? 'bg-info/10 text-info hover:bg-info/20'
                                       : 'hover:bg-foreground/10 text-foreground/40 hover:text-foreground'
                                   }`}
                                   title={chat.isPinned ? "Unpin" : "Pin"}
@@ -309,7 +309,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 e.stopPropagation();
                                 onDeleteChat(chat.id, chat.title);
                               }}
-                              className="p-2 rounded-lg hover:bg-red-500/10 text-foreground/40 hover:text-red-500 transition-all"
+                              className="p-2 rounded-lg hover:bg-destructive/10 text-destructive text-foreground/40 hover:text-destructive transition-all"
                               title="Delete"
                             >
                               <Trash2 size={14} />

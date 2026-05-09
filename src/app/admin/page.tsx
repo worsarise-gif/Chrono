@@ -78,7 +78,7 @@ export default function AdminDashboard() {
                   setActiveTab(item.id);
                   setMobileMenuOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === item.id ? 'bg-foreground text-background shadow-md' : 'text-muted-foreground hover:bg-surface-hover hover:text-foreground'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === item.id ? 'bg-foreground text-background shadow-md' : 'text-foreground-muted hover:bg-surface-hover hover:text-foreground'}`}
               >
                 <item.icon size={18} />
                 {item.label}
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
             </Link>
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-500/10 transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 text-destructive transition-colors"
             >
               <LogOut size={16} />
               Sign Out

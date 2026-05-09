@@ -105,14 +105,14 @@ export default function OverviewTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">Dashboard Overview</h2>
-          <p className="text-muted-foreground text-sm">Real-time analytics and system metrics.</p>
+          <p className="text-foreground-muted text-sm">Real-time analytics and system metrics.</p>
         </div>
         <div className="flex bg-surface border border-border rounded-lg p-1">
           {[7, 30, 90].map((days) => (
             <button
               key={days}
               onClick={() => setTimeRange(days as any)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${timeRange === days ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${timeRange === days ? 'bg-foreground text-background shadow-sm' : 'text-foreground-muted hover:text-foreground'}`}
             >
               {days} Days
             </button>
@@ -124,12 +124,12 @@ export default function OverviewTab() {
         <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Users</p>
+              <p className="text-sm font-medium text-foreground-muted">Total Users</p>
               <h3 className="text-2xl font-bold text-foreground mt-1">
-                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-muted-foreground" /> : stats.totalUsers}
+                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-foreground-muted" /> : stats.totalUsers}
               </h3>
             </div>
-            <div className="p-2 rounded-lg bg-background border border-border text-blue-500">
+            <div className="p-2 rounded-lg bg-background border border-border text-info">
               <Users size={18} />
             </div>
           </div>
@@ -138,12 +138,12 @@ export default function OverviewTab() {
         <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Chats</p>
+              <p className="text-sm font-medium text-foreground-muted">Total Chats</p>
               <h3 className="text-2xl font-bold text-foreground mt-1">
-                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-muted-foreground" /> : stats.totalChats}
+                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-foreground-muted" /> : stats.totalChats}
               </h3>
             </div>
-            <div className="p-2 rounded-lg bg-background border border-border text-green-500">
+            <div className="p-2 rounded-lg bg-background border border-border text-success">
               <MessageSquare size={18} />
             </div>
           </div>
@@ -152,12 +152,12 @@ export default function OverviewTab() {
         <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Avg Response Time</p>
+              <p className="text-sm font-medium text-foreground-muted">Avg Response Time</p>
               <h3 className="text-2xl font-bold text-foreground mt-1">
-                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-muted-foreground" /> : `${avgResponseTime}ms`}
+                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-foreground-muted" /> : `${avgResponseTime}ms`}
               </h3>
             </div>
-            <div className="p-2 rounded-lg bg-background border border-border text-yellow-500">
+            <div className="p-2 rounded-lg bg-background border border-border text-warning">
               <Zap size={18} />
             </div>
           </div>
@@ -166,12 +166,12 @@ export default function OverviewTab() {
         <div className="bg-surface border border-border rounded-xl p-5 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">System Health</p>
+              <p className="text-sm font-medium text-foreground-muted">System Health</p>
               <h3 className="text-2xl font-bold text-foreground mt-1">
-                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-muted-foreground" /> : healthStatus}
+                {loading ? <Loader2 className="animate-spin w-6 h-6 mt-1 text-foreground-muted" /> : healthStatus}
               </h3>
             </div>
-            <div className="p-2 rounded-lg bg-background border border-border text-emerald-500">
+            <div className="p-2 rounded-lg bg-background border border-border text-success">
               <Activity size={18} />
             </div>
           </div>
@@ -184,7 +184,7 @@ export default function OverviewTab() {
           <div className="h-[300px] w-full">
             {loading ? (
               <div className="w-full h-full flex items-center justify-center">
-                <Loader2 className="animate-spin text-muted-foreground w-8 h-8" />
+                <Loader2 className="animate-spin text-foreground-muted w-8 h-8" />
               </div>
             ) : (
               <ResponsiveContainer width="100%" height="100%">

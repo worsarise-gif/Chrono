@@ -72,9 +72,9 @@ export default function DatabaseTab() {
 
   const getStatusIcon = (status: string) => {
     switch(status) {
-      case 'operational': return <CheckCircle2 className="text-green-500" size={20} />;
-      case 'degraded': return <AlertTriangle className="text-yellow-500" size={20} />;
-      case 'down': return <XCircle className="text-red-500" size={20} />;
+      case 'operational': return <CheckCircle2 className="text-success" size={20} />;
+      case 'degraded': return <AlertTriangle className="text-warning" size={20} />;
+      case 'down': return <XCircle className="text-destructive" size={20} />;
       default: return null;
     }
   };
@@ -84,7 +84,7 @@ export default function DatabaseTab() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">Database & Infrastructure</h2>
-          <p className="text-muted-foreground text-sm">Monitor Firebase health, connections, and storage metrics.</p>
+          <p className="text-foreground-muted text-sm">Monitor Firebase health, connections, and storage metrics.</p>
         </div>
         <button 
           onClick={fetchRealData}
@@ -98,34 +98,34 @@ export default function DatabaseTab() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-info/10 text-info flex items-center justify-center mb-4">
             <Users size={32} />
           </div>
           <h3 className="text-3xl font-bold text-foreground">{refreshing ? '...' : dbStats.users}</h3>
-          <p className="text-sm font-medium text-muted-foreground mt-1">Total Users</p>
-          <div className="mt-4 text-xs text-green-500 font-medium bg-green-500/10 px-3 py-1 rounded-full">
+          <p className="text-sm font-medium text-foreground-muted mt-1">Total Users</p>
+          <div className="mt-4 text-xs text-success font-medium bg-success/10 px-3 py-1 rounded-full">
             Firestore Confirmed
           </div>
         </div>
 
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 rounded-full bg-purple-500/10 text-purple-500 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
             <MessageSquare size={32} />
           </div>
           <h3 className="text-3xl font-bold text-foreground">{refreshing ? '...' : dbStats.chats}</h3>
-          <p className="text-sm font-medium text-muted-foreground mt-1">Total Chat Sessions</p>
-          <div className="mt-4 text-xs text-purple-500 font-medium bg-purple-500/10 px-3 py-1 rounded-full">
+          <p className="text-sm font-medium text-foreground-muted mt-1">Total Chat Sessions</p>
+          <div className="mt-4 text-xs text-primary font-medium bg-primary/10 px-3 py-1 rounded-full">
             Firestore Confirmed
           </div>
         </div>
 
         <div className="bg-surface border border-border rounded-xl p-6 shadow-sm flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-success/10 text-success flex items-center justify-center mb-4">
             <Terminal size={32} />
           </div>
           <h3 className="text-3xl font-bold text-foreground">{refreshing ? '...' : dbStats.logs}</h3>
-          <p className="text-sm font-medium text-muted-foreground mt-1">System Events Logged</p>
-          <div className="mt-4 text-xs text-emerald-500 font-medium bg-emerald-500/10 px-3 py-1 rounded-full">
+          <p className="text-sm font-medium text-foreground-muted mt-1">System Events Logged</p>
+          <div className="mt-4 text-xs text-success font-medium bg-success/10 px-3 py-1 rounded-full">
             Firestore Confirmed
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function DatabaseTab() {
             </div>
             <h3 className="text-lg font-semibold text-foreground">System Health Status</h3>
           </div>
-          <span className="text-xs text-muted-foreground">Last checked: {lastUpdated.toLocaleTimeString()}</span>
+          <span className="text-xs text-foreground-muted">Last checked: {lastUpdated.toLocaleTimeString()}</span>
         </div>
         
         <div className="divide-y divide-border">
@@ -149,19 +149,19 @@ export default function DatabaseTab() {
                 {getStatusIcon(service.status)}
                 <div>
                   <h4 className="font-medium text-foreground">{service.name}</h4>
-                  <p className="text-xs text-muted-foreground capitalize">{service.status === 'operational' ? 'All systems operational' : 'Experiencing degraded performance'}</p>
+                  <p className="text-xs text-foreground-muted capitalize">{service.status === 'operational' ? 'All systems operational' : 'Experiencing degraded performance'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-6">
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-1">Latency</p>
+                  <p className="text-xs text-foreground-muted uppercase tracking-wider font-semibold mb-1">Latency</p>
                   <p className="font-mono text-sm text-foreground">{service.latency}</p>
                 </div>
                 <div className="w-24 text-right">
                   <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    service.status === 'operational' ? 'bg-green-500/10 text-green-500' : 
-                    service.status === 'degraded' ? 'bg-yellow-500/10 text-yellow-600' : 
-                    'bg-red-500/10 text-red-500'
+                    service.status === 'operational' ? 'bg-success/10 text-success' :
+                    service.status === 'degraded' ? 'bg-yellow-500/10 text-warning' :
+                    'bg-destructive/10 text-destructive'
                   }`}>
                     {service.status}
                   </span>

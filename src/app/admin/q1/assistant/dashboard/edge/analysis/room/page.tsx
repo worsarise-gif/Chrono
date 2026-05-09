@@ -52,7 +52,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-surface p-6 rounded-2xl border border-border shadow-sm">
             <h2 className="text-xl font-semibold mb-2">System Status</h2>
-            <p className="text-green-500 font-medium">All systems operational</p>
+            <p className="text-success font-medium">All systems operational</p>
           </div>
           <div className="bg-surface p-6 rounded-2xl border border-border shadow-sm">
             <h2 className="text-xl font-semibold mb-2">Active Users</h2>
