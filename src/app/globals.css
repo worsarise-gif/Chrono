@@ -3,6 +3,16 @@
 
 @variant dark (&:where(.dark, .dark *));
 
+body {
+  font-family: 'Google Sans', 'Inter', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code, pre, .font-mono {
+  font-family: 'Google Sans Mono', 'Fira Code', 'JetBrains Mono', monospace;
+}
+
 @theme {
   --font-sans: var(--font-google-sans-code), -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --font-brand: var(--font-montserrat);
@@ -35,6 +45,14 @@
   --color-info: #2563eb;
   --color-info-foreground: #ffffff;
   --color-ring: rgba(79, 70, 229, 0.3);
+
+  --color-chat-text: #1f2328;
+  --color-chat-meta: #57606a;
+  --color-chat-code-inline: #0a3069;
+  --color-chat-code-bg: #f6f8fa;
+  --color-chat-code-text: #24292f;
+  --color-chat-border: #d0d7de;
+  --color-chat-link: #0969da;
 }
 
 .dark {
@@ -64,22 +82,30 @@
   --color-info: #60a5fa;
   --color-info-foreground: #0f1115;
   --color-ring: rgba(129, 140, 248, 0.3);
+
+  --color-chat-text: #e2e4e9;
+  --color-chat-meta: #9198a1;
+  --color-chat-code-inline: #adbac7;
+  --color-chat-code-bg: #161b22;
+  --color-chat-code-text: #c9d1d9;
+  --color-chat-border: #3d444d;
+  --color-chat-link: #4493f8;
 }
 
 /* Custom Scrollbar for all elements */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-surface-hover);
-  border-radius: 10px;
+  background: #c1c8cd;
+  border-radius: 9999px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-muted);
+.dark ::-webkit-scrollbar-thumb {
+  background: #3d444d;
 }
 
 /* Keep sidebar specific if needed, but the global one covers it */
@@ -189,6 +215,14 @@ textarea {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: shimmer 3s linear infinite;
+}
+
+.response-chunk {
+  animation: fadeIn 80ms ease-in;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Streaming Typing Cursor */

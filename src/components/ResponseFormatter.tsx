@@ -6,8 +6,8 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import 'katex/dist/katex.min.css';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { atomOneDark, githubGist } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import { Check, Copy, Search, ExternalLink, ChevronDown, Maximize2, Download, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
@@ -51,41 +51,35 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
   };
 
   const currentTheme = resolvedTheme || theme || 'dark';
-  const syntaxStyle = currentTheme === 'dark' ? vscDarkPlus : oneLight;
+  const syntaxStyle = currentTheme === 'dark' ? atomOneDark : githubGist;
 
   if (!mounted) {
     return (
-      <div className="relative group my-6 rounded-xl overflow-hidden border border-border/30 bg-surface/50 font-sans animate-pulse h-32" />
+      <div className="relative group my-6 rounded-xl overflow-hidden border border-[var(--color-chat-border)] bg-[var(--color-chat-code-bg)] font-sans animate-pulse h-32" />
     );
   }
 
-  // Sleek light mode background: very subtle off-white/gray
-  // Sleek dark mode background: existing surface/50
-  const containerBg = 'bg-transparent';
-  const headerBg = currentTheme === 'dark' ? 'bg-surface/20' : 'bg-surface/10';
-  const borderColor = currentTheme === 'dark' ? 'border-border/30' : 'border-border';
-
   return (
-    <div className={`relative group my-6 rounded-2xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
-      <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${currentTheme === 'dark' ? 'border-[#fafafa]/20' : borderColor + '/50'} backdrop-blur-sm rounded-t-2xl`}>
-        <span style={{ fontFamily: 'var(--font-google-sans-code)' }} className="text-[11px] text-foreground uppercase tracking-wider font-semibold">{language || 'text'}</span>
+    <div className={`relative group my-6 rounded-xl overflow-hidden border border-[var(--color-chat-border)] bg-[var(--color-chat-code-bg)] font-sans transition-all duration-300 shadow-sm`}>
+      <div className={`flex items-center justify-between px-4 py-2.5 bg-[var(--color-chat-code-bg)] text-[var(--color-chat-code-text)] border-b border-[var(--color-chat-border)] rounded-t-xl`}>
+        <span style={{ fontFamily: 'var(--font-google-sans-code)' }} className="text-[11px] uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 text-[11px] text-foreground/40 hover:text-foreground transition-colors font-medium"
+          className="flex items-center gap-1.5 text-[11px] opacity-70 hover:opacity-100 transition-colors font-medium"
         >
           {copied ? <Check size={12} className="text-success" /> : <Copy size={12} />}
           {copied ? 'Copied!' : 'Copy'}
         </button>
       </div>
-      <div className="text-[13px] leading-relaxed overflow-x-auto p-1">
+      <div className="text-sm leading-relaxed overflow-x-auto p-4 rounded-b-xl">
         <SyntaxHighlighter
           language={language || 'text'}
           style={syntaxStyle}
           customStyle={{
             margin: 0,
-            padding: '1.25rem',
+            padding: 0,
             background: 'transparent',
-            fontSize: '13.5px',
+            fontSize: '14px',
             lineHeight: '1.6',
           }}
           codeTagProps={{
@@ -317,47 +311,47 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
 
   const markdownComponents = React.useMemo(() => ({
     h1({ node, children, ...props }: any) {
-      return <h1 className="text-xl font-medium text-foreground mt-2 mb-4" {...props}>{children}</h1>;
+      return <h1 className="text-2xl font-semibold text-[var(--color-chat-text)] mt-6 mb-3" {...props}>{children}</h1>;
     },
     h2({ node, children, ...props }: any) {
-      return <h2 className="text-lg font-medium text-foreground mt-2 mb-3" {...props}>{children}</h2>;
+      return <h2 className="text-xl font-semibold text-[var(--color-chat-text)] mt-5 mb-2" {...props}>{children}</h2>;
     },
     h3({ node, children, ...props }: any) {
       return (
-        <h3 className="text-base font-medium mt-2 mb-3 text-foreground" {...props}>
+        <h3 className="text-lg font-medium text-[var(--color-chat-text)] mt-4 mb-2" {...props}>
           {children}
         </h3>
       );
     },
     h4({ node, children, ...props }: any) {
-      return <h4 className="text-sm font-semibold mt-2 mb-2 text-foreground" {...props}>{children}</h4>;
+      return <h4 className="text-base font-semibold mt-3 mb-2 text-[var(--color-chat-text)]" {...props}>{children}</h4>;
     },
     h5({ node, children, ...props }: any) {
-      return <h5 className="text-sm font-medium mt-2 mb-2 text-foreground" {...props}>{children}</h5>;
+      return <h5 className="text-base font-medium mt-3 mb-2 text-[var(--color-chat-text)]" {...props}>{children}</h5>;
     },
     h6({ node, children, ...props }: any) {
-      return <h6 className="text-xs font-semibold mt-2 mb-2 text-foreground uppercase tracking-wide" {...props}>{children}</h6>;
+      return <h6 className="text-sm font-semibold mt-3 mb-2 text-[var(--color-chat-text)] uppercase tracking-wide" {...props}>{children}</h6>;
     },
     p({ node, children, ...props }: any) {
-      return <p className="text-foreground font-normal leading-relaxed mb-3 last:mb-0 mt-0" {...props}>{children}</p>;
+      return <p className="text-[var(--color-chat-text)] font-normal leading-relaxed mb-4 mt-0" {...props}>{children}</p>;
     },
     strong({ node, children, ...props }: any) {
-      return <strong className="font-medium text-foreground" {...props}>{children}</strong>;
+      return <strong className="font-semibold text-[var(--color-chat-text)]" {...props}>{children}</strong>;
     },
     em({ node, children, ...props }: any) {
-      return <em className="italic text-foreground" {...props}>{children}</em>;
+      return <em className="italic text-[var(--color-chat-text)]" {...props}>{children}</em>;
     },
     del({ node, children, ...props }: any) {
-      return <del className="line-through text-foreground/60" {...props}>{children}</del>;
+      return <del className="line-through text-[var(--color-chat-text)]/60" {...props}>{children}</del>;
     },
     ul({ node, children, ...props }: any) {
-      return <ul className="list-disc list-outside ml-5 mb-4 text-foreground marker:text-foreground/70" {...props}>{children}</ul>;
+      return <ul className="list-disc list-outside pl-6 space-y-1.5 text-base mb-4 text-[var(--color-chat-text)] marker:text-[var(--color-chat-text)]/70" {...props}>{children}</ul>;
     },
     ol({ node, children, ...props }: any) {
-      return <ol className="list-decimal list-outside ml-5 mb-4 text-foreground marker:text-foreground/70" {...props}>{children}</ol>;
+      return <ol className="list-decimal list-outside pl-6 space-y-1.5 text-base mb-4 text-[var(--color-chat-text)] marker:text-[var(--color-chat-text)]/70" {...props}>{children}</ol>;
     },
     li({ node, children, ...props }: any) {
-      return <li className="text-foreground font-normal mb-1 last:mb-0 leading-relaxed" {...props}>{children}</li>;
+      return <li className="text-[var(--color-chat-text)] font-normal mb-1 last:mb-0 leading-relaxed" {...props}>{children}</li>;
     },
     img({ node, src, alt, ...props }: any) {
       return <ImageRenderer src={src} alt={alt} onImageClick={(s: string) => onImageClickRef.current?.(s)} {...props} />;
@@ -371,7 +365,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
             href={href} 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-medium bg-info/20 text-info rounded-full ml-1 hover:bg-blue-500/40 transition-colors no-underline align-super border border-blue-500/30"
+            className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[10px] font-medium bg-[var(--color-chat-code-bg)] text-[var(--color-chat-link)] rounded-full ml-1 hover:opacity-80 transition-opacity no-underline align-super border border-[var(--color-chat-border)]"
             title={href}
             {...props}
           >
@@ -380,24 +374,24 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
         );
       }
       return (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="text-info hover:text-info underline decoration-blue-500/30 underline-offset-2 transition-colors font-medium" {...props}>
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-[var(--color-chat-link)] hover:text-[var(--color-chat-link)] underline underline-offset-2 transition-colors font-medium" {...props}>
           {children}
         </a>
       );
     },
     blockquote({ node, children, ...props }: any) {
       return (
-        <blockquote className="border-l-4 border-blue-500 bg-surface/40 px-5 py-4 rounded-r-2xl my-5 text-foreground not-italic shadow-sm flex flex-col justify-center" {...props}>
+        <blockquote className="border-l-4 border-[var(--color-chat-border)] bg-transparent pl-4 my-5 text-[var(--color-chat-text)] italic shadow-none flex flex-col justify-center text-sm leading-relaxed" {...props}>
           {children}
         </blockquote>
       );
     },
     hr({ node, ...props }: any) {
-      return <hr className="border-t border-border/70 my-6" {...props} />;
+      return <hr className="border-t border-[var(--color-chat-border)] my-6" {...props} />;
     },
     table({ node, children, ...props }: any) {
       return (
-        <div className="w-full overflow-x-auto my-8 rounded-xl border border-border/40 shadow-sm bg-surface/10">
+        <div className="w-full my-8 overflow-x-auto rounded-xl border border-[var(--color-chat-border)] shadow-sm bg-transparent">
           <table className="w-full text-sm text-left border-collapse !m-0" {...props}>
             {children}
           </table>
@@ -405,19 +399,19 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
       );
     },
     thead({ node, children, ...props }: any) {
-      return <thead className="bg-surface/40" {...props}>{children}</thead>;
+      return <thead className="bg-[var(--color-chat-code-bg)]" {...props}>{children}</thead>;
     },
     tbody({ node, children, ...props }: any) {
-      return <tbody className="divide-y divide-border/30" {...props}>{children}</tbody>;
+      return <tbody className="" {...props}>{children}</tbody>;
     },
     tr({ node, children, ...props }: any) {
-      return <tr className="hover:bg-surface/20 transition-colors duration-150" {...props}>{children}</tr>;
+      return <tr className="transition-colors duration-150" {...props}>{children}</tr>;
     },
     th({ node, children, ...props }: any) {
-      return <th className="!px-5 !py-3.5 font-medium text-foreground/80 border-b border-border/60 whitespace-nowrap tracking-wide text-xs uppercase" {...props}>{children}</th>;
+      return <th className="!px-4 !py-2 font-semibold text-[var(--color-chat-text)] border-b-2 border-[var(--color-chat-border)] tracking-wide text-xs uppercase" {...props}>{children}</th>;
     },
     td({ node, children, ...props }: any) {
-      return <td className="!px-5 !py-4 text-foreground/90 align-top leading-relaxed" {...props}>{children}</td>;
+      return <td className="!px-4 !py-2 text-[var(--color-chat-text)] align-top leading-relaxed border-b border-[var(--color-chat-border)]" {...props}>{children}</td>;
     },
     pre({ node, children, ...props }: any) {
       return <div className="not-prose m-0 p-0 bg-transparent">{children}</div>;
@@ -433,7 +427,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
 
       if (isInline) {
         return (
-          <code style={{ fontFamily: 'var(--font-google-sans-code)' }} className="bg-surface/30 text-foreground px-1.5 py-0.5 rounded-lg text-sm before:content-none after:content-none border border-border/50 break-words" {...props}>
+          <code style={{ fontFamily: 'var(--font-google-sans-code)' }} className="bg-[var(--color-chat-code-bg)] text-[var(--color-chat-code-inline)] px-1.5 py-0.5 rounded-md text-sm before:content-none after:content-none break-words" {...props}>
             {children}
           </code>
         );
@@ -481,7 +475,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`w-full prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-foreground max-w-none font-normal break-words text-foreground prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:font-semibold prose-strong:text-foreground prose-code:text-foreground text-sm ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`w-full prose prose-neutral dark:prose-invert prose-sm sm:prose-base max-w-none font-normal break-words text-[var(--color-chat-text)] prose-p:text-[var(--color-chat-text)] prose-li:text-[var(--color-chat-text)] prose-headings:text-[var(--color-chat-text)] prose-strong:text-[var(--color-chat-text)] prose-code:text-[var(--color-chat-text)] text-base leading-7 ${isStreaming ? 'streaming-content response-chunk' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();

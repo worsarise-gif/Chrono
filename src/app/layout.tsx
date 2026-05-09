@@ -42,6 +42,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${montserrat.variable} ${googleSansCode.variable}`} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Google+Sans+Mono:wght@400;500&display=swap" rel="stylesheet" />
         <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400..900&display=swap" rel="stylesheet" />
       </head>
       <body className="bg-background text-foreground font-sans overflow-hidden selection:bg-primary/30 selection:text-foreground relative">

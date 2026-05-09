@@ -2911,7 +2911,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             {/* Welcome screen is handled by the input area's positioning */}
           </div>
         ) : (
-          <div className="max-w-3xl mx-auto w-full px-4 pb-40 md:pb-32 space-y-6 md:space-y-8 flex-1">
+          <div className="max-w-3xl mx-auto w-full px-4 pb-40 md:pb-32 space-y-6 flex-1">
             <AnimatePresence initial={false}>
               {messages.filter(msg => msg.id !== currentStreamingMessageId).map((msg, index) => (
                 <motion.div 
@@ -2941,7 +2941,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </motion.div>
                     )}
 
-          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm overflow-hidden' : 'bg-transparent text-foreground text-sm w-full'}`}>
+          <div className={`${msg.role === 'user' ? 'bg-surface rounded-2xl px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm overflow-hidden' : 'bg-transparent text-[var(--color-chat-text)] text-base w-full p-4 md:p-5 rounded-2xl max-w-3xl mx-auto'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full message-content-container" id={`message-content-${msg.id}`}>
                           {msg.content.startsWith('Error:') ? (
@@ -3123,7 +3123,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   />
                 )}
                 {streamingMessage.length > 0 && (
-                  <div className="w-full relative bg-transparent text-foreground text-base">
+                  <div className="w-full relative bg-transparent text-[var(--color-chat-text)] text-base w-full p-4 md:p-5 rounded-2xl max-w-3xl mx-auto">
                     <div className="w-full">
                       <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
                     </div>
