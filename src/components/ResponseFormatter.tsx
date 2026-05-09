@@ -67,7 +67,7 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
 
   return (
     <div className={`relative group my-6 rounded-2xl overflow-hidden border ${borderColor} ${containerBg} font-sans transition-all duration-300 shadow-sm`}>
-      <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}/50 backdrop-blur-sm rounded-t-2xl`}>
+      <div className={`flex items-center justify-between px-4 py-2.5 ${headerBg} border-b ${borderColor}/20 backdrop-blur-sm rounded-t-2xl`}>
         <span style={{ fontFamily: 'var(--font-google-sans-code)' }} className="text-[11px] text-foreground uppercase tracking-wider font-semibold">{language || 'text'}</span>
         <button
           onClick={handleCopy}
