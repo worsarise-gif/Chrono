@@ -1280,12 +1280,13 @@ Return ONLY the JSON array.`;
       if (!chatId) {
         isNewChat = true;
         try {
-          const chatRef = await addDoc(collection(db, 'users', user.uid, 'chats'), {
+          const chatRef = doc(collection(db, 'users', user.uid, 'chats'));
+          chatId = chatRef.id;
+          setDoc(chatRef, {
             title: userMessage.slice(0, 40) || 'New Chat',
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
-          });
-          chatId = chatRef.id;
+          }).catch(e => console.error("Failed to async create chat", e));
 
           const defaultState = streamStore.getStream('default');
           if (defaultState) {
@@ -1321,13 +1322,25 @@ Return ONLY the JSON array.`;
 
     if (user) {
       try {
-        userMessageRef = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), messageData);
-        await updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), {
-          updatedAt: serverTimestamp()
+        userMessageRef = doc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'));
+
+        // Optimistic UI update before network
+        const newMsg = {
+          id: userMessageRef.id,
+          ...messageData,
+          createdAt: new Date() // temporary local date until sync
+        };
+        setMessages(prev => [...prev, newMsg]);
+
+        // Fire and forget
+        Promise.all([
+          setDoc(userMessageRef, messageData),
+          updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), { updatedAt: serverTimestamp() }),
+          updateDoc(doc(db, 'users', user.uid), { totalMessages: increment(1) })
+        ]).catch(error => {
+          console.error("Failed async operations", error);
         });
-        await updateDoc(doc(db, 'users', user.uid), {
-          totalMessages: increment(1)
-        });
+
       } catch (error) {
         setIsLoading(false, chatId || undefined);
         try {
@@ -1364,7 +1377,7 @@ Return ONLY the JSON array.`;
       }
     } else {
       // Guest mode: update local state
-      const newMsg: Message = {
+      const newMsg = {
         id: Date.now().toString(),
         ...messageData
       };
@@ -1514,28 +1527,43 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
       }
 
       try {
-        await addDoc(collection(db, 'users', user!.uid, 'chats', chatId!, 'messages'), {
+        const msgRef = doc(collection(db, 'users', user!.uid, 'chats', chatId!, 'messages'));
+        const newMsg: Message = {
+          id: msgRef.id,
           role: 'model',
-          uid: user!.uid,
           content: finalImageResponse,
-          createdAt: serverTimestamp(),
+          createdAt: new Date(),
           isGeneratedImage: true
-        });
-        await updateDoc(doc(db, 'users', user!.uid, 'chats', chatId!), {
-          updatedAt: serverTimestamp()
-        });
-        await updateDoc(doc(db, 'users', user!.uid), {
-          totalMessages: increment(1)
-        });
+        };
+        // Optimistic UI update
+        setMessages(prev => [...prev, newMsg]);
+
+        const ops = [
+          setDoc(msgRef, {
+            ...newMsg,
+            createdAt: serverTimestamp()
+          }),
+          updateDoc(doc(db, 'users', user!.uid, 'chats', chatId!), {
+            updatedAt: serverTimestamp()
+          }),
+          updateDoc(doc(db, 'users', user!.uid), {
+            totalMessages: increment(1)
+          })
+        ];
 
         // Save to dedicated images collection for the gallery
         if (generatedImageBase64) {
-          await addDoc(collection(db, 'users', user!.uid, 'generated_images'), {
+          ops.push(addDoc(collection(db, 'users', user!.uid, 'generated_images'), {
             prompt: effectiveUserMessage,
             imageData: generatedImageBase64,
             createdAt: serverTimestamp()
-          });
+          }).then(() => {}));
         }
+
+        Promise.all(ops).catch(error => {
+          console.error("Failed to async save image response", error);
+        });
+
       } catch (error) {
         console.error("Failed to save image response", error);
         try {
@@ -2602,34 +2630,31 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       try {
         let finalMessageId = aiMessageRef?.id;
         if (user) {
+          const ops = [];
+
           if (aiMessageRef) {
-            await setDoc(aiMessageRef, {
+            ops.push(setDoc(aiMessageRef, {
               role: 'model',
               uid: user.uid,
               content: fullResponse,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp()
-            });
-            await updateDoc(doc(db, 'users', user.uid), {
-              totalMessages: increment(1)
-            });
+            }));
           } else {
-            const messageData: any = {
+            const docRef = doc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'));
+            finalMessageId = docRef.id;
+            ops.push(setDoc(docRef, {
               role: 'model',
               uid: user.uid,
               content: fullResponse,
               createdAt: serverTimestamp()
-            };
-            const docRef = await addDoc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'), messageData);
-            finalMessageId = docRef.id;
-            await updateDoc(doc(db, 'users', user.uid), {
-              totalMessages: increment(1)
-            });
+            }));
           }
 
-          await updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), {
-            updatedAt: serverTimestamp()
-          });
+          ops.push(updateDoc(doc(db, 'users', user.uid), { totalMessages: increment(1) }));
+          ops.push(updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), { updatedAt: serverTimestamp() }));
+
+          Promise.all(ops).catch(e => console.error("Failed async AI response save", e));
 
           // Generate smart title asynchronously for new chats using the AI response
           if (isNewChat) {
