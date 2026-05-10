@@ -7,11 +7,11 @@ import { withProviderFallback } from '@/lib/providerFallback';
 import { db } from '@/lib/firebaseAdmin';
 
 // Eagerly evaluated fetch inside the promise to catch network/auth errors immediately
-async function openAIProviderStream(url: string, apiKey: string, model: string, messages: any[], signal?: AbortSignal) {
+async function openAIProviderStream(url: string, apiKey: string, model: string, messages: any[], signal?: AbortSignal, isStream: boolean = true) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({ model, messages, stream: true }),
+    body: JSON.stringify({ model, messages, stream: isStream }),
     signal
   });
   if (!res.ok) {
@@ -19,6 +19,12 @@ async function openAIProviderStream(url: string, apiKey: string, model: string, 
     throw Object.assign(new Error(`API Error ${res.status}: ${errorText}`), { status: res.status });
   }
 
+  if (!isStream) {
+    const data = await res.json();
+    return (async function* () {
+      yield data.choices?.[0]?.message?.content || data.response || '';
+    })();
+  }
   return (async function* () {
     const reader = res.body?.getReader();
     if (!reader) throw new Error('No reader available');
@@ -49,14 +55,15 @@ async function openAIProviderStream(url: string, apiKey: string, model: string, 
   })();
 }
 
-async function googleProviderStream(apiKey: string, model: string, messages: any[], signal?: AbortSignal) {
+async function googleProviderStream(apiKey: string, model: string, messages: any[], signal?: AbortSignal, isStream: boolean = true) {
   // Using the OpenAI compatibility endpoint for Gemini
   return openAIProviderStream(
     'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     apiKey,
     model,
     messages,
-    signal
+    signal,
+    isStream
   );
 }
 
@@ -92,10 +99,10 @@ export async function POST(req: NextRequest) {
 
         const aiStream = await withRetry(() =>
           withProviderFallback([
-            () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqKey, 'llama3-8b-8192', messages, req.signal),
-            () => googleProviderStream(geminiKey, 'gemini-2.5-flash', messages, req.signal),
-            () => openAIProviderStream('https://api.cerebras.ai/v1/chat/completions', cerebrasKey, 'llama3.1-8b', messages, req.signal),
-            () => openAIProviderStream(`https://api.cloudflare.com/client/v4/accounts/${cfCreds.accountId}/ai/v1/chat/completions`, cfCreds.apiKey as string, '@cf/meta/llama-3-8b-instruct', messages, req.signal),
+            () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqKey, 'llama3-8b-8192', messages, req.signal, stream),
+            () => googleProviderStream(geminiKey, 'gemini-2.5-flash', messages, req.signal, stream),
+            () => openAIProviderStream('https://api.cerebras.ai/v1/chat/completions', cerebrasKey, 'llama3.1-8b', messages, req.signal, stream),
+            () => openAIProviderStream(`https://api.cloudflare.com/client/v4/accounts/${cfCreds.accountId}/ai/v1/chat/completions`, cfCreds.apiKey as string, '@cf/meta/llama-3-8b-instruct', messages, req.signal, stream),
           ])
         );
 
@@ -156,10 +163,10 @@ export async function POST(req: NextRequest) {
 
         const aiStream = await withRetry(() =>
           withProviderFallback([
-            () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqKey, 'llama3-8b-8192', messages, req.signal),
-            () => googleProviderStream(geminiKey, 'gemini-2.5-flash', messages, req.signal),
-            () => openAIProviderStream('https://api.cerebras.ai/v1/chat/completions', cerebrasKey, 'llama3.1-8b', messages, req.signal),
-            () => openAIProviderStream(`https://api.cloudflare.com/client/v4/accounts/${cfCreds.accountId}/ai/v1/chat/completions`, cfCreds.apiKey as string, '@cf/meta/llama-3-8b-instruct', messages, req.signal),
+            () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqKey, 'llama3-8b-8192', messages, req.signal, stream),
+            () => googleProviderStream(geminiKey, 'gemini-2.5-flash', messages, req.signal, stream),
+            () => openAIProviderStream('https://api.cerebras.ai/v1/chat/completions', cerebrasKey, 'llama3.1-8b', messages, req.signal, stream),
+            () => openAIProviderStream(`https://api.cloudflare.com/client/v4/accounts/${cfCreds.accountId}/ai/v1/chat/completions`, cfCreds.apiKey as string, '@cf/meta/llama-3-8b-instruct', messages, req.signal, stream),
           ])
         );
 
