@@ -855,6 +855,7 @@ Session Title Status: "false"`;
 
       let generatedTitle = '';
       const titleConfigs = [
+        { provider: 'cerebras', model: 'qwen-3-235b-a22b-instruct-2507', apiTier: 0 },
         { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 0 },
         { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 0 },
         { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 1 },
