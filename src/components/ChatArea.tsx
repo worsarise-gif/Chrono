@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { PlanetLogo } from './PlanetLogo';
 import { Paperclip, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download, Edit2 } from 'lucide-react';
 import { ResponseFormatter } from './ResponseFormatter';
+import { TypingText } from './lightswind/typing-text';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { useDebug } from '../contexts/DebugContext';
@@ -3331,7 +3332,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         </AnimatePresence>
 
         {!isChatStarted && (
-          <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
+          <div className="flex flex-col items-center gap-3 md:gap-4 mb-6 md:mb-8">
             {!user ? (
               <Link href="/">
                 <PlanetLogo size={64} showText={true} className="text-foreground hover:opacity-80 transition-opacity" />
@@ -3341,6 +3342,17 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 <PlanetLogo size={64} showText={true} className="text-foreground" />
               </>
             )}
+            <TypingText
+              delay={0.5}
+              duration={2}
+              fontSize="text-3xl sm:text-5xl"
+              fontWeight="font-extrabold"
+              color="text-primary"
+              letterSpacing="tracking-wider"
+              align="center"
+            >
+              Welcome to the Future of UI
+            </TypingText>
           </div>
         )}
         <form onSubmit={handleSubmit} className="w-full max-w-3xl relative">
