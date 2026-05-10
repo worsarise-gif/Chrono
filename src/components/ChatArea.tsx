@@ -2933,7 +2933,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   transition={{ duration: 0.2 }}
                   className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} group w-full`}
                 >
-                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[95%] md:max-w-[85%] overflow-hidden' : 'items-start w-full'} relative`}>
+                  <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[95%] md:max-w-[85%]' : 'items-start w-full'} relative`}>
                     {msg.role === 'user' && msg.imageUrl && (
                       <motion.div 
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -2953,7 +2953,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </motion.div>
                     )}
 
-          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm overflow-hidden' : 'bg-transparent text-foreground text-sm w-full'}`}>
+          <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm relative' : 'bg-transparent text-foreground text-sm w-full'}`}>
                       {msg.role === 'model' ? (
                         <div className="w-full message-content-container" id={`message-content-${msg.id}`}>
                           {msg.content.startsWith('Error:') ? (
@@ -3057,7 +3057,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               </div>
 
                               {/* Suggestions */}
-                              {msg.recommendations && msg.recommendations.length > 0 && (
+                              {msg.recommendations && msg.recommendations.length > 0 && index === messages.filter(m => m.id !== currentStreamingMessageId).length - 1 && (
                                 <div className="mt-5 space-y-3">
                                   {msg.recommendations.map((rec, i) => (
                                     <button 
@@ -3105,7 +3105,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               >
                                 {msg.content}
                               </p>
-                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-opacity">
+                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all duration-200">
                                 <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
