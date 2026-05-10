@@ -1,4 +1,4 @@
-export const getApiKeys = (provider: 'gemini' | 'groq' | 'cerebras' | 'cloudflare' | 'tavily' | 'googleSearch' | 'cloudflare_vectorize'): any[] => {
+export const getApiKeys = (provider: 'gemini' | 'groq' | 'groq_generator' | 'cerebras' | 'cloudflare' | 'tavily' | 'googleSearch' | 'cloudflare_vectorize'): any[] => {
   switch (provider) {
     case 'gemini':
       return [
@@ -11,6 +11,10 @@ export const getApiKeys = (provider: 'gemini' | 'groq' | 'cerebras' | 'cloudflar
         process.env.GROQ_API_KEY,
         process.env.GROQ_API_KEY_SECONDARY,
         process.env.GROQ_API_KEY_TERTIARY
+      ].filter(Boolean) as string[];
+    case 'groq_generator':
+      return [
+        process.env.GROQ_API_KEY_GENERATOR
       ].filter(Boolean) as string[];
     case 'cerebras':
       return [
