@@ -882,11 +882,11 @@ Session Title Status: "false"`;
             });
             if (!res.ok) throw new Error("Cloudflare Title failed");
             const data = await res.json();
-            generatedTitle = data.result?.response || '';
-            break;
+            generatedTitle = data.result?.response || data.choices?.[0]?.message?.content || data.response || '';
+            if (generatedTitle) break;
           } else if (config.provider === 'cerebras') {
             generatedTitle = await callCerebrasNonStream(config.model, [{ role: 'user', content: prompt }], undefined, addLog, config.apiTier);
-            break;
+            if (generatedTitle) break;
           }
         } catch (error) {
           console.warn(`Title generation failed with ${config.provider} (tier ${config.apiTier}):`, error);
