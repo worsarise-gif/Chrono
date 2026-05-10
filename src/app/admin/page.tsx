@@ -24,7 +24,7 @@ export default function AdminDashboard() {
     { id: 'users', label: 'Users', icon: Users },
     { id: 'database', label: 'Database', icon: Database },
     { id: 'logs', label: 'System Logs', icon: Terminal },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    ...(user?.email === 'johnkerveelayese@gmail.com' ? [{ id: 'settings', label: 'Settings', icon: Settings }] : []),
   ];
 
   const renderTabContent = () => {
@@ -33,7 +33,7 @@ export default function AdminDashboard() {
       case 'users': return <UsersTab />;
       case 'database': return <DatabaseTab />;
       case 'logs': return <LogsTab />;
-      case 'settings': return <SettingsTab />;
+      case 'settings': return user?.email === 'johnkerveelayese@gmail.com' ? <SettingsTab /> : <OverviewTab />;
       default: return <OverviewTab />;
     }
   };
