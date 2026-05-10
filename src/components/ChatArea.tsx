@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo, useCallback, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { PlanetLogo } from './PlanetLogo';
@@ -504,7 +504,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [previewImageIndex, allImages.length]);
 
-  const handleImageClick = (src: string) => {
+  const handleImageClick = useCallback((src: string) => {
     const index = allImages.findIndex(img => img.src === src);
     if (index !== -1) {
       setPreviewImageIndex(index);
@@ -512,7 +512,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       // Fallback for images not in history (e.g. just sent)
       setPreviewImage(src);
     }
-  };
+  }, [allImages]);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
