@@ -67,7 +67,7 @@ async function googleProviderStream(apiKey: string, model: string, messages: any
   );
 }
 
-const getFirstKey = (provider: 'groq' | 'gemini' | 'cerebras' | 'cloudflare') => {
+const getFirstKey = (provider: 'groq' | 'groq_generator' | 'gemini' | 'cerebras' | 'cloudflare') => {
   const keys = getApiKeys(provider as any);
   if (!keys || keys.length === 0) throw new Error(`No keys for ${provider}`);
   const keyObj = keys[0];
@@ -92,19 +92,33 @@ export async function POST(req: NextRequest) {
 
     if (stream === false) {
       try {
-        const groqKey = getFirstKey('groq').apiKey;
-        const geminiKey = getFirstKey('gemini').apiKey;
-        const cerebrasKey = getFirstKey('cerebras').apiKey;
-        const cfCreds = getFirstKey('cloudflare');
+        let aiStream;
 
-        const aiStream = await withRetry(() =>
-          withProviderFallback([
-            () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqKey, 'llama3-8b-8192', messages, req.signal, stream),
-            () => googleProviderStream(geminiKey, 'gemini-2.5-flash', messages, req.signal, stream),
-            () => openAIProviderStream('https://api.cerebras.ai/v1/chat/completions', cerebrasKey, 'llama3.1-8b', messages, req.signal, stream),
-            () => openAIProviderStream(`https://api.cloudflare.com/client/v4/accounts/${cfCreds.accountId}/ai/v1/chat/completions`, cfCreds.apiKey as string, '@cf/meta/llama-3-8b-instruct', messages, req.signal, stream),
-          ])
-        );
+        if (provider === 'generator') {
+          const groqGeneratorKey = getFirstKey('groq_generator').apiKey;
+          aiStream = await withRetry(() =>
+            withProviderFallback([
+              () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqGeneratorKey, 'llama-3.1-8b-instant', messages, req.signal, stream),
+              () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqGeneratorKey, 'llama-3.3-70b-versatile', messages, req.signal, stream),
+              () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqGeneratorKey, 'qwen-2.5-32b', messages, req.signal, stream), // standard groq model name for qwen
+              () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqGeneratorKey, 'qwen/qwen3-32b', messages, req.signal, stream), // fallback for custom router if used
+            ])
+          );
+        } else {
+          const groqKey = getFirstKey('groq').apiKey;
+          const geminiKey = getFirstKey('gemini').apiKey;
+          const cerebrasKey = getFirstKey('cerebras').apiKey;
+          const cfCreds = getFirstKey('cloudflare');
+
+          aiStream = await withRetry(() =>
+            withProviderFallback([
+              () => openAIProviderStream('https://api.groq.com/openai/v1/chat/completions', groqKey, 'llama3-8b-8192', messages, req.signal, stream),
+              () => googleProviderStream(geminiKey, 'gemini-2.5-flash', messages, req.signal, stream),
+              () => openAIProviderStream('https://api.cerebras.ai/v1/chat/completions', cerebrasKey, 'llama3.1-8b', messages, req.signal, stream),
+              () => openAIProviderStream(`https://api.cloudflare.com/client/v4/accounts/${cfCreds.accountId}/ai/v1/chat/completions`, cfCreds.apiKey as string, '@cf/meta/llama-3-8b-instruct', messages, req.signal, stream),
+            ])
+          );
+        }
 
         let accumulatedContent = '';
         for await (const chunk of aiStream) {

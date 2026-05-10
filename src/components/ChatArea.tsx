@@ -853,46 +853,24 @@ AI: "${aiResponse}"
 
 Session Title Status: "false"`;
 
-      let generatedTitle = '';
-      const titleConfigs = [
-        { provider: 'cerebras', model: 'qwen-3-235b-a22b-instruct-2507', apiTier: 0 },
-        { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 0 },
-        { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 0 },
-        { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 1 },
-        { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 1 },
-        { provider: 'cloudflare', model: '@cf/facebook/bart-large-cnn', apiTier: 2 },
-        { provider: 'cerebras', model: 'llama3.1-8b', apiTier: 2 }
-      ];
+      const idToken = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+        },
+        body: JSON.stringify({
+          provider: 'generator',
+          model: 'generator', // Model handled server-side by fallback
+          messages: [{ role: 'user', content: prompt }],
+          stream: false
+        })
+      });
 
-      for (const config of titleConfigs) {
-        try {
-          if (config.provider === 'cloudflare') {
-            const idToken = await auth.currentUser?.getIdToken();
-            const res = await fetch('/api/cloudflare-chat', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
-              },
-              body: JSON.stringify({
-                model: config.model,
-                messages: [{ role: 'user', content: prompt }],
-                stream: false,
-                apiTier: config.apiTier
-              })
-            });
-            if (!res.ok) throw new Error("Cloudflare Title failed");
-            const data = await res.json();
-            generatedTitle = data.result?.response || data.choices?.[0]?.message?.content || data.response || '';
-            if (generatedTitle) break;
-          } else if (config.provider === 'cerebras') {
-            generatedTitle = await callCerebrasNonStream(config.model, [{ role: 'user', content: prompt }], undefined, addLog, config.apiTier);
-            if (generatedTitle) break;
-          }
-        } catch (error) {
-          console.warn(`Title generation failed with ${config.provider} (tier ${config.apiTier}):`, error);
-        }
-      }
+      if (!res.ok) throw new Error("Title generation request failed");
+      const data = await res.json();
+      const generatedTitle = data.choices?.[0]?.message?.content || data.response || '';
       
       if (generatedTitle && !generatedTitle.includes("Title already generated")) {
         const cleanTitle = generatedTitle.replace(/^["']|["']$/g, '').trim();
@@ -1183,7 +1161,25 @@ Assistant Response:
 
 Return ONLY the JSON array.`;
       
-      const result = await callCerebrasNonStream('llama3.1-8b', [{ role: 'user', content: prompt }], undefined, addLog);
+      const idToken = await auth.currentUser?.getIdToken();
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+        },
+        body: JSON.stringify({
+          provider: 'generator',
+          model: 'generator',
+          messages: [{ role: 'user', content: prompt }],
+          stream: false
+        })
+      });
+
+      if (!res.ok) throw new Error("Recommendations request failed");
+      const data = await res.json();
+      const result = data.choices?.[0]?.message?.content || data.response || '';
+
       const jsonMatch = result.match(/\[.*\]/s);
       if (jsonMatch) {
         const recs = JSON.parse(jsonMatch[0]);
