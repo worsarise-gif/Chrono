@@ -3130,7 +3130,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               >
                                 {msg.content}
                               </p>
-                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 md:opacity-0 md:group-hover:opacity-100 opacity-100 transition-all duration-200">
+                              <div className="absolute -bottom-10 right-0 flex items-center gap-1 md:opacity-0 md:group-hover/user:opacity-100 opacity-100 transition-all duration-200">
                                 <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
