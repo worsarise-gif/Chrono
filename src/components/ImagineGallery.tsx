@@ -40,21 +40,27 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
 
         setIsMigrating(true);
         const chatsSnapshot = await getDocs(collection(db, 'users', user.uid, 'chats'));
+        const migrationPromises: Promise<any>[] = [];
+
+        // Parallelize fetching messages for all chats
+        const chatMessagesSnapshots = await Promise.all(
+          chatsSnapshot.docs.map(chatDoc =>
+            getDocs(collection(db, 'users', user.uid, 'chats', chatDoc.id, 'messages'))
+          )
+        );
         
-        for (const chatDoc of chatsSnapshot.docs) {
-          const messagesSnapshot = await getDocs(collection(db, 'users', user.uid, 'chats', chatDoc.id, 'messages'));
-          
+        for (const messagesSnapshot of chatMessagesSnapshots) {
           for (const msgDoc of messagesSnapshot.docs) {
             const data = msgDoc.data();
             
             // Check for user uploaded images
             if (data.imageUrl) {
-              await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
+              migrationPromises.push(addDoc(collection(db, 'users', user.uid, 'generated_images'), {
                 prompt: data.content || 'Uploaded Image',
                 imageData: data.imageUrl,
                 createdAt: data.createdAt || new Date(),
                 isUploaded: true
-              });
+              }));
             }
             
             // Check if it's a model message containing an image markdown
@@ -66,15 +72,20 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
                 const prompt = match[1] || 'Generated Image';
                 const imageData = match[2];
                 
-                // Add to generated_images collection
-                await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
+                // Add to generated_images collection promise array
+                migrationPromises.push(addDoc(collection(db, 'users', user.uid, 'generated_images'), {
                   prompt,
                   imageData,
                   createdAt: data.createdAt || new Date()
-                });
+                }));
               }
             }
           }
+        }
+
+        // Execute all migration writes concurrently
+        if (migrationPromises.length > 0) {
+          await Promise.all(migrationPromises);
         }
 
         // Mark migration as complete
