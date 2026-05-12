@@ -2,12 +2,13 @@ import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { db, auth } from '@/lib/firebaseAdmin';
 import crypto from 'crypto';
+import { isValidEmail, hashEmail } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
 
-    if (!email || typeof email !== 'string') {
+    if (!email || typeof email !== 'string' || !isValidEmail(email)) {
       return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
     }
 
@@ -31,10 +32,12 @@ export async function POST(request: Request) {
     const otp = crypto.randomInt(100000, 999999).toString();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
-    // Save to Firestore
-    await db.collection('email_otps').doc(email).set({
+    // Save to Firestore using hashed email as doc ID for security
+    const hashedEmail = hashEmail(email);
+    await db.collection('email_otps').doc(hashedEmail).set({
       otp,
       expiresAt: expiresAt.toISOString(),
+      email, // Store the email for reference if needed
     });
 
     // Setup nodemailer transporter

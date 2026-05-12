@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { db, auth } from '@/lib/firebaseAdmin';
+import { isValidEmail, hashEmail } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
     const { email, otp, password } = await request.json();
 
-    if (!email || typeof email !== 'string') {
+    if (!email || typeof email !== 'string' || !isValidEmail(email)) {
       return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
     }
 
@@ -13,7 +14,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Valid OTP is required.' }, { status: 400 });
     }
 
-    const otpDocRef = db.collection('email_otps').doc(email);
+    const hashedEmail = hashEmail(email);
+    const otpDocRef = db.collection('email_otps').doc(hashedEmail);
     const otpDoc = await otpDocRef.get();
 
     if (!otpDoc.exists) {
