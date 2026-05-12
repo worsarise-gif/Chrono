@@ -187,7 +187,11 @@ export async function POST(req: NextRequest) {
         for await (const chunk of aiStream) {
           accumulatedContent += chunk;
           if (controllerInstance) {
-            controllerInstance.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`));
+            try {
+              controllerInstance.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: chunk } }] })}\n\n`));
+            } catch (e) {
+              // Ignore enqueue errors if the stream was aborted/closed by the client
+            }
           }
         }
 
@@ -198,10 +202,13 @@ export async function POST(req: NextRequest) {
         }
 
         if (controllerInstance) {
-          controllerInstance.enqueue(encoder.encode(`data: [DONE]\n\n`));
-          controllerInstance.close();
+          try {
+            controllerInstance.enqueue(encoder.encode(`data: [DONE]\n\n`));
+            controllerInstance.close();
+          } catch (e) {
+            // Ignore close errors
+          }
         }
-        resolveTaskFn();
       } catch (err) {
         // If transient failure, enqueue front
         if (retryAttempts < MAX_RETRIES) {
@@ -209,7 +216,6 @@ export async function POST(req: NextRequest) {
           enqueueFront(userId, async () => {
              await runStreamTask();
           });
-          resolveTaskFn(); // Complete the current failed slot
           return;
         }
 
@@ -219,9 +225,14 @@ export async function POST(req: NextRequest) {
             .catch(() => {});
         }
         if (controllerInstance) {
-          controllerInstance.enqueue(encoder.encode(`data: [DONE]\n\n`));
-          controllerInstance.close();
+          try {
+            controllerInstance.enqueue(encoder.encode(`data: [DONE]\n\n`));
+            controllerInstance.close();
+          } catch (e) {
+            // Ignore close errors
+          }
         }
+      } finally {
         resolveTaskFn();
       }
     };
