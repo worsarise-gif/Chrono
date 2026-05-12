@@ -241,7 +241,7 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
         <img 
           src={src} 
           alt={alt || 'Generated Image'} 
-          className={`max-w-full h-auto block rounded-2xl transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`} 
+          className={`max-w-[300px] md:max-w-[400px] h-auto object-contain block rounded-2xl transition-opacity duration-300 ${isLoading ? 'opacity-0' : 'opacity-100'}`}
           loading="lazy" 
           onLoad={handleLoad}
           {...props} 
