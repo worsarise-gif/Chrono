@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert';
-import { isValidEmail, hashEmail } from './security.ts';
+import { isValidEmail, hashEmail } from './security';
 
 describe('Security Utilities', () => {
   describe('isValidEmail', () => {

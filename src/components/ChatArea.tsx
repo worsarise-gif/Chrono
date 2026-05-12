@@ -1604,8 +1604,25 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         content: m.content ? m.content.replace(/!\[(.*?)\]\(data:image\/[^;]+;base64,[^)]+\)/g, '[Generated Image: $1]') : m.content
       }));
 
-      const recentMessages = cleanedMessages.slice(-6); // Keep last 6 messages intact
-      const olderMessages = cleanedMessages.slice(0, -6);
+      const MAX_CONTEXT_CHARS = 20000;
+      let currentChars = 0;
+      let recentMessages: typeof cleanedMessages = [];
+      let olderMessages: typeof cleanedMessages = [];
+
+      // Collect recent messages from newest to oldest until character limit is hit
+      for (let i = cleanedMessages.length - 1; i >= 0; i--) {
+        const msg = cleanedMessages[i];
+        const msgChars = msg.content?.length || 0;
+        // Always include at least the very last message (the current user prompt)
+        // or up to the limit for older messages
+        if (i === cleanedMessages.length - 1 || currentChars + msgChars < MAX_CONTEXT_CHARS) {
+          recentMessages.unshift(msg);
+          currentChars += msgChars;
+        } else {
+          olderMessages = cleanedMessages.slice(0, i + 1);
+          break;
+        }
+      }
 
       if (olderMessages.length > 0) {
         // Summarize the *entire* conversation history (including recent ones) to ensure no context is lost
@@ -1666,15 +1683,10 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
               console.error("Final fallback to Gemini 1.5 Pro-002 failed:", fallbackErr);
             }
           }
-          contextText = `[Summary of older conversation: ${summary}]\n\n`;
+          contextText = `[System Note: The following is a summary of earlier discarded conversation to provide context: ${summary}]\n\n`;
         } catch (e) {
           console.error("Summarization failed completely", e);
         }
-      }
-
-      if (contextText) {
-        contents.push({ role: 'user', parts: [{ text: contextText }] });
-        contents.push({ role: 'model', parts: [{ text: 'Understood. I will remember this context.' }] });
       }
 
       for (const msg of recentMessages) {
@@ -1922,6 +1934,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         dynamicSystemInstruction += `\n\n[PRO LAYER ACTIVE]\nYou are an expert software engineer and mathematician. Provide clean, efficient, and well-documented code or step-by-step logic.\n- ALWAYS wrap code snippets in standard Markdown triple-backtick blocks with the correct language identifier.\n- Ensure proper indentation.\n- Do not use HTML tags for code.\n- Structure your response with clear headings and explanations.\n- Avoid incomplete code blocks.`;
       }
 
+      if (contextText) {
+        dynamicSystemInstruction += `\n\n${contextText}`;
+      }
+
       config.systemInstruction = dynamicSystemInstruction;
 
       const mergedRecentMessages: any[] = [];
@@ -1972,16 +1988,15 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       if (classification === 'image') {
         openAIMessages = [...mergedRecentMessages];
         if (openAIMessages.length > 0 && openAIMessages[0].role === 'user') {
-          const sysContent = dynamicSystemInstruction + (contextText ? `\n\n${contextText}` : '');
           if (typeof openAIMessages[0].content === 'string') {
-             openAIMessages[0].content = `[System Instruction: ${sysContent}]\n\n` + openAIMessages[0].content;
+             openAIMessages[0].content = `[System Instruction: ${dynamicSystemInstruction}]\n\n` + openAIMessages[0].content;
           } else if (Array.isArray(openAIMessages[0].content)) {
-             openAIMessages[0].content = [{ type: 'text', text: `[System Instruction: ${sysContent}]\n\n` }, ...openAIMessages[0].content];
+             openAIMessages[0].content = [{ type: 'text', text: `[System Instruction: ${dynamicSystemInstruction}]\n\n` }, ...openAIMessages[0].content];
           }
         }
       } else {
         openAIMessages = [
-          { role: 'system', content: dynamicSystemInstruction + (contextText ? `\n\n${contextText}` : '') },
+          { role: 'system', content: dynamicSystemInstruction },
           ...mergedRecentMessages
         ];
       }
