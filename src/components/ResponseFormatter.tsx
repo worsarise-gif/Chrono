@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useDeferredValue } from 'react';
+import StreamingText from './StreamingText';
 import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -34,7 +35,7 @@ const sanitizeSchema = {
   }
 };
 
-const CodeBlock = ({ language, value }: { language: string, value: string }) => {
+const CodeBlock = React.memo(({ language, value }: { language: string, value: string }) => {
   const [copied, setCopied] = useState(false);
   const { theme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(globalMounted);
@@ -101,9 +102,10 @@ const CodeBlock = ({ language, value }: { language: string, value: string }) => 
       </div>
     </div>
   );
-};
+});
+CodeBlock.displayName = 'CodeBlock';
 
-const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreaming?: boolean }) => {
+const ThinkingProcess = React.memo(({ content, isStreaming }: { content: string, isStreaming?: boolean }) => {
   const [isOpen, setIsOpen] = useState(isStreaming || false);
 
   useEffect(() => {
@@ -159,11 +161,12 @@ const ThinkingProcess = ({ content, isStreaming }: { content: string, isStreamin
       </AnimatePresence>
     </div>
   );
-};
+});
+ThinkingProcess.displayName = 'ThinkingProcess';
 
 const loadedImages = new Set<string>();
 
-const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
+const ImageRenderer = React.memo(({ src, alt, onImageClick, ...props }: any) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(!loadedImages.has(src));
 
@@ -299,7 +302,8 @@ const ImageRenderer = ({ src, alt, onImageClick, ...props }: any) => {
       </AnimatePresence>
     </>
   );
-};
+});
+ImageRenderer.displayName = 'ImageRenderer';
 
 interface ResponseFormatterProps {
   content: string;
@@ -308,7 +312,8 @@ interface ResponseFormatterProps {
 }
 
 export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({ content, isStreaming = false, onImageClick }) => {
-  const displayedContent = content;
+  const deferredContent = useDeferredValue(content);
+  const displayedContent = deferredContent;
   const onImageClickRef = React.useRef(onImageClick);
 
   React.useEffect(() => {
@@ -339,7 +344,15 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
       return <h6 className="text-xs font-semibold mt-2 mb-2 text-foreground uppercase tracking-wide" {...props}>{children}</h6>;
     },
     p({ node, children, ...props }: any) {
-      return <p className="text-foreground font-normal leading-relaxed mb-3 last:mb-0 mt-0" {...props}>{children}</p>;
+      return (
+        <p className="text-foreground font-normal leading-relaxed mb-3 last:mb-0 mt-0" {...props}>
+          {isStreaming ? (
+            <StreamingText content={typeof children === 'string' ? children : String(children)} isStreaming={isStreaming} />
+          ) : (
+            children
+          )}
+        </p>
+      );
     },
     strong({ node, children, ...props }: any) {
       return <strong className="font-medium text-foreground" {...props}>{children}</strong>;
@@ -481,7 +494,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
   const parts = displayedContent.split(/(<think>[\s\S]*?<\/think>|<think>[\s\S]*?$)/g);
 
   return (
-    <div className={`w-full prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-foreground max-w-none font-normal break-words text-foreground prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:font-semibold prose-strong:text-foreground prose-code:text-foreground text-[13px] ${isStreaming ? 'streaming-content' : ''}`}>
+    <div className={`w-full prose dark:prose-invert prose-p:leading-relaxed prose-headings:font-normal prose-headings:tracking-tight prose-li:marker:text-foreground max-w-none font-normal break-words text-foreground prose-p:text-foreground prose-li:text-foreground prose-headings:text-foreground prose-strong:font-semibold prose-strong:text-foreground prose-code:text-foreground text-[13px] ${isStreaming ? 'streaming-content streaming-cursor' : ''}`}>
       {parts.map((part, index) => {
         if (part.startsWith('<think>')) {
           const thinkingContent = part.replace('<think>', '').replace('</think>', '').trim();
