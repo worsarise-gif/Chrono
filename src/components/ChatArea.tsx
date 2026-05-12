@@ -2002,23 +2002,22 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
       let lastUIUpdateTime = 0;
       let firstTokenReceived = false;
 
+      let bufferRef = '';
+      let rafRef: number | null = null;
+
       const handleChunk = (text: string) => {
         if (!firstTokenReceived) firstTokenReceived = true;
         
-        const now = Date.now();
-        lastTokenTime = now;
-        
+        lastTokenTime = Date.now();
         fullResponse += text;
+        bufferRef += text;
         
-        // Throttle UI updates to ~30fps (33ms) to prevent layout thrashing
-        if (now - lastUIUpdateTime > 33) {
-          setStreamingMessage(fullResponse, chatId || undefined);
-          lastUIUpdateTime = now;
-        }
-        
-        if (user && aiMessageRef && now - lastUpdateTime > 1500) {
-          lastUpdateTime = now;
-          updateDoc(aiMessageRef, { content: fullResponse }).catch(e => console.error("Failed to sync chunk", e));
+        if (rafRef === null) {
+          rafRef = requestAnimationFrame(() => {
+            setStreamingMessage(fullResponse, chatId || undefined);
+            bufferRef = '';
+            rafRef = null;
+          });
         }
       };
 
@@ -2687,6 +2686,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           handleError(e, "Failed to save AI response");
         }
       } finally {
+        if (rafRef !== null) {
+          cancelAnimationFrame(rafRef);
+          rafRef = null;
+        }
         if (writeSuccessful) {
           setStreamingMessage(fullResponse, chatId || undefined);
         } else {
@@ -2980,7 +2983,14 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
 
           <div className={`${msg.role === 'user' ? 'bg-surface rounded-[24px] px-4 py-3 md:px-5 md:py-3.5 text-foreground shadow-sm text-sm relative' : 'bg-transparent text-foreground text-sm w-full'}`}>
                       {msg.role === 'model' ? (
-                        <div className="w-full message-content-container" id={`message-content-${msg.id}`}>
+                        <div
+                          className="w-full message-content-container"
+                          id={`message-content-${msg.id}`}
+                          style={{
+                            contain: 'content',
+                            willChange: msg.isStreaming ? 'contents' : 'auto'
+                          }}
+                        >
                           {msg.content.startsWith('Error:') ? (
                             <div className="p-4 bg-surface-hover border border-border rounded-xl text-foreground flex items-start gap-3 mb-2">
                               <AlertCircle size={18} className="mt-0.5 shrink-0" />
@@ -3161,7 +3171,14 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 )}
                 {streamingMessage.length > 0 && (
                   <div className="w-full relative bg-transparent text-foreground text-base">
-                    <div className="w-full">
+                    <div
+                      className="w-full message-content-container"
+                      id="message-content-streaming"
+                      style={{
+                        contain: 'content',
+                        willChange: 'contents'
+                      }}
+                    >
                       <ResponseFormatter content={streamingMessage} isStreaming={isLoading} onImageClick={handleImageClick} />
                     </div>
                   </div>
