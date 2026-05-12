@@ -66,7 +66,7 @@ const callCerebrasNonStream = async (model: string, messages: any[], signal?: Ab
       }
     }
     const data = await res.json();
-    return data.choices[0].message.content;
+    return data.choices?.[0]?.message?.content || data.response || '';
 };
 
 const callOpenAIStream = async (provider: 'groq' | 'cerebras', model: string, msgs: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any, apiTier?: number) => {
@@ -175,7 +175,7 @@ const callCloudflareNonStream = async (model: string, messages: any[], signal?: 
   }
 
   const data = await res.json();
-  return data.result?.response || '';
+  return data.result?.response || data.choices?.[0]?.message?.content || data.response || '';
 };
 
 const callCloudflareStream = async (model: string, messages: any[], onChunk: (text: string) => void, signal?: AbortSignal, addLog?: any, apiTier?: number) => {
@@ -335,7 +335,7 @@ const callGroqChatNonStream = async (model: string, messages: any[], fallbackMod
         }
       }
       const data = await res.json();
-      return data.choices[0].message.content;
+    return data.choices?.[0]?.message?.content || data.response || '';
   };
 
   try {
