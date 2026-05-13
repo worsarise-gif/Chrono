@@ -298,6 +298,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
             </Link>
 
             <button
+              aria-label="Expand Sidebar"
               onClick={() => setIsCollapsed?.(false)}
               className={`absolute hidden md:flex items-center justify-center text-foreground/60 dark:text-white hover:text-foreground dark:hover:text-white transition-opacity p-2 rounded-md hover:bg-surface ${isCollapsed ? 'opacity-0 group-hover/logo:opacity-100 pointer-events-none group-hover/logo:pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
             >
@@ -313,6 +314,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
           </div>
           <div className={`flex-1 flex items-center justify-end pr-4 transition-opacity duration-300 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             <button
+              aria-label="Collapse Sidebar"
               onClick={() => {
                 if (window.innerWidth < 768) {
                   setIsMobileOpen?.(false);
@@ -396,6 +398,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                   className="flex-1 bg-transparent border-none outline-none text-sm text-foreground py-1"
                                 />
                                 <button 
+                                  aria-label="Save Title"
                                   onClick={() => handleSaveTitle(chat.id)}
                                   disabled={isSavingTitle}
                                   className="p-1 text-success hover:bg-success/10 rounded transition-colors"
@@ -403,6 +406,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                   <Check size={14} />
                                 </button>
                                 <button 
+                                  aria-label="Cancel Edit"
                                   onClick={handleCancelEdit}
                                   className="p-1 text-destructive hover:bg-destructive/10 text-destructive rounded transition-colors"
                                 >
@@ -433,6 +437,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                                 </button>
                                 
                                 <button
+                                  aria-label="More Options"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setActiveMenuId(activeMenuId === chat.id ? null : chat.id);
@@ -576,7 +581,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
               </>
             ) : (
               <>
-                <button onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
+                <button aria-label="Login with Google" onClick={loginWithGoogle} className="w-9 h-9 rounded-full bg-[#f43f5e] flex items-center justify-center text-white hover:opacity-90 transition-opacity flex-shrink-0 shadow-sm pointer-events-auto">
                   <LogIn size={16} />
                 </button>
                 
