@@ -36,8 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [showSplash, setShowSplash] = useState(true);
 
   const isAdmin = !!(
-    user?.profile?.role === 'admin' || 
-    (user?.email === 'johnkerveelayese@gmail.com' && user?.emailVerified)
+    user?.profile?.role === 'admin'
   );
 
   const isBanned = !!user?.profile?.isBanned;

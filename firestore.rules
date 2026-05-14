@@ -48,10 +48,9 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        ( (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-           'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-          (request.auth.token.email == "johnkerveelayese@gmail.com") ); // Default admin
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     function uidUnchanged() {
