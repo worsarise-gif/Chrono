@@ -3,9 +3,32 @@ import { vectorSearch } from '@/lib/tools/vectorSearch';
 import { legacyWebSearch } from '@/lib/tools/legacyWebSearch';
 import { verifySession } from '@/lib/auth';
 import { withRetry } from '@/lib/withRetry';
+import { checkRateLimit } from '@/lib/rateLimit';
+import { db } from '@/lib/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await verifySession(req);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.uid;
+
+    // Rate Limiting
+    if (!checkRateLimit(userId)) {
+      return NextResponse.json({ error: 'Too Many Requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+    }
+
+    // Circuit Breaker Bans Check
+    try {
+      const banDoc = await db.collection('circuit_breaker_bans').doc(userId).get();
+      if (banDoc.exists && banDoc.data()?.banned) {
+        return NextResponse.json({ error: 'Account Banned' }, { status: 403 });
+      }
+    } catch(e) {
+      console.warn("Failed to check circuit breaker bans", e);
+    }
+
     const body = await req.json();
     const query = body.query;
     const forceRefresh = body.forceRefresh;

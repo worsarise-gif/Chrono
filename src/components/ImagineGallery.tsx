@@ -12,7 +12,7 @@ import { PlanetLogo } from './PlanetLogo';
 interface GeneratedImage {
   id: string;
   prompt: string;
-  imageData: string;
+  imageUrl: string;
   createdAt: any;
 }
 
@@ -57,7 +57,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
             if (data.imageUrl) {
               migrationPromises.push(addDoc(collection(db, 'users', user.uid, 'generated_images'), {
                 prompt: data.content || 'Uploaded Image',
-                imageData: data.imageUrl,
+                imageUrl: data.imageUrl,
                 createdAt: data.createdAt || new Date(),
                 isUploaded: true
               }));
@@ -70,12 +70,12 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
               let match;
               while ((match = imgRegex.exec(data.content)) !== null) {
                 const prompt = match[1] || 'Generated Image';
-                const imageData = match[2];
+                const imageUrl = match[2];
                 
                 // Add to generated_images collection promise array
                 migrationPromises.push(addDoc(collection(db, 'users', user.uid, 'generated_images'), {
                   prompt,
-                  imageData,
+                  imageUrl,
                   createdAt: data.createdAt || new Date()
                 }));
               }
@@ -116,7 +116,8 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const imgData: GeneratedImage[] = [];
       snapshot.forEach((doc) => {
-        imgData.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as GeneratedImage);
+        const data = doc.data({ serverTimestamps: 'estimate' });
+        imgData.push({ id: doc.id, ...data, imageUrl: data.imageUrl || data.imageData } as any);
       });
       setImages(imgData);
       setIsLoading(false);
@@ -149,7 +150,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
         document.body.removeChild(link);
       }
     };
-    image.src = img.imageData;
+    image.src = img.imageUrl;
   };
 
   return (
@@ -221,13 +222,19 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
                       setShowPrompt(false);
                     }}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={img.imageData}
-                      alt={img.prompt}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      loading="lazy"
-                    />
+                    {img.imageUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={img.imageUrl}
+                        alt={img.prompt}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-surface flex items-center justify-center text-muted">
+                        <ImageIcon size={32} className="opacity-50" />
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3">
                       <div className="flex justify-end translate-y-[-10px] opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                         <button
@@ -300,7 +307,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
               <div className="relative inline-flex max-w-full max-h-full" onClick={(e) => e.stopPropagation()}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={selectedImage.imageData}
+                  src={selectedImage.imageUrl}
                   alt={selectedImage.prompt}
                   className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
                 />

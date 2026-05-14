@@ -5,13 +5,19 @@ import { enqueueChat, enqueueFront, queueDepth } from '@/lib/chatQueue';
 import { withRetry, isRateLimitError } from '@/lib/withRetry';
 import { withProviderFallback } from '@/lib/providerFallback';
 import { db } from '@/lib/firebaseAdmin';
+import { checkRateLimit } from '@/lib/rateLimit';
+import { buildContextWindow } from '@/lib/tokenBudget';
 
 // Eagerly evaluated fetch inside the promise to catch network/auth errors immediately
 async function openAIProviderStream(url: string, apiKey: string, model: string, messages: any[], signal?: AbortSignal, isStream: boolean = true) {
+  const mappedMessages = messages.map(m => ({
+    ...m,
+    role: m.role === 'model' ? 'assistant' : 'user'
+  }));
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify({ model, messages, stream: isStream }),
+    body: JSON.stringify({ model, messages: mappedMessages, stream: isStream }),
     signal
   });
   if (!res.ok) {
@@ -56,7 +62,8 @@ async function openAIProviderStream(url: string, apiKey: string, model: string, 
 }
 
 async function googleProviderStream(apiKey: string, model: string, messages: any[], signal?: AbortSignal, isStream: boolean = true) {
-  // Using the OpenAI compatibility endpoint for Gemini
+  // Using the OpenAI compatibility endpoint for Gemini.
+  // It handles the OpenAI role format, but since we map to 'assistant' inside openAIProviderStream, we pass original messages.
   return openAIProviderStream(
     'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     apiKey,
@@ -82,6 +89,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const userId = session.uid;
+
+    // Rate Limiting
+    if (!checkRateLimit(userId)) {
+      return NextResponse.json({ error: 'Too Many Requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+    }
+
+    // Circuit Breaker Bans Check
+    try {
+      const banDoc = await db.collection('circuit_breaker_bans').doc(userId).get();
+      if (banDoc.exists && banDoc.data()?.banned) {
+        return NextResponse.json({ error: 'Account Banned' }, { status: 403 });
+      }
+    } catch(e) {
+      console.warn("Failed to check circuit breaker bans", e);
+    }
 
     const body = await req.json();
     const { provider, model, messages, stream, apiTier, streamingMessageDocRef, ...rest } = body;
