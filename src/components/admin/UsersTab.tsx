@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, doc, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Search, MoreVertical, Shield, ShieldOff, Ban, CheckCircle2, Loader2 } from 'lucide-react';
+import { Search, MoreVertical, Shield, ShieldOff, Ban, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { handleFirestoreError, OperationType } from '../../utils/firebaseErrorHandler';
 
@@ -20,11 +20,12 @@ interface UserRowProps {
   user: AdminUser;
   handleToggleAdmin: (userId: string, currentRole: string) => Promise<void>;
   handleToggleBan: (userId: string, currentStatus: boolean) => Promise<void>;
+  handleDeleteUser: (userId: string) => Promise<void>;
   actionMenuOpen: string | null;
   setActionMenuOpen: (id: string | null) => void;
 }
 
-const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, setActionMenuOpen }: UserRowProps) => {
+const UserRow = ({ user, handleToggleAdmin, handleToggleBan, handleDeleteUser, actionMenuOpen, setActionMenuOpen }: UserRowProps) => {
   const [chatCount, setChatCount] = useState<number | null>(null);
 
   useEffect(() => {
@@ -99,6 +100,17 @@ const UserRow = ({ user, handleToggleAdmin, handleToggleBan, actionMenuOpen, set
                 {user.isBanned ? <CheckCircle2 size={14} /> : <Ban size={14} />}
                 {user.isBanned ? 'Unban User' : 'Ban User'}
               </button>
+              <button
+                onClick={() => {
+                  if (confirm(`Are you sure you want to delete user ${user.email || user.displayName || user.id}? This action cannot be undone.`)) {
+                    handleDeleteUser(user.id);
+                  }
+                }}
+                className="w-full text-left px-4 py-2.5 text-sm hover:bg-destructive/10 flex items-center gap-2 transition-colors text-destructive"
+              >
+                <Trash2 size={14} />
+                Delete User
+              </button>
             </div>
           </>
         )}
@@ -150,6 +162,21 @@ export default function UsersTab() {
         handleFirestoreError(error, OperationType.UPDATE, `users/${userId}`);
       } catch (e: any) {
         toast.error(`Failed to update ban status: ${e.message}`);
+      }
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', userId));
+      toast.success('User deleted successfully');
+      setActionMenuOpen(null);
+    } catch (error) {
+      console.error("Error deleting user", error);
+      try {
+        handleFirestoreError(error, OperationType.DELETE, `users/${userId}`);
+      } catch (e: any) {
+        toast.error(`Failed to delete user: ${e.message}`);
       }
     }
   };
@@ -228,6 +255,7 @@ export default function UsersTab() {
                     user={user} 
                     handleToggleAdmin={handleToggleAdmin} 
                     handleToggleBan={handleToggleBan} 
+                    handleDeleteUser={handleDeleteUser}
                     actionMenuOpen={actionMenuOpen} 
                     setActionMenuOpen={setActionMenuOpen} 
                   />
