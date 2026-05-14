@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { useDebug } from '../contexts/DebugContext';
 import { db, storage, auth, loginWithGoogle } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, deleteDoc, limit, startAfter, getDocs } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
@@ -391,6 +391,9 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const { currentChatId, setCurrentChatId } = useChatContext();
   const { addLog } = useDebug();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [lastMessageDoc, setLastMessageDoc] = useState<any>(null);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
   const [input, setInput] = useState('');
 
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -662,6 +665,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   }, [input]);
 
   useEffect(() => {
+    let mounted = true;
     if (!user) {
       setIsLoadingMessages(false);
       return;
@@ -692,17 +696,51 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
     const q = query(
       collection(db, 'users', user.uid, 'chats', currentChatId, 'messages'),
-      orderBy('createdAt', 'asc')
+      orderBy('createdAt', 'desc'),
+      limit(50)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!mounted) return;
       const messageData: Message[] = [];
+      const now = Date.now();
+
       snapshot.forEach((doc) => {
-        messageData.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Message);
+        const data = doc.data({ serverTimestamps: 'estimate' });
+
+        // Client-side cleanup of orphaned streaming messages
+        if (data.isStreaming && data.createdAt) {
+          const createdAtTime = data.createdAt.toMillis ? data.createdAt.toMillis() : (data.createdAt.seconds * 1000);
+          if (now - createdAtTime > 60000) { // older than 60 seconds
+            // Update local data for immediate rendering
+            data.isStreaming = false;
+            data.content = (data.content || '') + '\n\n[Response interrupted]';
+
+            // Fire async update to fix it in Firestore
+            updateDoc(doc.ref, {
+              isStreaming: false,
+              content: data.content
+            }).catch(console.error);
+          }
+        }
+
+        messageData.push({ id: doc.id, ...data } as Message);
       });
+
+      if (snapshot.docs.length > 0) {
+        setLastMessageDoc(snapshot.docs[snapshot.docs.length - 1]);
+      } else {
+        setHasMoreMessages(false);
+      }
+
+      setHasMoreMessages(snapshot.docs.length >= 50);
+
+      messageData.reverse();
+
       setMessages(messageData);
       setIsLoadingMessages(false);
     }, (error) => {
+      if (!mounted) return;
       // Ignore errors if the user is logged out or logging out
       if (!auth.currentUser) return;
       
@@ -714,8 +752,52 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, [user?.uid, currentChatId]);
+
+  const loadEarlierMessages = async () => {
+    if (!user || !currentChatId || !lastMessageDoc || !hasMoreMessages || isLoadingMoreMessages) return;
+
+    setIsLoadingMoreMessages(true);
+    try {
+      const q = query(
+        collection(db, 'users', user.uid, 'chats', currentChatId, 'messages'),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastMessageDoc),
+        limit(50)
+      );
+
+      const snapshot = await getDocs(q);
+      const newMessages: Message[] = [];
+      snapshot.forEach((doc) => {
+        newMessages.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Message);
+      });
+
+      if (snapshot.docs.length > 0) {
+        setLastMessageDoc(snapshot.docs[snapshot.docs.length - 1]);
+      } else {
+        setHasMoreMessages(false);
+      }
+
+      setHasMoreMessages(snapshot.docs.length >= 50);
+
+      newMessages.reverse();
+
+      setMessages(prev => {
+        // We prepend newMessages to prev, deduplicating just in case
+        const merged = [...newMessages, ...prev];
+        const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+        return unique;
+      });
+    } catch (e) {
+      console.error("Failed to load earlier messages:", e);
+    } finally {
+      setIsLoadingMoreMessages(false);
+    }
+  };
 
   const processImageFile = (file: File) => {
     // Validate file size limit (e.g., 20MB)
@@ -1322,11 +1404,12 @@ Return ONLY the JSON array.`;
 
     if (user) {
       try {
-        userMessageRef = doc(collection(db, 'users', user.uid, 'chats', chatId!, 'messages'));
+        const messageId = `${user.uid}_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
+        userMessageRef = doc(db, 'users', user.uid, 'chats', chatId!, 'messages', messageId);
 
         // Optimistic UI update before network
         const newMsg = {
-          id: userMessageRef.id,
+          id: messageId,
           ...messageData,
           createdAt: new Date() // temporary local date until sync
         };
@@ -1334,7 +1417,7 @@ Return ONLY the JSON array.`;
 
         // Fire and forget
         Promise.all([
-          setDoc(userMessageRef, messageData),
+          setDoc(userMessageRef, messageData, { merge: false }),
           updateDoc(doc(db, 'users', user.uid, 'chats', chatId!), { updatedAt: serverTimestamp() }),
           updateDoc(doc(db, 'users', user.uid), { totalMessages: increment(1) })
         ]).catch(error => {
@@ -1469,7 +1552,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
           addLog('success', 'Image Gen', 'Image generated successfully');
           const blob = await res.blob();
           
-          // Compress the image to avoid Firestore's 1MB document limit
+          // Compress the image before uploading
           const compressedBase64 = await new Promise<string>((resolve, reject) => {
             const img = new Image();
             img.onload = () => {
@@ -1512,9 +1595,14 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
             img.src = URL.createObjectURL(blob);
           });
           
-          generatedImageBase64 = compressedBase64;
+          // Upload to Firebase Storage
+          const imageRef = ref(storage, `generated_images/${user!.uid}/${Date.now()}_img.webp`);
+          await uploadString(imageRef, compressedBase64, 'data_url');
+          const uploadedImageUrl = await getDownloadURL(imageRef);
+
+          generatedImageBase64 = uploadedImageUrl;
           const safeAltText = effectiveUserMessage.replace(/[\r\n\[\]]/g, ' ').substring(0, 150).trim() || 'Generated Image';
-          finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${compressedBase64})`;
+          finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${uploadedImageUrl})`;
         }
       } catch (err: any) {
         if (err.name === 'AbortError' || controller.signal.aborted) {
@@ -1555,7 +1643,7 @@ Reply ONLY with the aspect ratio string (e.g., "16:9", "1:1"). If none is specif
         if (generatedImageBase64) {
           ops.push(addDoc(collection(db, 'users', user!.uid, 'generated_images'), {
             prompt: effectiveUserMessage,
-            imageData: generatedImageBase64,
+            imageUrl: generatedImageBase64,
             createdAt: serverTimestamp()
           }).then(() => {}));
         }
@@ -2352,9 +2440,14 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 img.src = URL.createObjectURL(blob);
               });
 
-              generatedImageBase64 = compressedBase64 as string;
+              // Upload to Firebase Storage
+              const imageRef = ref(storage, `generated_images/${user!.uid}/${Date.now()}_img.jpeg`);
+              await uploadString(imageRef, compressedBase64 as string, 'data_url');
+              const uploadedImageUrl = await getDownloadURL(imageRef);
+
+              generatedImageBase64 = uploadedImageUrl;
               const safeAltText = prompt.replace(/[\r\n\[\]]/g, ' ').substring(0, 150).trim() || 'Generated Image';
-              finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${compressedBase64})`;
+              finalImageResponse = `Here is your generated image:\n\n![${safeAltText}](${uploadedImageUrl})`;
             }
           } catch (err: any) {
              if (err.name === 'AbortError' || controller.signal.aborted) {
@@ -2385,7 +2478,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               if (generatedImageBase64) {
                 await addDoc(collection(db, 'users', user.uid, 'generated_images'), {
                   prompt: prompt,
-                  imageData: generatedImageBase64,
+                  imageUrl: generatedImageBase64,
                   createdAt: serverTimestamp()
                 });
               }
@@ -2967,6 +3060,24 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           </div>
         ) : (
           <div className="max-w-3xl mx-auto w-full px-4 pb-40 md:pb-32 space-y-6 md:space-y-8 flex-1">
+            {messages.length > 0 && hasMoreMessages && (
+              <div className="flex justify-center py-4 relative z-10 w-full mb-4">
+                <button
+                  onClick={loadEarlierMessages}
+                  disabled={isLoadingMoreMessages}
+                  className="px-4 py-2 bg-surface hover:bg-surface-hover text-foreground/70 text-xs rounded-full border border-border transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isLoadingMoreMessages ? (
+                    <>
+                      <Helix size="12" speed="2.5" color="currentColor" />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <span>Load Earlier Messages</span>
+                  )}
+                </button>
+              </div>
+            )}
             <AnimatePresence initial={false}>
               {messages.filter(msg => msg.id !== currentStreamingMessageId).map((msg, index) => (
                 <motion.div 

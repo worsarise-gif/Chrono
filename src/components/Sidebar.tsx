@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { db, auth, loginWithGoogle } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, deleteDoc, updateDoc, limit, startAfter, getDocs } from 'firebase/firestore';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
 import { Helix } from 'ldrs/react';
@@ -84,6 +84,8 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   const router = useRouter();
   const pathname = usePathname();
   const [chats, setChats] = useState<Chat[]>([]);
+  const [lastDoc, setLastDoc] = useState<any>(null);
+  const [hasMoreChats, setHasMoreChats] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(true);
   const [isLoadingChats, setIsLoadingChats] = useState(true);
@@ -181,6 +183,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
   };
 
   useEffect(() => {
+    let mounted = true;
     if (!user) {
       setChats([]);
       setIsLoadingChats(false);
@@ -190,15 +193,28 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
     setIsLoadingChats(true);
     const q = query(
       collection(db, 'users', user.uid, 'chats'),
-      orderBy('updatedAt', 'desc')
+      orderBy('updatedAt', 'desc'),
+      limit(20)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!mounted) return;
+
       const chatData: Chat[] = [];
       snapshot.forEach((doc) => {
         chatData.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Chat);
       });
       
+      if (snapshot.docs.length > 0) {
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      } else {
+        setHasMoreChats(false);
+      }
+
+      if (snapshot.docs.length < 20) {
+        setHasMoreChats(false);
+      }
+
       // Sort by isPinned first, then updatedAt
       chatData.sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
@@ -212,6 +228,7 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       setChats(chatData);
       setIsLoadingChats(false);
     }, (error) => {
+      if (!mounted) return;
       // Ignore errors if the user is logged out or logging out
       if (!auth.currentUser) return;
       
@@ -223,8 +240,57 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, [user?.uid]);
+
+  const loadMoreChats = async () => {
+    if (!user || !lastDoc || !hasMoreChats) return;
+
+    try {
+      const q = query(
+        collection(db, 'users', user.uid, 'chats'),
+        orderBy('updatedAt', 'desc'),
+        startAfter(lastDoc),
+        limit(20)
+      );
+
+      const snapshot = await getDocs(q);
+      const newChatData: Chat[] = [];
+      snapshot.forEach((doc) => {
+        newChatData.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Chat);
+      });
+
+      if (snapshot.docs.length > 0) {
+        setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
+      } else {
+        setHasMoreChats(false);
+      }
+
+      if (snapshot.docs.length < 20) {
+        setHasMoreChats(false);
+      }
+
+      setChats(prevChats => {
+        const merged = [...prevChats, ...newChatData];
+        const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+
+        unique.sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+
+          const timeA = a.updatedAt?.toDate?.()?.getTime() || 0;
+          const timeB = b.updatedAt?.toDate?.()?.getTime() || 0;
+          return timeB - timeA;
+        });
+        return unique;
+      });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.LIST, 'load more chats');
+    }
+  };
 
   const handleNewChat = async () => {
     if (!user) return;
@@ -505,6 +571,16 @@ export default function Sidebar({ isMobileOpen, setIsMobileOpen }: { isMobileOpe
                   >
                     See all
                   </button>
+                )}
+                {hasMoreChats && (
+                  <div className="flex justify-center mt-2 pb-2">
+                    <button
+                      onClick={loadMoreChats}
+                      className="text-[11px] text-foreground/40 hover:text-foreground dark:text-white/60 dark:hover:text-white font-medium"
+                    >
+                      Load More
+                    </button>
+                  </div>
                 )}
               </>
             )}

@@ -3,6 +3,8 @@ import { getApiKeys, withFallback } from '@/lib/apiFallback.server';
 import { verifySession } from '@/lib/auth';
 import { withRetry } from '@/lib/withRetry';
 import { withProviderFallback } from '@/lib/providerFallback';
+import { checkRateLimit } from '@/lib/rateLimit';
+import { db } from '@/lib/firebaseAdmin';
 
 async function generateWithModel(model: string, prompt: string, width?: number, height?: number, apiTier?: number) {
   const keys = getApiKeys('cloudflare');
@@ -48,6 +50,22 @@ export async function POST(req: NextRequest) {
     const session = await verifySession(req);
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = session.uid;
+
+    // Rate Limiting
+    if (!checkRateLimit(userId)) {
+      return NextResponse.json({ error: 'Too Many Requests' }, { status: 429, headers: { 'Retry-After': '60' } });
+    }
+
+    // Circuit Breaker Bans Check
+    try {
+      const banDoc = await db.collection('circuit_breaker_bans').doc(userId).get();
+      if (banDoc.exists && banDoc.data()?.banned) {
+        return NextResponse.json({ error: 'Account Banned' }, { status: 403 });
+      }
+    } catch(e) {
+      console.warn("Failed to check circuit breaker bans", e);
     }
 
     const { prompt, width, height, apiTier } = await req.json();
