@@ -131,9 +131,10 @@ export default function UsersTab() {
   }, []);
 
   const filteredUsers = users.filter(u => 
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email !== 'johnkerveelayese@gmail.com' &&
+    (u.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.id.includes(searchTerm)
+    u.id.includes(searchTerm))
   );
 
   const handleToggleBan = async (userId: string, currentStatus: boolean) => {
