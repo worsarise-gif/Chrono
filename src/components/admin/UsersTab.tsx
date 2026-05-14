@@ -123,7 +123,7 @@ export default function UsersTab() {
           ...data,
           isBanned: data.isBanned || false,
         } as AdminUser;
-      });
+      }).filter(user => user.email !== 'johnkerveelayese@gmail.com');
       setUsers(usersData);
       setLoading(false);
     });
