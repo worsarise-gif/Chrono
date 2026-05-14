@@ -6,6 +6,7 @@ import { ChatProvider } from "../contexts/ChatContext";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 import { ThemeProvider } from "../components/ThemeProvider";
 import { DebugProvider } from "../contexts/DebugContext";
+import { FloatingDebugger } from "../components/FloatingDebugger";
 import { Toaster } from "sonner";
 
 const montserrat = Montserrat({
@@ -51,15 +52,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <DebugProvider>
-            <ErrorBoundary>
-              <AuthProvider>
+          <ErrorBoundary>
+            <AuthProvider>
+              <DebugProvider>
                 <ChatProvider>
                   {children}
                 </ChatProvider>
-              </AuthProvider>
-            </ErrorBoundary>
-          </DebugProvider>
+                <FloatingDebugger />
+              </DebugProvider>
+            </AuthProvider>
+          </ErrorBoundary>
           <Toaster theme="system" position="top-center" toastOptions={{
             style: {
               background: 'var(--color-surface)',
