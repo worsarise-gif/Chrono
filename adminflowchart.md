@@ -23,8 +23,4 @@ flowchart TD
     E -->|System Logs| I[LogsTab]
     I --> I1[Load System Logs from Firestore debug_logs]
     I --> I2[Display Logs with filters]
-
-    E -->|Settings| J[SettingsTab - Restricted to owner]
-    J --> J1[Load System Settings system_settings/main]
-    J --> J2[Toggle Maintenance Mode, API Keys configs, etc.]
 ```
