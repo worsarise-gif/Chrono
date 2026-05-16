@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Search, Trash2, MessageSquare, Calendar, Clock, ArrowRight, Edit2, Check, Pin, PinOff } from 'lucide-react';
-import { format } from 'date-fns';
+
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
