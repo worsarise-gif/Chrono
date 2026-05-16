@@ -1,0 +1,131 @@
+export type MockChat = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  isPinned: boolean;
+  preview: string;
+};
+
+export const MOCK_CHATS: MockChat[] = [
+  {
+    id: 'chat-1',
+    title: 'Explain React Server Components',
+    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+    isPinned: true,
+    preview: 'Can you explain how React Server Components work?',
+  },
+  {
+    id: 'chat-2',
+    title: 'Python script for CSV parsing',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+    isPinned: true,
+    preview: 'I need a script to parse a large CSV and filter rows.',
+  },
+  {
+    id: 'chat-3',
+    title: 'Quantum computing overview',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
+    isPinned: true,
+    preview: 'What are the main advantages of quantum computing?',
+  },
+  {
+    id: 'chat-4',
+    title: 'Debug Next.js routing error',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    isPinned: false,
+    preview: 'I am getting a 404 on my dynamic route.',
+  },
+  {
+    id: 'chat-5',
+    title: 'Healthy dinner recipes',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
+    isPinned: false,
+    preview: 'Give me 3 high protein dinner ideas.',
+  },
+  {
+    id: 'chat-6',
+    title: 'Rust borrow checker explained',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 96).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 96).toISOString(),
+    isPinned: false,
+    preview: 'Why does my rust code fail to compile with lifetimes?',
+  },
+  {
+    id: 'chat-7',
+    title: 'Dockerizing a Node API',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 120).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 120).toISOString(),
+    isPinned: false,
+    preview: 'Can you provide a simple Dockerfile for an Express app?',
+  },
+  {
+    id: 'chat-8',
+    title: 'Workout routine for beginners',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 144).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 144).toISOString(),
+    isPinned: false,
+    preview: 'I want to start lifting weights, where do I begin?',
+  },
+  {
+    id: 'chat-9',
+    title: 'Learn Spanish common phrases',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 168).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 168).toISOString(),
+    isPinned: false,
+    preview: 'Translate "Where is the library?" to Spanish.',
+  },
+  {
+    id: 'chat-10',
+    title: 'CSS Grid vs Flexbox',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 192).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 192).toISOString(),
+    isPinned: false,
+    preview: 'When should I use grid instead of flexbox?',
+  },
+  {
+    id: 'chat-11',
+    title: 'Best sci-fi books of the decade',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 216).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 216).toISOString(),
+    isPinned: false,
+    preview: 'Recommend me some modern sci-fi novels.',
+  },
+  {
+    id: 'chat-12',
+    title: 'Set up NeoVim for React',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 240).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 240).toISOString(),
+    isPinned: false,
+    preview: 'What plugins do I need for a good react dev experience?',
+  },
+  {
+    id: 'chat-13',
+    title: 'Write a cover letter',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 264).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 264).toISOString(),
+    isPinned: false,
+    preview: 'Help me write a cover letter for a frontend engineer role.',
+  },
+  {
+    id: 'chat-14',
+    title: 'PostgreSQL index types',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 288).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 288).toISOString(),
+    isPinned: false,
+    preview: 'Explain the difference between B-Tree and GIN indexes.',
+  },
+  {
+    id: 'chat-15',
+    title: 'Plan a trip to Japan',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 312).toISOString(),
+    updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 312).toISOString(),
+    isPinned: false,
+    preview: 'Create a 14 day itinerary for first time visitors.',
+  },
+];
