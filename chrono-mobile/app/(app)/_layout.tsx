@@ -1,6 +1,7 @@
 import { Drawer } from 'expo-router/drawer';
-import { View, Text, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { useTheme } from '../../src/theme';
+import { Sidebar } from '../../src/components/sidebar/Sidebar';
 
 export default function AppLayout() {
   const { colors } = useTheme();
@@ -11,11 +12,7 @@ export default function AppLayout() {
         drawerType: Platform.OS === 'ios' ? 'slide' : 'front',
         drawerStyle: { width: '80%', backgroundColor: colors.sidebarBackground },
       }}
-      drawerContent={() => (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: colors.text }}>Sidebar</Text>
-        </View>
-      )}
+      drawerContent={() => <Sidebar />}
     >
       <Drawer.Screen name="index" />
       <Drawer.Screen name="gallery" />
