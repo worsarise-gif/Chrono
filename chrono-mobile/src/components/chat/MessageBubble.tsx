@@ -8,7 +8,7 @@ import * as Sharing from 'expo-sharing';
 import { format } from 'date-fns';
 import { Copy, Share, Trash2 } from 'lucide-react-native';
 import { useTheme } from '../../theme';
-import { MockMessage } from '../../mock/messages';
+import { MockMessage } from '../../types';
 import { ImageMessage } from './ImageMessage';
 import { MarkdownMessage } from './MarkdownMessage';
 import { StreamingText } from './StreamingText';

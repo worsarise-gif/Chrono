@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeOut, useSharedValue, useAnimatedStyle, withSpring, useReducedMotion } from 'react-native-reanimated';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { ImagePlus, ArrowUp, Square, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -33,6 +33,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isStreaming = fals
     }
   };
 
+  const scale = useSharedValue(1);
+  const reducedMotion = useReducedMotion();
+
+  const animatedInputStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   const handleSend = () => {
     if (isStreaming) {
       onSend('__STOP__');
@@ -42,6 +49,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isStreaming = fals
     if (text.trim().length === 0 && !imageUri) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    if (!reducedMotion) {
+      scale.value = withSpring(0.97, {}, () => {
+        scale.value = withSpring(1);
+      });
+    }
+
     onSend(text, imageUri);
     setText('');
     setImageUri(undefined);
@@ -84,9 +98,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isStreaming = fals
             <ImagePlus color={colors.textMuted} size={24} />
           </TouchableOpacity>
 
-          <TextInput
-            style={[
-              styles.input,
+          <Animated.View style={[styles.inputWrapper, animatedInputStyle]}>
+            <TextInput
+              style={[
+                styles.input,
               {
                 color: colors.text,
                 fontSize: typography.size.base,
@@ -98,15 +113,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({ onSend, isStreaming = fals
                 paddingBottom: spacing.md,
               },
             ]}
-            placeholder="Message Chrono..."
-            placeholderTextColor={colors.textSubtle}
-            multiline
-            maxLength={2000}
-            value={text}
-            onChangeText={setText}
-            editable={!disabled}
-            textAlignVertical="center"
-          />
+              placeholder="Message Chrono..."
+              placeholderTextColor={colors.textSubtle}
+              multiline
+              maxLength={2000}
+              value={text}
+              onChangeText={setText}
+              editable={!disabled}
+              textAlignVertical="center"
+            />
+          </Animated.View>
 
           <TouchableOpacity
             style={[
@@ -148,12 +164,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
-  input: {
+  inputWrapper: {
     flex: 1,
+    marginHorizontal: 8,
+  },
+  input: {
+    width: '100%',
     borderWidth: 1,
     minHeight: 40,
     maxHeight: 120, // ~5 lines
-    marginHorizontal: 8,
   },
   iconButton: {
     padding: 8,

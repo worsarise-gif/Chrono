@@ -1,9 +1,4 @@
-export type MockImage = {
-  id: string;
-  prompt: string;
-  imageUrl: string;
-  createdAt: string;
-};
+import { MockImage } from '../types';
 
 export const MOCK_IMAGES: MockImage[] = Array.from({ length: 12 }).map((_, i) => ({
   id: `img-${i}`,

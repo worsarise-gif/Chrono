@@ -13,7 +13,7 @@ export function Avatar({ uri, initials, size = 40, showOnlineIndicator = false }
   const { colors, typography } = useTheme();
 
   return (
-    <View style={{ width: size, height: size }}>
+    <View style={{ width: size, height: size }} accessibilityRole="image" accessibilityLabel="User avatar">
       {uri ? (
         <Image
           source={{ uri }}

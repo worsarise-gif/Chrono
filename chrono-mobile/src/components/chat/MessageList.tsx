@@ -4,7 +4,7 @@ import { FlashList } from '@shopify/flash-list';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { ArrowDown } from 'lucide-react-native';
 import { useTheme } from '../../theme';
-import { MockMessage } from '../../mock/messages';
+import { MockMessage } from '../../types';
 import { MessageBubble } from './MessageBubble';
 import { Skeleton } from '../ui/Skeleton';
 
