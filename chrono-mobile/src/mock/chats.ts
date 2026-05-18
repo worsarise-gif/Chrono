@@ -1,11 +1,4 @@
-export type MockChat = {
-  id: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  isPinned: boolean;
-  preview: string;
-};
+import { MockChat } from '../types';
 
 export const MOCK_CHATS: MockChat[] = [
   {

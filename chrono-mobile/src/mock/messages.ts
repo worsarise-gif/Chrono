@@ -1,15 +1,4 @@
-export type MockMessage = {
-  id: string;
-  chatId: string;
-  role: 'user' | 'model';
-  content: string;
-  createdAt: string;
-  hasImage?: boolean;
-  imageUrl?: string;
-  isGeneratedImage?: boolean;
-  isStreaming?: boolean;
-  messageType?: 'text' | 'code' | 'math' | 'chart' | 'image';
-};
+import { MockMessage } from '../types';
 
 export const MOCK_MESSAGES: Record<string, MockMessage[]> = {
   'chat-1': [

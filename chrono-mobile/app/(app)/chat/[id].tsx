@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TextInput, Modal, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { DrawerActions } from '@react-navigation/native';
+import { useDrawerStatus } from '@react-navigation/drawer';
+import { useBackHandler } from '@react-native-community/hooks';
 import { PanelLeft, MoreHorizontal, ChevronDown, Check } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../src/theme';
-import { MOCK_MESSAGES, MockMessage } from '../../../src/mock/messages';
+import { MOCK_MESSAGES } from '../../../src/mock/messages';
 import { MOCK_CHATS } from '../../../src/mock/chats';
+import { MockMessage } from '../../../src/types';
 import { MessageList } from '../../../src/components/chat/MessageList';
 import { ChatInput } from '../../../src/components/chat/ChatInput';
 import { IconButton } from '../../../src/components/ui/IconButton';
@@ -23,6 +26,17 @@ export default function ChatScreen() {
   const { colors, typography, spacing, radius } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const navigation = useNavigation();
+  const router = useRouter();
+  const isDrawerOpen = useDrawerStatus() === 'open';
+
+  useBackHandler(() => {
+    if (isDrawerOpen) {
+      navigation.dispatch(DrawerActions.closeDrawer());
+      return true;
+    }
+    router.replace('/');
+    return true;
+  });
   const insets = useSafeAreaInsets();
 
   const chatId = id || 'chat-1';

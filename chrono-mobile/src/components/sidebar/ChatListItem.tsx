@@ -3,8 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { MessageSquare, Bookmark, Pencil, Trash2 } from 'lucide-react-native';
 import { formatDistanceToNow } from 'date-fns';
+import * as Haptics from 'expo-haptics';
+import { FadeInLeft, useReducedMotion } from 'react-native-reanimated';
+import AnimatedReanimated from 'react-native-reanimated';
 import { useTheme } from '../../theme';
-import { MockChat } from '../../mock/chats';
+import { MockChat } from '../../types';
 
 type ChatListItemProps = {
   chat: MockChat;
@@ -13,10 +16,17 @@ type ChatListItemProps = {
   onPin: () => void;
   onRename: () => void;
   onDelete: () => void;
+  index?: number;
 };
 
-export const ChatListItem: React.FC<ChatListItemProps> = React.memo(({ chat, isActive, onPress, onPin, onRename, onDelete }) => {
+export const ChatListItem: React.FC<ChatListItemProps> = React.memo(({ chat, isActive, onPress, onPin, onRename, onDelete, index = 0 }) => {
   const { colors, typography, spacing, radius } = useTheme();
+  const reducedMotion = useReducedMotion();
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  };
 
   const renderRightActions = (progress: Animated.AnimatedInterpolation<number>, dragX: Animated.AnimatedInterpolation<number>) => {
     return (
@@ -34,12 +44,15 @@ export const ChatListItem: React.FC<ChatListItemProps> = React.memo(({ chat, isA
     );
   };
 
+  const delay = Math.min(index * 20, 200);
+
   return (
-    <Swipeable renderRightActions={renderRightActions} friction={2} rightThreshold={40}>
-      <TouchableOpacity
-        onPress={onPress}
-        style={[
-          styles.container,
+    <AnimatedReanimated.View entering={reducedMotion ? undefined : FadeInLeft.delay(delay).duration(200)}>
+      <Swipeable renderRightActions={renderRightActions} friction={2} rightThreshold={40}>
+        <TouchableOpacity
+          onPress={handlePress}
+          style={[
+            styles.container,
           {
             backgroundColor: isActive ? colors.accentDim : 'transparent',
             borderLeftColor: isActive ? colors.accent : 'transparent',
@@ -55,12 +68,13 @@ export const ChatListItem: React.FC<ChatListItemProps> = React.memo(({ chat, isA
           <Text style={[styles.title, { color: colors.text, fontSize: typography.size.base }]} numberOfLines={1}>
             {chat.title}
           </Text>
-        </View>
-        <Text style={[styles.timestamp, { color: colors.textSubtle, fontSize: typography.size.xs }]}>
-          {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: false }).replace('about ', '')}
-        </Text>
-      </TouchableOpacity>
-    </Swipeable>
+          </View>
+          <Text style={[styles.timestamp, { color: colors.textSubtle, fontSize: typography.size.xs }]}>
+            {formatDistanceToNow(new Date(chat.updatedAt), { addSuffix: false }).replace('about ', '')}
+          </Text>
+        </TouchableOpacity>
+      </Swipeable>
+    </AnimatedReanimated.View>
   );
 });
 

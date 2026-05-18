@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Toast } from '../src/components/ui/Toast';
 import { StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, useReducedMotion } from 'react-native-reanimated';
 import { useTheme } from '../src/theme';
 
 SplashScreen.preventAutoHideAsync();
@@ -56,6 +57,8 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
+  const reducedMotion = useReducedMotion();
+
   if (!fontsLoaded && !fontError) {
     return null;
   }
@@ -65,10 +68,10 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <ThemeProvider>
           <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated }}>
-            <View style={styles.container}>
+            <Animated.View style={styles.container} entering={reducedMotion ? undefined : FadeIn.duration(200)}>
               <RootNavigator />
               <Toast />
-            </View>
+            </Animated.View>
           </AuthContext.Provider>
         </ThemeProvider>
       </SafeAreaProvider>

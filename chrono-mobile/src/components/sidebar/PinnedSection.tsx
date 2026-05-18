@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Bookmark } from 'lucide-react-native';
 import { useTheme } from '../../theme';
-import { MockChat } from '../../mock/chats';
+import { MockChat } from '../../types';
 import { ChatListItem } from './ChatListItem';
 
 type PinnedSectionProps = {

@@ -86,6 +86,7 @@ export function Button({
     justifyContent: 'center',
     opacity: disabled ? 0.4 : 1,
     width: fullWidth ? '100%' : undefined,
+    minHeight: 44, // Enforce 44pt touch target
     ...getPadding(),
   };
 
@@ -103,6 +104,9 @@ export function Button({
       onPressOut={handlePressOut}
       disabled={disabled || loading}
       style={[containerStyle, animatedStyle]}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: disabled || loading }}
     >
       {loading ? (
         <ActivityIndicator color={getTextColor()} />

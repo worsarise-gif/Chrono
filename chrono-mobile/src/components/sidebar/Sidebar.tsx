@@ -6,7 +6,8 @@ import { useRouter, useNavigation } from 'expo-router';
 import { DrawerActions } from '@react-navigation/native';
 import { Settings } from 'lucide-react-native';
 import { useTheme } from '../../theme';
-import { MOCK_CHATS, MockChat } from '../../mock/chats';
+import { MOCK_CHATS } from '../../mock/chats';
+import { MockChat } from '../../types';
 import { NewChatButton } from './NewChatButton';
 import { PinnedSection } from './PinnedSection';
 import { ChatListItem } from './ChatListItem';
@@ -33,9 +34,10 @@ export const Sidebar: React.FC = () => {
     router.push(`/chat/${id}` as any);
   };
 
-  const renderRecentChat = ({ item }: { item: MockChat }) => (
+  const renderRecentChat = ({ item, index }: { item: MockChat; index: number }) => (
     <ChatListItem
       chat={item}
+      index={index}
       onPress={() => handleChatPress(item.id)}
       onPin={() => {
         // Mock: in a real app this would pin the chat
