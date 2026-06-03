@@ -3156,10 +3156,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {msg.content}
                               </p>
                               <div className="absolute -bottom-10 right-0 hidden md:flex items-center gap-1 md:opacity-0 md:group-hover/user:opacity-100 opacity-100 transition-all duration-200">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
+                                <button aria-label="Edit message" onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
+                                <button aria-label="Copy message" onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                 </button>
                               </div>
@@ -3250,6 +3250,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="absolute top-6 right-6 flex items-center gap-3">
                 {previewImageIndex !== null && (
                   <button 
+                    aria-label="Download image"
                     onClick={() => {
                       const img = allImages[previewImageIndex];
                       const link = document.createElement('a');
@@ -3266,6 +3267,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   </button>
                 )}
                 <button 
+                  aria-label="Close preview"
                   onClick={() => {
                     setPreviewImage(null);
                     setPreviewImageIndex(null);
@@ -3282,6 +3284,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 <>
                   {previewImageIndex > 0 && (
                     <button 
+                      aria-label="Previous image"
                       onClick={(e) => {
                         e.stopPropagation();
                         setPreviewImageIndex(previewImageIndex - 1);
@@ -3293,6 +3296,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   )}
                   {previewImageIndex < allImages.length - 1 && (
                     <button 
+                      aria-label="Next image"
                       onClick={(e) => {
                         e.stopPropagation();
                         setPreviewImageIndex(previewImageIndex + 1);
@@ -3327,6 +3331,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={(e) => e.stopPropagation()}
             >
               <button 
+                aria-label="Close sign in modal"
                 onClick={() => setShowSignInModal(false)}
                 className="absolute top-4 right-4 p-2 text-foreground/60 hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
               >
@@ -3422,6 +3427,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     />
                     <div className="absolute -top-2 -right-2 flex gap-1 z-10">
                       <button 
+                        aria-label="Remove image"
                         type="button"
                         onClick={() => setSelectedImage(null)} 
                         className="bg-foreground text-background rounded-full p-1 shadow-lg hover:scale-110 transition-transform"
@@ -3431,6 +3437,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </button>
                     </div>
                     <button 
+                      aria-label="Replace image"
                       type="button"
                       onClick={() => fileInputRef.current?.click()} 
                       className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-white"
@@ -3453,6 +3460,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               />
               
               <button 
+                aria-label="Attach image"
                 type="button" 
                 onClick={() => fileInputRef.current?.click()}
                 className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
@@ -3575,6 +3583,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h3 className="font-medium text-foreground text-base">Sources</h3>
               <button 
+                aria-label="Close sources panel"
                 onClick={() => setShowSourcesPanel(false)}
                 className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
               >
@@ -3607,6 +3616,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                 <h3 className="font-medium text-foreground text-base">Sources</h3>
                 <button 
+                  aria-label="Close sources panel"
                   onClick={() => setShowSourcesPanel(false)}
                   className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
                 >
