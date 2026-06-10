@@ -282,6 +282,7 @@ const ImageRenderer = React.memo(({ src, alt, onImageClick, ...props }: any) => 
                     <Download size={20} />
                   </button>
                   <button 
+                    aria-label="Close modal"
                     onClick={() => setIsOpen(false)}
                     className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                     title="Close"
