@@ -290,7 +290,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
                   setShowPrompt(false);
                 }}
                 className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-full backdrop-blur-md transition-colors"
-                aria-label="Close"
+                aria-label="Close gallery"
               >
                 <X size={24} />
               </button>
