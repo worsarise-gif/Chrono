@@ -9,7 +9,7 @@ export interface VectorSearchResult {
 export async function vectorSearch(query: string): Promise<string> {
   try {
     // STAGE 1: SEMANTIC RETRIEVAL (Vector DB)
-    const embeddingModel = '@cf/google/embeddinggemma-300m';
+    const embeddingModel = '@cf/baai/bge-base-en-v1.5';
     const cloudflareKeys = getApiKeys('cloudflare_vectorize');
 
     // Convert query to vector and fetch Top 50
@@ -26,7 +26,9 @@ export async function vectorSearch(query: string): Promise<string> {
       });
 
       if (!embedRes.ok) {
-        throw new Error(`Embedding failed: ${await embedRes.text()}`);
+        const errorText = await embedRes.text();
+        console.error(`[VectorSearch] Embedding failed. Status: ${embedRes.status}. Payload: ${errorText}`);
+        throw new Error(`Embedding failed: ${errorText}`);
       }
 
       const embedData = await embedRes.json();
@@ -49,7 +51,9 @@ export async function vectorSearch(query: string): Promise<string> {
       });
 
       if (!queryRes.ok) {
-        throw new Error(`Vectorize query failed: ${await queryRes.text()}`);
+        const errorText = await queryRes.text();
+        console.error(`[VectorSearch] Vectorize query failed. Status: ${queryRes.status}. Payload: ${errorText}`);
+        throw new Error(`Vectorize query failed: ${errorText}`);
       }
 
       const queryData = await queryRes.json();
@@ -94,12 +98,14 @@ export async function vectorSearch(query: string): Promise<string> {
               },
               body: JSON.stringify({
                 query: query,
-                documents: top50Strings
+                contexts: top50Strings.map((str: string) => ({ text: str }))
               })
             });
 
             if (!rerankRes.ok) {
-              throw new Error(`Reranking failed: ${await rerankRes.text()}`);
+              const errorText = await rerankRes.text();
+              console.error(`[VectorSearch] Reranking failed. Status: ${rerankRes.status}. Payload: ${errorText}`);
+              throw new Error(`Reranking failed: ${errorText}`);
             }
 
             return await rerankRes.json();
