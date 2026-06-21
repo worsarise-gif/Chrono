@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { useDebug } from '../contexts/DebugContext';
 import { db, storage, auth, loginWithGoogle } from '../firebase';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, doc, updateDoc, increment, setDoc, deleteDoc, limit } from 'firebase/firestore';
 import { ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError, ErrorSeverity } from '../utils/errorHandler';
@@ -692,7 +692,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     }
     const q = query(
       collection(db, 'users', user.uid, 'chats', currentChatId, 'messages'),
-      orderBy('createdAt', 'asc')
+      orderBy('createdAt', 'desc'), limit(100)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -700,7 +700,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       snapshot.forEach((doc) => {
         messageData.push({ id: doc.id, ...doc.data({ serverTimestamps: 'estimate' }) } as Message);
       });
-      setMessages(messageData);
+      setMessages(messageData.reverse());
       setIsLoadingMessages(false);
     }, (error) => {
       // Ignore errors if the user is logged out or logging out
@@ -2788,7 +2788,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             className="block group"
           >
             <div className="flex items-center gap-2 mb-1.5">
-              <img 
+              <img loading="lazy"
                 src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
                 alt={hostname}
                 className="w-4 h-4 rounded-full bg-background object-cover"
@@ -2984,7 +2984,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                         className="mb-2 cursor-pointer group relative"
                         onClick={() => handleImageClick(msg.imageUrl!)}
                       >
-                        <img 
+                        <img loading="lazy"
                           src={msg.imageUrl} 
                           alt="Uploaded" 
                           className="max-w-[200px] md:max-w-[300px] rounded-2xl object-contain shadow-md border border-border/50"
@@ -3088,7 +3088,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                             let hostname = source.link;
                                             try { hostname = new URL(source.link).hostname; } catch (e) {}
                                             return (
-                                              <img 
+                                              <img loading="lazy"
                                                 key={i}
                                                 src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
                                                 alt={hostname}
@@ -3239,7 +3239,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               className="relative w-fit h-fit group flex items-center justify-center"
               onClick={(e) => e.stopPropagation()}
             >
-              <img 
+              <img loading="lazy"
                 src={previewImageIndex !== null ? allImages[previewImageIndex].src : previewImage!} 
                 alt="Preview" 
                 className="max-w-full max-h-[90vh] block rounded-lg shadow-2xl border border-white/10" 
@@ -3414,7 +3414,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   className="px-3 pt-3 pb-2 flex overflow-hidden"
                 >
                   <div className="relative group">
-                    <img 
+                    <img loading="lazy"
                       src={`data:${selectedImage.mimeType};base64,${selectedImage.data}`} 
                       className="w-20 h-20 md:w-24 md:h-24 object-cover rounded-xl border border-border shadow-sm" 
                       alt="Selected"
