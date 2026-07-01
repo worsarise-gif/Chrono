@@ -2889,6 +2889,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <div className="flex items-center gap-2 pointer-events-auto md:hidden">
               <button
+                aria-label="Open Menu"
                 onClick={onMenuClick}
                 className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
               >
@@ -2948,6 +2949,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             </button>
           ) : (
             <button 
+              aria-label="New Chat"
               onClick={() => setCurrentChatId(null)}
               className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
               title="New Chat"
@@ -3380,6 +3382,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
               onClick={() => scrollToBottom(true)}
               className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-foreground/60 hover:text-foreground shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
+              aria-label="Scroll to bottom"
               title="Scroll to bottom"
             >
               <ChevronDown size={20} />
