@@ -2889,6 +2889,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <div className="flex items-center gap-2 pointer-events-auto md:hidden">
               <button
+                aria-label="Toggle mobile menu"
                 onClick={onMenuClick}
                 className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
               >
@@ -2948,6 +2949,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             </button>
           ) : (
             <button 
+              aria-label="New Chat"
               onClick={() => setCurrentChatId(null)}
               className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
               title="New Chat"
@@ -3023,6 +3025,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 transition-opacity text-foreground/40 relative">
                                 {/* Primary Actions - Always Visible */}
                                 <button 
+                                  aria-label="Regenerate response"
                                   onClick={() => handleRegenerate(index)}
                                   className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                   title="Regenerate"
@@ -3030,6 +3033,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   <RefreshCcw size={14} />
                                 </button>
                                 <button 
+                                  aria-label="Copy message"
                                   onClick={() => handleCopyMessage(msg.id, msg.content)}
                                   className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                   title="Copy"
@@ -3040,6 +3044,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {/* Actions */}
                                 <div className="flex items-center gap-1">
                                   <button 
+                                    aria-label="Good response"
                                     onClick={() => handleFeedback(msg.id, 'upvote')}
                                     className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'hover:text-foreground'}`} 
                                     title="Good response"
@@ -3047,6 +3052,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                     <ThumbsUp size={14} className={msg.feedback === 'upvote' ? 'fill-current' : ''} />
                                   </button>
                                   <button 
+                                    aria-label="Bad response"
                                     onClick={() => handleFeedback(msg.id, 'downvote')}
                                     className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'downvote' ? 'text-destructive' : 'hover:text-foreground'}`}
                                     title="Bad response"
@@ -3055,6 +3061,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   </button>
                                   {(!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) && (
                                     <button 
+                                      aria-label={speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}
                                       onClick={() => {
                                         if (speakingMessageId === msg.id) {
                                           window.speechSynthesis.cancel();
@@ -3156,10 +3163,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {msg.content}
                               </p>
                               <div className="absolute -bottom-10 right-0 hidden md:flex items-center gap-1 md:opacity-0 md:group-hover/user:opacity-100 opacity-100 transition-all duration-200">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
+                                <button aria-label="Edit message" onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
+                                <button aria-label="Copy message" onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                 </button>
                               </div>
@@ -3266,6 +3273,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   </button>
                 )}
                 <button 
+                  aria-label="Close preview"
                   onClick={() => {
                     setPreviewImage(null);
                     setPreviewImageIndex(null);
@@ -3282,6 +3290,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 <>
                   {previewImageIndex > 0 && (
                     <button 
+                      aria-label="Previous image"
                       onClick={(e) => {
                         e.stopPropagation();
                         setPreviewImageIndex(previewImageIndex - 1);
@@ -3293,6 +3302,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   )}
                   {previewImageIndex < allImages.length - 1 && (
                     <button 
+                      aria-label="Next image"
                       onClick={(e) => {
                         e.stopPropagation();
                         setPreviewImageIndex(previewImageIndex + 1);
@@ -3327,6 +3337,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={(e) => e.stopPropagation()}
             >
               <button 
+                aria-label="Close sign-in modal"
                 onClick={() => setShowSignInModal(false)}
                 className="absolute top-4 right-4 p-2 text-foreground/60 hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
               >
@@ -3381,6 +3392,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={() => scrollToBottom(true)}
               className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-foreground/60 hover:text-foreground shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
               title="Scroll to bottom"
+              aria-label="Scroll to bottom"
             >
               <ChevronDown size={20} />
             </motion.button>
@@ -3422,6 +3434,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     />
                     <div className="absolute -top-2 -right-2 flex gap-1 z-10">
                       <button 
+                        aria-label="Remove selected image"
                         type="button"
                         onClick={() => setSelectedImage(null)} 
                         className="bg-foreground text-background rounded-full p-1 shadow-lg hover:scale-110 transition-transform"
@@ -3431,6 +3444,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </button>
                     </div>
                     <button 
+                      aria-label="Replace selected image"
                       type="button"
                       onClick={() => fileInputRef.current?.click()} 
                       className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-white"
@@ -3453,6 +3467,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               />
               
               <button 
+                aria-label="Attach image"
                 type="button" 
                 onClick={() => fileInputRef.current?.click()}
                 className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
@@ -3532,6 +3547,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                       onClick={handleStop}
                                       className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
                                       title="Stop responding"
+                                      aria-label="Stop responding"
                                     >
                                       <Square size={16} className="md:w-4 md:h-4 fill-current" />
                                     </motion.button>
@@ -3549,6 +3565,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                           ? 'bg-muted/20 text-muted cursor-not-allowed' 
                                           : 'bg-foreground text-background hover:opacity-90'
                                       }`}
+                                      aria-label="Send message"
                                     >
                                       <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
                                     </motion.button>
@@ -3575,6 +3592,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h3 className="font-medium text-foreground text-base">Sources</h3>
               <button 
+                aria-label="Close sources"
                 onClick={() => setShowSourcesPanel(false)}
                 className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
               >
@@ -3607,6 +3625,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                 <h3 className="font-medium text-foreground text-base">Sources</h3>
                 <button 
+                  aria-label="Close sources"
                   onClick={() => setShowSourcesPanel(false)}
                   className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
                 >
