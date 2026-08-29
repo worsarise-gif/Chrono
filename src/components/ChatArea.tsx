@@ -4,7 +4,12 @@ import { motion, AnimatePresence } from 'motion/react';
 import Link from 'next/link';
 import { PlanetLogo } from './PlanetLogo';
 import { Paperclip, AudioLines, ChevronDown, ArrowUp, Image as ImageIcon, X, Volume2, Search, Zap, Bot, MoreHorizontal, Upload, SquarePen, RefreshCcw, RefreshCw, AlertCircle, Copy, ThumbsUp, ThumbsDown, CornerDownRight, Menu, MessageSquare, Check, Cpu, Sparkles, Globe, Square, Download, Edit2 } from 'lucide-react';
-import { ResponseFormatter } from './ResponseFormatter';
+import dynamic from 'next/dynamic';
+// ⚡ Bolt Performance Optimization:
+// Lazy load ResponseFormatter (which contains heavy dependencies like react-markdown and react-syntax-highlighter)
+// to reduce the initial JavaScript bundle size and improve the initial page load speed.
+// ssr: false is used because this component is only needed on the client-side for dynamic chat rendering.
+const ResponseFormatter = dynamic(() => import('./ResponseFormatter').then(mod => mod.ResponseFormatter), { ssr: false });
 import { useAuth } from '../contexts/AuthContext';
 import { useChatContext } from '../contexts/ChatContext';
 import { useDebug } from '../contexts/DebugContext';
