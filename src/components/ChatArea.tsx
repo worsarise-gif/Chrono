@@ -2889,6 +2889,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <div className="flex items-center gap-2 pointer-events-auto md:hidden">
               <button
+                aria-label="Toggle menu"
                 onClick={onMenuClick}
                 className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
               >
@@ -3023,6 +3024,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 transition-opacity text-foreground/40 relative">
                                 {/* Primary Actions - Always Visible */}
                                 <button 
+                                  aria-label="Regenerate response"
                                   onClick={() => handleRegenerate(index)}
                                   className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                   title="Regenerate"
@@ -3040,6 +3042,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {/* Actions */}
                                 <div className="flex items-center gap-1">
                                   <button 
+                                    aria-label="Good response"
                                     onClick={() => handleFeedback(msg.id, 'upvote')}
                                     className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'hover:text-foreground'}`} 
                                     title="Good response"
@@ -3453,6 +3456,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               />
               
               <button 
+                aria-label="Attach image"
                 type="button" 
                 onClick={() => fileInputRef.current?.click()}
                 className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
