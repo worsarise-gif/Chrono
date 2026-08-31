@@ -2,11 +2,14 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Search, Trash2, MessageSquare, Calendar, Clock, ArrowRight, Edit2, Check, Pin, PinOff } from 'lucide-react';
-import { format } from 'date-fns';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { handleFirestoreError, OperationType } from '../utils/firebaseErrorHandler';
 import { handleError } from '../utils/errorHandler';
+
+// Instantiate formatters globally to avoid recreating them on every render
+const dateFormatter = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const timeFormatter = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
 
 interface Chat {
   id: string;
@@ -130,13 +133,13 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
   const formatDate = (timestamp: any) => {
     if (!timestamp) return 'Unknown date';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'MMM d, yyyy');
+    return dateFormatter.format(date);
   };
 
   const formatTime = (timestamp: any) => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return format(date, 'h:mm a');
+    return timeFormatter.format(date);
   };
 
   return (
