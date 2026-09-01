@@ -3422,6 +3422,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     />
                     <div className="absolute -top-2 -right-2 flex gap-1 z-10">
                       <button 
+                        aria-label="Remove image"
                         type="button"
                         onClick={() => setSelectedImage(null)} 
                         className="bg-foreground text-background rounded-full p-1 shadow-lg hover:scale-110 transition-transform"
@@ -3431,6 +3432,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </button>
                     </div>
                     <button 
+                      aria-label="Replace image"
                       type="button"
                       onClick={() => fileInputRef.current?.click()} 
                       className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-white"
@@ -3453,6 +3455,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               />
               
               <button 
+                aria-label="Attach image"
                 type="button" 
                 onClick={() => fileInputRef.current?.click()}
                 className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
@@ -3575,6 +3578,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h3 className="font-medium text-foreground text-base">Sources</h3>
               <button 
+                aria-label="Close sources"
                 onClick={() => setShowSourcesPanel(false)}
                 className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
               >
@@ -3607,6 +3611,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                 <h3 className="font-medium text-foreground text-base">Sources</h3>
                 <button 
+                  aria-label="Close sources"
                   onClick={() => setShowSourcesPanel(false)}
                   className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
                 >
