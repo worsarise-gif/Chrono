@@ -487,6 +487,15 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return images;
   }, [messages]);
 
+  // ⚡ Bolt Optimization: Stabilize handleImageClick reference
+  // We use a ref to store the latest allImages array. This allows the handleImageClick
+  // useCallback to have an empty dependency array. This prevents ResponseFormatter
+  // (which is React.memo'd) from unnecessarily re-rendering on every new message.
+  const allImagesRef = useRef(allImages);
+  useEffect(() => {
+    allImagesRef.current = allImages;
+  }, [allImages]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (previewImageIndex === null) return;
@@ -505,14 +514,14 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   }, [previewImageIndex, allImages.length]);
 
   const handleImageClick = useCallback((src: string) => {
-    const index = allImages.findIndex(img => img.src === src);
+    const index = allImagesRef.current.findIndex(img => img.src === src);
     if (index !== -1) {
       setPreviewImageIndex(index);
     } else {
       // Fallback for images not in history (e.g. just sent)
       setPreviewImage(src);
     }
-  }, [allImages]);
+  }, []);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
