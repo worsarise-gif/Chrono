@@ -3023,6 +3023,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               <div className="flex flex-wrap items-center gap-1 mt-4 opacity-100 transition-opacity text-foreground/40 relative">
                                 {/* Primary Actions - Always Visible */}
                                 <button 
+                                  aria-label="Regenerate response"
                                   onClick={() => handleRegenerate(index)}
                                   className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                   title="Regenerate"
@@ -3030,6 +3031,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   <RefreshCcw size={14} />
                                 </button>
                                 <button 
+                                  aria-label="Copy message"
                                   onClick={() => handleCopyMessage(msg.id, msg.content)}
                                   className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                   title="Copy"
@@ -3040,6 +3042,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {/* Actions */}
                                 <div className="flex items-center gap-1">
                                   <button 
+                                    aria-label="Upvote response"
                                     onClick={() => handleFeedback(msg.id, 'upvote')}
                                     className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'hover:text-foreground'}`} 
                                     title="Good response"
@@ -3047,6 +3050,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                     <ThumbsUp size={14} className={msg.feedback === 'upvote' ? 'fill-current' : ''} />
                                   </button>
                                   <button 
+                                    aria-label="Downvote response"
                                     onClick={() => handleFeedback(msg.id, 'downvote')}
                                     className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'downvote' ? 'text-destructive' : 'hover:text-foreground'}`}
                                     title="Bad response"
@@ -3055,6 +3059,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   </button>
                                   {(!msg.content.includes('![') && !msg.content.includes('<img') && !msg.content.includes('data:image/')) && (
                                     <button 
+                                      aria-label={speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}
                                       onClick={() => {
                                         if (speakingMessageId === msg.id) {
                                           window.speechSynthesis.cancel();
@@ -3156,10 +3161,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {msg.content}
                               </p>
                               <div className="absolute -bottom-10 right-0 hidden md:flex items-center gap-1 md:opacity-0 md:group-hover/user:opacity-100 opacity-100 transition-all duration-200">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
+                                <button aria-label="Edit message" onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
+                                <button aria-label="Copy message" onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                 </button>
                               </div>
@@ -3250,6 +3255,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="absolute top-6 right-6 flex items-center gap-3">
                 {previewImageIndex !== null && (
                   <button 
+                    aria-label="Download image"
                     onClick={() => {
                       const img = allImages[previewImageIndex];
                       const link = document.createElement('a');
@@ -3266,6 +3272,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   </button>
                 )}
                 <button 
+                  aria-label="Close image preview"
                   onClick={() => {
                     setPreviewImage(null);
                     setPreviewImageIndex(null);
@@ -3375,6 +3382,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         <AnimatePresence>
           {showScrollButton && isChatStarted && (
             <motion.button
+              aria-label="Scroll to bottom"
               initial={{ opacity: 0, y: 10, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
@@ -3422,6 +3430,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     />
                     <div className="absolute -top-2 -right-2 flex gap-1 z-10">
                       <button 
+                        aria-label="Remove image"
                         type="button"
                         onClick={() => setSelectedImage(null)} 
                         className="bg-foreground text-background rounded-full p-1 shadow-lg hover:scale-110 transition-transform"
@@ -3431,6 +3440,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       </button>
                     </div>
                     <button 
+                      aria-label="Replace image"
                       type="button"
                       onClick={() => fileInputRef.current?.click()} 
                       className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-white"
@@ -3453,6 +3463,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               />
               
               <button 
+                aria-label="Attach image"
                 type="button" 
                 onClick={() => fileInputRef.current?.click()}
                 className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
@@ -3523,6 +3534,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 <AnimatePresence mode="wait">
                                   {isLoading ? (
                                     <motion.button 
+                                      aria-label="Stop responding"
                                       key="stop"
                                       initial={{ opacity: 0, scale: 0.8 }}
                                       animate={{ opacity: 1, scale: 1 }}
