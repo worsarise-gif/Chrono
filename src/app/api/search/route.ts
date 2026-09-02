@@ -6,6 +6,11 @@ import { withRetry } from '@/lib/withRetry';
 
 export async function POST(req: NextRequest) {
   try {
+    const session = await verifySession(req);
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await req.json();
     const query = body.query;
     const forceRefresh = body.forceRefresh;
