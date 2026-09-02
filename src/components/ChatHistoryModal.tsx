@@ -172,6 +172,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                 </div>
               </div>
               <button
+                aria-label="Close"
                 onClick={onClose}
                 className="p-2 rounded-full hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all"
               >
@@ -248,6 +249,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                   <Check size={16} />
                                 </button>
                                 <button 
+                                  aria-label="Cancel Edit"
                                   onClick={(e) => handleCancelEdit(e)}
                                   className="p-1 text-destructive hover:bg-destructive/10 text-destructive rounded transition-colors"
                                 >
