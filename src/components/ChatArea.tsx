@@ -3156,10 +3156,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {msg.content}
                               </p>
                               <div className="absolute -bottom-10 right-0 hidden md:flex items-center gap-1 md:opacity-0 md:group-hover/user:opacity-100 opacity-100 transition-all duration-200">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
+                                <button aria-label="Edit message" onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
+                                <button aria-label="Copy message" onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                 </button>
                               </div>
