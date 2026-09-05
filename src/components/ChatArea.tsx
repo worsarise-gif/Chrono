@@ -504,15 +504,20 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [previewImageIndex, allImages.length]);
 
+  const allImagesRef = useRef(allImages);
+  useEffect(() => {
+    allImagesRef.current = allImages;
+  }, [allImages]);
+
   const handleImageClick = useCallback((src: string) => {
-    const index = allImages.findIndex(img => img.src === src);
+    const index = allImagesRef.current.findIndex(img => img.src === src);
     if (index !== -1) {
       setPreviewImageIndex(index);
     } else {
       // Fallback for images not in history (e.g. just sent)
       setPreviewImage(src);
     }
-  }, [allImages]);
+  }, []);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
