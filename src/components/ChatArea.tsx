@@ -2951,6 +2951,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={() => setCurrentChatId(null)}
               className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
               title="New Chat"
+              aria-label="New Chat"
             >
               <SquarePen size={18} className="group-hover:scale-110 transition-transform" />
             </button>
@@ -3026,6 +3027,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   onClick={() => handleRegenerate(index)}
                                   className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                   title="Regenerate"
+                                  aria-label="Regenerate"
                                 >
                                   <RefreshCcw size={14} />
                                 </button>
@@ -3033,6 +3035,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   onClick={() => handleCopyMessage(msg.id, msg.content)}
                                   className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                   title="Copy"
+                                  aria-label="Copy"
                                 >
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                 </button>
@@ -3043,6 +3046,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                     onClick={() => handleFeedback(msg.id, 'upvote')}
                                     className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'upvote' ? 'text-primary' : 'hover:text-foreground'}`} 
                                     title="Good response"
+                                    aria-label="Good response"
                                   >
                                     <ThumbsUp size={14} className={msg.feedback === 'upvote' ? 'fill-current' : ''} />
                                   </button>
@@ -3050,6 +3054,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                     onClick={() => handleFeedback(msg.id, 'downvote')}
                                     className={`p-1.5 rounded-lg hover:bg-surface-hover transition-colors ${msg.feedback === 'downvote' ? 'text-destructive' : 'hover:text-foreground'}`}
                                     title="Bad response"
+                                    aria-label="Bad response"
                                   >
                                     <ThumbsDown size={14} className={msg.feedback === 'downvote' ? 'fill-current' : ''} />
                                   </button>
@@ -3066,6 +3071,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                       }}
                                       className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors hover:text-foreground" 
                                       title={speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}
+                                      aria-label={speakingMessageId === msg.id ? "Stop reading" : "Read aloud"}
                                     >
                                       {speakingMessageId === msg.id ? <Square size={14} className="fill-current" /> : <Volume2 size={14} />}
                                     </button>
@@ -3156,10 +3162,10 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                 {msg.content}
                               </p>
                               <div className="absolute -bottom-10 right-0 hidden md:flex items-center gap-1 md:opacity-0 md:group-hover/user:opacity-100 opacity-100 transition-all duration-200">
-                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit">
+                                <button onClick={() => handleEditMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Edit" aria-label="Edit">
                                   <Edit2 size={14} />
                                 </button>
-                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy">
+                                <button onClick={() => handleCopyMessage(msg.id, msg.content)} className="p-1.5 rounded-lg hover:bg-surface-hover transition-colors text-foreground/40 hover:text-foreground" title="Copy" aria-label="Copy">
                                   {copiedMessageId === msg.id ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                                 </button>
                               </div>
@@ -3261,6 +3267,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     }}
                     className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                     title="Download"
+                    aria-label="Download"
                   >
                     <Download size={20} />
                   </button>
@@ -3272,6 +3279,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   }}
                   className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                   title="Close preview"
+                  aria-label="Close preview"
                 >
                   <X size={20} />
                 </button>
@@ -3381,6 +3389,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={() => scrollToBottom(true)}
               className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-foreground/60 hover:text-foreground shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
               title="Scroll to bottom"
+              aria-label="Scroll to bottom"
             >
               <ChevronDown size={20} />
             </motion.button>
@@ -3426,6 +3435,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                         onClick={() => setSelectedImage(null)} 
                         className="bg-foreground text-background rounded-full p-1 shadow-lg hover:scale-110 transition-transform"
                         title="Remove image"
+                        aria-label="Remove image"
                       >
                         <X size={14} />
                       </button>
@@ -3435,6 +3445,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       onClick={() => fileInputRef.current?.click()} 
                       className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-white"
                       title="Replace image"
+                      aria-label="Replace image"
                     >
                       <RefreshCw size={18} />
                     </button>
@@ -3457,6 +3468,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 onClick={() => fileInputRef.current?.click()}
                 className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
                 title="Attach image"
+                aria-label="Attach image"
               >
                 <Paperclip size={20} />
               </button>
@@ -3532,6 +3544,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                       onClick={handleStop}
                                       className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
                                       title="Stop responding"
+                                      aria-label="Stop responding"
                                     >
                                       <Square size={16} className="md:w-4 md:h-4 fill-current" />
                                     </motion.button>
