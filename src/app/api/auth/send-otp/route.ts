@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       otp,
       expiresAt: expiresAt.toISOString(),
       email, // Store the email for reference if needed
+      attempts: 0,
     });
 
     // Setup nodemailer transporter

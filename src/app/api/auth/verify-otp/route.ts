@@ -16,23 +16,49 @@ export async function POST(request: Request) {
 
     const hashedEmail = hashEmail(email);
     const otpDocRef = db.collection('email_otps').doc(hashedEmail);
-    const otpDoc = await otpDocRef.get();
 
-    if (!otpDoc.exists) {
-      return NextResponse.json({ error: 'Invalid or expired OTP.' }, { status: 400 });
-    }
+    try {
+      const txResult = await db.runTransaction(async (transaction) => {
+        const otpDoc = await transaction.get(otpDocRef);
 
-    const data = otpDoc.data();
+        if (!otpDoc.exists) {
+          return { success: false, error: 'Invalid or expired OTP.', status: 400 };
+        }
 
-    if (!data || data.otp !== otp) {
-      return NextResponse.json({ error: 'Invalid OTP.' }, { status: 400 });
-    }
+        const data = otpDoc.data();
+        if (!data) {
+           return { success: false, error: 'Invalid or expired OTP.', status: 400 };
+        }
 
-    const expiresAt = new Date(data.expiresAt);
-    if (expiresAt < new Date()) {
-      // OTP expired, delete the document
-      await otpDocRef.delete();
-      return NextResponse.json({ error: 'OTP has expired.' }, { status: 400 });
+        const expiresAt = new Date(data.expiresAt);
+        if (expiresAt < new Date()) {
+          // OTP expired, delete the document
+          transaction.delete(otpDocRef);
+          return { success: false, error: 'OTP has expired.', status: 400 };
+        }
+
+        if (data.otp !== otp) {
+          const attempts = (data.attempts || 0) + 1;
+          if (attempts >= 5) {
+            transaction.delete(otpDocRef);
+            return { success: false, error: 'Too many failed attempts. OTP invalidated.', status: 400 };
+          } else {
+            transaction.update(otpDocRef, { attempts });
+            return { success: false, error: 'Invalid OTP.', status: 400 };
+          }
+        }
+
+        // OTP is valid and not expired, verify the user's email and delete doc
+        transaction.delete(otpDocRef);
+        return { success: true };
+      });
+
+      if (!txResult.success) {
+        return NextResponse.json({ error: txResult.error }, { status: txResult.status });
+      }
+    } catch (transactionError: any) {
+      console.error('Transaction failed:', transactionError);
+      return NextResponse.json({ error: 'An error occurred while verifying the OTP.' }, { status: 500 });
     }
 
     // OTP is valid and not expired, verify the user's email
@@ -59,9 +85,6 @@ export async function POST(request: Request) {
       console.error('Error updating/creating user:', err);
       return NextResponse.json({ error: 'Failed to update or create user.' }, { status: 500 });
     }
-
-    // Delete the OTP document to prevent reuse
-    await otpDocRef.delete();
 
     return NextResponse.json({ success: true, message: 'Email verified successfully.' }, { status: 200 });
 
