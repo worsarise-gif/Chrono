@@ -2889,6 +2889,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <div className="flex items-center gap-2 pointer-events-auto md:hidden">
               <button
+                aria-label="Open sidebar menu"
                 onClick={onMenuClick}
                 className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
               >
@@ -2899,6 +2900,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="relative" ref={mobileModeDropdownRef}>
                 <button
                   type="button"
+                  aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                   onClick={() => setShowMobileModeDropdown(!showMobileModeDropdown)}
                   className="h-9 px-3 flex items-center gap-1.5 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground text-[13px] font-medium transition-all shadow-lg"
                 >
@@ -3381,6 +3383,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={() => scrollToBottom(true)}
               className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-foreground/60 hover:text-foreground shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
               title="Scroll to bottom"
+              aria-label="Scroll to bottom"
             >
               <ChevronDown size={20} />
             </motion.button>
@@ -3480,6 +3483,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   <div className="relative hidden md:block" ref={modeDropdownRef}>
                     <button 
                       type="button" 
+                      aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                       onClick={() => setShowModeDropdown(!showModeDropdown)}
                       className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-foreground text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
                     >
