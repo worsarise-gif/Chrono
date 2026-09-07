@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { auth } from '@/lib/firebaseAdmin';
+import { isValidEmail } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
 
-    if (!email || typeof email !== 'string') {
+    if (!email || typeof email !== 'string' || !isValidEmail(email)) {
       return NextResponse.json({ error: 'Valid email is required.' }, { status: 400 });
     }
 
@@ -110,11 +111,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, message: 'Password reset email sent successfully.' }, { status: 200 });
   } catch (error: any) {
+    if (error.code === 'auth/user-not-found') {
+      return NextResponse.json({ success: true, message: 'Password reset email sent successfully.' }, { status: 200 });
+    }
     console.error('Error sending reset password email:', error);
 
     // Provide general 500 error, or handle specific firebase admin / nodemailer errors if needed
     return NextResponse.json(
-      { error: error?.message || 'An error occurred while sending the password reset email.' },
+      { error: 'An error occurred while sending the password reset email.' },
       { status: 500 }
     );
   }
