@@ -1,0 +1,3 @@
+## $(date +%Y-%m-%d) - Adding ARIA labels to icon-only modal buttons
+**Learning:** Found a recurring pattern in the design system where small utility modals (Profile, Settings) use raw `lucide-react` icons wrapped in generic buttons (like `<button><X size={20} /></button>`) for actions like closing, editing, or changing avatars. This creates an accessibility gap where screen readers cannot interpret the button's function.
+**Action:** Always add explicit `aria-label` attributes to icon-only buttons across all utility components and modals to ensure parity for keyboard navigation and screen readers without cluttering the visual UI.
