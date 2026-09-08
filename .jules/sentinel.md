@@ -1,0 +1,4 @@
+## 2026-09-08 - Prevent Internal Information Leakage in Auth Endpoints
+**Vulnerability:** Auth endpoints (reset-password, send-otp, verify-otp) returned raw `error?.message` directly to clients in HTTP 500 error responses, which could leak internal stack traces or system details. The reset-password endpoint also threw an error if the user was not found, which could be used for user enumeration.
+**Learning:** Returning raw error objects or messages in HTTP 500 responses can expose sensitive information about the backend. Not catching expected auth errors can lead to user enumeration.
+**Prevention:** Catch expected errors (like 'auth/user-not-found') and return generic success messages (e.g. status 200) to prevent user enumeration. Return generic, hardcoded error strings in the HTTP 500 catch blocks instead of the raw `error?.message`.
