@@ -143,7 +143,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     <>
       <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div className="bg-surface border border-border/40 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden relative">
-          <button onClick={onClose} className="absolute top-4 right-4 text-foreground/50 hover:text-foreground z-10">
+          <button aria-label="Close" onClick={onClose} className="absolute top-4 right-4 text-foreground/50 hover:text-foreground z-10">
             <X size={20} />
           </button>
           <div className="p-8">
@@ -162,6 +162,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     </div>
                   )}
                   <button
+                    aria-label="Change profile picture"
                     onClick={() => fileInputRef.current?.click()}
                     className="absolute bottom-0 right-0 p-2 bg-background text-foreground rounded-full border border-border shadow-sm hover:bg-surface-hover transition-colors"
                   >
@@ -195,6 +196,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       {user.profile?.displayName || user.displayName || "Anonymous User"}
                     </h2>
                     <button
+                      aria-label="Edit display name"
                       onClick={() => setIsEditing(true)}
                       className="md:opacity-0 md:group-hover/name:opacity-100 opacity-100 text-foreground/40 hover:text-foreground transition-opacity"
                     >
