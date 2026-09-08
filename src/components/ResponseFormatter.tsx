@@ -320,6 +320,10 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
     onImageClickRef.current = onImageClick;
   }, [onImageClick]);
 
+  const handleStableImageClick = React.useCallback((s: string) => {
+    onImageClickRef.current?.(s);
+  }, []);
+
   const markdownComponents = React.useMemo(() => ({
     h1({ node, children, ...props }: any) {
       return <h1 className="text-xl font-medium text-foreground mt-2 mb-4" {...props}>{children}</h1>;
@@ -373,7 +377,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
       return <li className="text-foreground font-normal mb-1 last:mb-0 leading-relaxed" {...props}>{children}</li>;
     },
     img({ node, src, alt, ...props }: any) {
-      return <ImageRenderer src={src} alt={alt} onImageClick={(s: string) => onImageClickRef.current?.(s)} {...props} />;
+      return <ImageRenderer src={src} alt={alt} onImageClick={handleStableImageClick} {...props} />;
     },
     a({ node, children, href, ...props }: any) {
       const text = String(children);
@@ -468,7 +472,7 @@ export const ResponseFormatter: React.FC<ResponseFormatterProps> = React.memo(({
         </summary>
       );
     }
-  }), []);
+  }), [handleStableImageClick]);
 
   // Robust Normalization Layer
   const normalizeContent = (text: string) => {
