@@ -2899,6 +2899,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="relative" ref={mobileModeDropdownRef}>
                 <button
                   type="button"
+                  aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                   onClick={() => setShowMobileModeDropdown(!showMobileModeDropdown)}
                   className="h-9 px-3 flex items-center gap-1.5 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground text-[13px] font-medium transition-all shadow-lg"
                 >
