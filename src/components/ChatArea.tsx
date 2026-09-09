@@ -487,6 +487,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return images;
   }, [messages]);
 
+  // Use latest ref pattern to prevent handleImageClick from breaking ResponseFormatter memoization
+  const allImagesRef = useRef(allImages);
+  useEffect(() => {
+    allImagesRef.current = allImages;
+  }, [allImages]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (previewImageIndex === null) return;
@@ -505,14 +511,14 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   }, [previewImageIndex, allImages.length]);
 
   const handleImageClick = useCallback((src: string) => {
-    const index = allImages.findIndex(img => img.src === src);
+    const index = allImagesRef.current.findIndex(img => img.src === src);
     if (index !== -1) {
       setPreviewImageIndex(index);
     } else {
       // Fallback for images not in history (e.g. just sent)
       setPreviewImage(src);
     }
-  }, [allImages]);
+  }, []); // Empty dependency array to ensure function reference never changes
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
