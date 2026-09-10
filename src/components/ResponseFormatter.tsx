@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef, useDeferredValue } from 'react';
 import StreamingText from './StreamingText';
-import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
+import { defaultUrlTransform } from 'react-markdown';
+import dynamic from 'next/dynamic';
+
+// Performance optimization: Lazy load heavy client-side components to reduce initial bundle size
+const ReactMarkdown = dynamic(() => import('react-markdown'));
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import 'katex/dist/katex.min.css';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+const SyntaxHighlighter = dynamic(() => import('react-syntax-highlighter').then(mod => mod.Prism));
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Search, ExternalLink, ChevronDown, Maximize2, Download, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
