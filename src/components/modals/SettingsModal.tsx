@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Moon, Sun, X } from 'lucide-react';
+import { Moon, Sun, X, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from 'next-themes';
 import { db } from '../../firebase';
@@ -49,7 +49,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-surface border border-border/40 rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-foreground/50 hover:text-foreground">
+        <button
+          onClick={onClose}
+          aria-label="Close settings"
+          className="absolute top-4 right-4 text-foreground/50 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/50 rounded-full p-1"
+        >
           <X size={20} />
         </button>
         <div className="p-6">
@@ -85,9 +89,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <button
                 onClick={handleSavePrompt}
                 disabled={isSaving}
-                className="w-full py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="w-full py-2 bg-foreground text-background rounded-lg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {isSaving ? 'Saving...' : 'Save Prompt'}
+                {isSaving ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Saving...
+                  </>
+                ) : 'Save Prompt'}
               </button>
             </div>
           </div>
