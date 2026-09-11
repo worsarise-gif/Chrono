@@ -1,0 +1,3 @@
+## 2024-11-20 - [ARIA Labels for Icon-Only Buttons]
+**Learning:** Found a pattern of missing `aria-label` attributes on icon-only buttons (`Menu`, `X`, `ChevronDown`) across `ChatArea.tsx`, particularly in conditionally rendered or overlaid components (like image preview modals and sources panels). This is critical for screen reader users as they would otherwise lack context for these actions.
+**Action:** Always ensure that icon-only interactive elements explicitly define an accessible name using `aria-label`. When reviewing new components, actively check for `<button>` elements containing only `<Icon />` components.
