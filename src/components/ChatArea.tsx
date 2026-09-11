@@ -454,7 +454,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     const y = touch.clientY;
     longPressTimerRef.current = setTimeout(() => {
       setUserMenuState({ messageId: msgId, content, x, y });
-    }, 500);
+    }, 500) as ReturnType<typeof setTimeout>;
   };
 
   const clearLongPress = () => {
@@ -2889,6 +2889,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <div className="flex items-center gap-2 pointer-events-auto md:hidden">
               <button
+                aria-label="Open menu"
                 onClick={onMenuClick}
                 className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
               >
@@ -3282,6 +3283,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 <>
                   {previewImageIndex > 0 && (
                     <button 
+                      aria-label="Previous image"
                       onClick={(e) => {
                         e.stopPropagation();
                         setPreviewImageIndex(previewImageIndex - 1);
@@ -3293,6 +3295,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   )}
                   {previewImageIndex < allImages.length - 1 && (
                     <button 
+                      aria-label="Next image"
                       onClick={(e) => {
                         e.stopPropagation();
                         setPreviewImageIndex(previewImageIndex + 1);
@@ -3327,6 +3330,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={(e) => e.stopPropagation()}
             >
               <button 
+                aria-label="Close modal"
                 onClick={() => setShowSignInModal(false)}
                 className="absolute top-4 right-4 p-2 text-foreground/60 hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
               >
@@ -3575,6 +3579,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h3 className="font-medium text-foreground text-base">Sources</h3>
               <button 
+                aria-label="Close sources panel"
                 onClick={() => setShowSourcesPanel(false)}
                 className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
               >
@@ -3607,6 +3612,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                 <h3 className="font-medium text-foreground text-base">Sources</h3>
                 <button 
+                  aria-label="Close sources panel"
                   onClick={() => setShowSourcesPanel(false)}
                   className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
                 >
