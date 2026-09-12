@@ -275,6 +275,7 @@ const ImageRenderer = React.memo(({ src, alt, onImageClick, ...props }: any) => 
               <div className="relative w-fit h-fit group">
                 <div className="absolute top-5 right-5 flex gap-3 z-10">
                   <button 
+                    aria-label="Download Image"
                     onClick={handleDownload}
                     className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                     title="Download Image"
@@ -282,6 +283,7 @@ const ImageRenderer = React.memo(({ src, alt, onImageClick, ...props }: any) => 
                     <Download size={20} />
                   </button>
                   <button 
+                    aria-label="Close"
                     onClick={() => setIsOpen(false)}
                     className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-sm border border-white/10 rounded-full text-white/70 hover:text-white transition-all duration-200 drop-shadow-md"
                     title="Close"
