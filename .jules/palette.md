@@ -1,0 +1,3 @@
+## 2024-05-24 - Interactive Element Screen Reader Accessibility
+**Learning:** Found several icon-only interactive elements (like modal close buttons, image download actions, and mobile navigation toggles) across multiple components (`ResponseFormatter`, `ChatHistoryModal`, `ImagineGallery`, `ChatArea`, `SettingsModal`, `ProfileModal`) that lacked `aria-label`s, rendering them functionally invisible to screen reader users.
+**Action:** When adding interactive elements containing only icons (like Lucide React icons `<X />`, `<Download />`, `<Menu />`), always explicitly define a descriptive `aria-label` attribute to ensure WCAG compliance and improve keyboard and screen reader accessibility across the application.

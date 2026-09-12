@@ -168,6 +168,7 @@ export default function ImagineGallery({ onMenuClick }: { onMenuClick?: () => vo
             </div>
           ) : (
             <button
+              aria-label="Open Mobile Menu"
               onClick={onMenuClick}
               className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground md:hidden pointer-events-auto transition-all shadow-lg"
             >
