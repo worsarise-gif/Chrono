@@ -487,6 +487,15 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return images;
   }, [messages]);
 
+  const allImagesRef = useRef(allImages);
+
+  // ⚡ Bolt Optimization: Use 'latest ref' pattern to track allImages
+  // This allows handleImageClick to have an empty dependency array
+  // and prevents unnecessary re-renders of ResponseFormatter child components
+  useLayoutEffect(() => {
+    allImagesRef.current = allImages;
+  }, [allImages]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (previewImageIndex === null) return;
@@ -505,14 +514,14 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   }, [previewImageIndex, allImages.length]);
 
   const handleImageClick = useCallback((src: string) => {
-    const index = allImages.findIndex(img => img.src === src);
+    const index = allImagesRef.current.findIndex(img => img.src === src);
     if (index !== -1) {
       setPreviewImageIndex(index);
     } else {
       // Fallback for images not in history (e.g. just sent)
       setPreviewImage(src);
     }
-  }, [allImages]);
+  }, []);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
