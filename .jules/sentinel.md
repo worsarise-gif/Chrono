@@ -1,0 +1,4 @@
+## 2024-05-24 - Stop User Enumeration and Information Leakage in Auth Routes
+**Vulnerability:** The password reset and OTP verification routes returned specific error messages (e.g., `error?.message`) in 500 responses and allowed user enumeration by revealing whether an email address was registered based on the `auth/user-not-found` error during password link generation.
+**Learning:** Returning detailed backend errors to the frontend can leak implementation details to attackers. Unhandled specific Firebase errors (like `auth/user-not-found`) can expose system state (valid user emails).
+**Prevention:** Catch expected business logic errors (like user not found) and return generic success responses to prevent enumeration. Never pass `error?.message` directly in a 500 error response to the client; always use a sanitized, generic error string.
