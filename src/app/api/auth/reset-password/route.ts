@@ -114,7 +114,7 @@ export async function POST(request: Request) {
 
     // Provide general 500 error, or handle specific firebase admin / nodemailer errors if needed
     return NextResponse.json(
-      { error: error?.message || 'An error occurred while sending the password reset email.' },
+      { error: 'An error occurred while sending the password reset email.' },
       { status: 500 }
     );
   }

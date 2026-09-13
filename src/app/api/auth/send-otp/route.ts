@@ -16,8 +16,8 @@ export async function POST(request: Request) {
       const userRecord = await auth.getUserByEmail(email);
       if (userRecord.emailVerified) {
         return NextResponse.json(
-          { error: 'An account with this email already exists.' },
-          { status: 400 }
+          { success: true, message: 'OTP sent successfully.' },
+          { status: 200 }
         );
       }
       // If user exists but is unverified, allow OTP generation to proceed
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     console.error('Error sending OTP email:', error);
 
     return NextResponse.json(
-      { error: error?.message || 'An error occurred while sending the OTP email.' },
+      { error: 'An error occurred while sending the OTP email.' },
       { status: 500 }
     );
   }
