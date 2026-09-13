@@ -1,3 +1,7 @@
 ## 2024-05-10 - Unnecessary React re-renders due to inline functions
 **Learning:** React re-renders components when props change. Inline functions, like `() => handleImageClick(msg.imageUrl!)` in the `ChatArea.tsx` map over `messages`, create a new function reference on every render, leading to unnecessary re-renders of the child components or triggering deeper React diffing than needed. Similarly, using inline arrow functions or non-memoized values in dependency arrays can cause unnecessary re-renders. I also observed that `ResponseFormatter` is using `React.memo` but its `onImageClick` prop is being passed as an unmemoized function from its parent component.
 **Action:** Always wrap functions passed as props to child components (especially memoized components like `ResponseFormatter`) in `useCallback`. Ensure that when mapping over arrays to render components that take functions as props, we either pass a memoized reference that accepts an id or bind the arguments properly if the child component expects it. Since we fixed it with a useCallback wrapper, no further actions are required.
+
+## 2026-09-13 - Lazy loading heavy dependencies
+**Learning:** Heavy components like `react-syntax-highlighter` significantly block the main thread and increase bundle size if imported statically, especially in components rendered repeatedly like `ResponseFormatter`.
+**Action:** Replaced static imports of `react-syntax-highlighter` with Next.js `next/dynamic` using `{ ssr: false }`.
