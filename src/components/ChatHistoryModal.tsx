@@ -173,7 +173,8 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="p-2 rounded-full hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all"
+                aria-label="Close chat history"
+                className="p-2 rounded-full hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:outline-none"
               >
                 <X size={24} />
               </button>
@@ -243,13 +244,15 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 <button 
                                   onClick={(e) => handleSaveTitle(e, chat.id)}
                                   disabled={isSaving}
-                                  className="p-1 text-success hover:bg-success/10 rounded transition-colors"
+                                  aria-label="Save chat title"
+                                  className="p-1 text-success hover:bg-success/10 rounded transition-colors focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:outline-none"
                                 >
                                   <Check size={16} />
                                 </button>
                                 <button 
                                   onClick={(e) => handleCancelEdit(e)}
-                                  className="p-1 text-destructive hover:bg-destructive/10 text-destructive rounded transition-colors"
+                                  aria-label="Cancel editing chat title"
+                                  className="p-1 text-destructive hover:bg-destructive/10 text-destructive rounded transition-colors focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:outline-none"
                                 >
                                   <X size={16} />
                                 </button>
@@ -286,7 +289,8 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                               <>
                                 <button
                                   onClick={(e) => handleTogglePin(e, chat.id, !!chat.isPinned)}
-                                  className={`p-2 rounded-lg transition-all ${
+                                  aria-label={chat.isPinned ? "Unpin chat" : "Pin chat"}
+                                  className={`p-2 rounded-lg transition-all focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:outline-none ${
                                     chat.isPinned 
                                       ? 'bg-info/10 text-info hover:bg-info/20'
                                       : 'hover:bg-foreground/10 text-foreground/40 hover:text-foreground'
@@ -297,7 +301,8 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 </button>
                                 <button
                                   onClick={(e) => handleStartEdit(e, chat.id, chat.title)}
-                                  className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-all"
+                                  aria-label="Rename chat"
+                                  className="p-2 rounded-lg hover:bg-foreground/10 text-foreground/40 hover:text-foreground transition-all focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:outline-none"
                                   title="Rename"
                                 >
                                   <Edit2 size={14} />
@@ -309,7 +314,8 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 e.stopPropagation();
                                 onDeleteChat(chat.id, chat.title);
                               }}
-                              className="p-2 rounded-lg hover:bg-destructive/10 text-destructive text-foreground/40 hover:text-destructive transition-all"
+                              aria-label="Delete chat"
+                              className="p-2 rounded-lg hover:bg-destructive/10 text-destructive text-foreground/40 hover:text-destructive transition-all focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:outline-none"
                               title="Delete"
                             >
                               <Trash2 size={14} />
