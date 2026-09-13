@@ -7,11 +7,16 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import 'katex/dist/katex.min.css';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import dynamic from 'next/dynamic';
 import { Check, Copy, Search, ExternalLink, ChevronDown, Maximize2, Download, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
+
+// Lazy load SyntaxHighlighter to reduce bundle size
+const SyntaxHighlighter = dynamic(
+  () => import('react-syntax-highlighter').then((mod) => mod.Prism),
+  { ssr: false, loading: () => <div className="h-20 animate-pulse bg-surface/20 rounded-md" /> }
+);
 
 interface ResponseFormatterProps {
   content: string;
@@ -51,8 +56,20 @@ const CodeBlock = React.memo(({ language, value }: { language: string, value: st
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const [syntaxStyle, setSyntaxStyle] = useState<any>(null);
   const currentTheme = resolvedTheme || theme || 'dark';
-  const syntaxStyle = currentTheme === 'dark' ? vscDarkPlus : oneLight;
+
+  useEffect(() => {
+    let isMounted = true;
+    import('react-syntax-highlighter/dist/esm/styles/prism').then((styles) => {
+      if (isMounted) {
+        setSyntaxStyle(currentTheme === 'dark' ? styles.vscDarkPlus : styles.oneLight);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [currentTheme]);
 
   if (!mounted) {
     return (
@@ -81,7 +98,7 @@ const CodeBlock = React.memo(({ language, value }: { language: string, value: st
       <div className="text-[13px] leading-relaxed overflow-x-auto p-1">
         <SyntaxHighlighter
           language={language || 'text'}
-          style={syntaxStyle}
+          style={syntaxStyle || {}}
           customStyle={{
             margin: 0,
             padding: '1.25rem',
