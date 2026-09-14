@@ -171,7 +171,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                   <p className="text-sm text-foreground/60">{chats.length} conversations found</p>
                 </div>
               </div>
-              <button
+              <button aria-label="Close Chat History"
                 onClick={onClose}
                 className="p-2 rounded-full hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all"
               >
@@ -240,14 +240,14 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                   }}
                                   className="flex-1 bg-transparent border-none outline-none text-sm text-foreground py-1 px-2"
                                 />
-                                <button 
+                                <button aria-label="Save Title"
                                   onClick={(e) => handleSaveTitle(e, chat.id)}
                                   disabled={isSaving}
                                   className="p-1 text-success hover:bg-success/10 rounded transition-colors"
                                 >
                                   <Check size={16} />
                                 </button>
-                                <button 
+                                <button aria-label="Cancel Edit"
                                   onClick={(e) => handleCancelEdit(e)}
                                   className="p-1 text-destructive hover:bg-destructive/10 text-destructive rounded transition-colors"
                                 >
