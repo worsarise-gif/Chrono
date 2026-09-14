@@ -31,7 +31,7 @@ interface Chat {
 const NavItem = ({ icon, label, onClick, active, hasDot, isCollapsed, index }: any) => {
   return (
     <li className="w-full relative group">
-      <button
+      <button aria-label={label}
         onClick={onClick}
         className={`flex items-center w-[calc(100%-16px)] mx-2 rounded-full transition-colors relative pointer-events-auto h-[40px] ${active && !isCollapsed ? 'text-foreground dark:text-white bg-surface-hover' : active && isCollapsed ? 'text-foreground dark:text-white' : 'text-foreground/60 hover:text-foreground dark:text-white dark:hover:text-white'} ${!isCollapsed && !active ? 'hover:bg-surface-hover/50' : ''}`}
       >
