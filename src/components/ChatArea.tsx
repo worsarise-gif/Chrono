@@ -487,6 +487,13 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return images;
   }, [messages]);
 
+  // Latest ref pattern to stabilize handleImageClick and prevent unnecessary re-renders
+  // of ResponseFormatter components when messages update.
+  const allImagesRef = useRef(allImages);
+  useEffect(() => {
+    allImagesRef.current = allImages;
+  }, [allImages]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (previewImageIndex === null) return;
@@ -494,7 +501,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
       if (e.key === 'Escape') {
         setPreviewImageIndex(null);
       } else if (e.key === 'ArrowRight') {
-        setPreviewImageIndex((prev) => (prev !== null && prev < allImages.length - 1 ? prev + 1 : prev));
+        setPreviewImageIndex((prev) => (prev !== null && prev < allImagesRef.current.length - 1 ? prev + 1 : prev));
       } else if (e.key === 'ArrowLeft') {
         setPreviewImageIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : prev));
       }
@@ -502,17 +509,17 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [previewImageIndex, allImages.length]);
+  }, [previewImageIndex]);
 
   const handleImageClick = useCallback((src: string) => {
-    const index = allImages.findIndex(img => img.src === src);
+    const index = allImagesRef.current.findIndex(img => img.src === src);
     if (index !== -1) {
       setPreviewImageIndex(index);
     } else {
       // Fallback for images not in history (e.g. just sent)
       setPreviewImage(src);
     }
-  }, [allImages]);
+  }, []);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
