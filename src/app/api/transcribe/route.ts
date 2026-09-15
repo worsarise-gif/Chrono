@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         headers: {
           'Authorization': `Bearer ${apiKey}`
         },
-        body: formData,
+        body: formData as unknown as BodyInit,
       });
 
       if (!response.ok) {
