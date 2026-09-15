@@ -446,7 +446,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [userMenuState, setUserMenuState] = useState<{messageId: string, content: string, x: number, y: number} | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const dragCounterRef = useRef(0);
-  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent, msgId: string, content: string) => {
     const touch = e.touches[0];
@@ -454,7 +454,7 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     const y = touch.clientY;
     longPressTimerRef.current = setTimeout(() => {
       setUserMenuState({ messageId: msgId, content, x, y });
-    }, 500);
+    }, 500) as ReturnType<typeof setTimeout>;
   };
 
   const clearLongPress = () => {
@@ -2889,6 +2889,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <div className="flex items-center gap-2 pointer-events-auto md:hidden">
               <button
+                aria-label="Open menu"
                 onClick={onMenuClick}
                 className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
               >
@@ -2898,6 +2899,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               {/* Mobile Mode Selector */}
               <div className="relative" ref={mobileModeDropdownRef}>
                 <button
+                  aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                   type="button"
                   onClick={() => setShowMobileModeDropdown(!showMobileModeDropdown)}
                   className="h-9 px-3 flex items-center gap-1.5 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground text-[13px] font-medium transition-all shadow-lg"
@@ -2948,6 +2950,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             </button>
           ) : (
             <button 
+              aria-label="New chat"
               onClick={() => setCurrentChatId(null)}
               className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground pointer-events-auto transition-all shadow-lg ml-auto group"
               title="New Chat"
@@ -3327,6 +3330,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={(e) => e.stopPropagation()}
             >
               <button 
+                aria-label="Close sign in modal"
                 onClick={() => setShowSignInModal(false)}
                 className="absolute top-4 right-4 p-2 text-foreground/60 hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
               >
@@ -3375,6 +3379,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         <AnimatePresence>
           {showScrollButton && isChatStarted && (
             <motion.button
+              aria-label="Scroll to bottom"
               initial={{ opacity: 0, y: 10, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.9 }}
@@ -3479,6 +3484,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 {user && (
                   <div className="relative hidden md:block" ref={modeDropdownRef}>
                     <button 
+                      aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                       type="button" 
                       onClick={() => setShowModeDropdown(!showModeDropdown)}
                       className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-foreground text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
