@@ -112,9 +112,13 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Error sending reset password email:', error);
 
+    if (error?.code === 'auth/user-not-found') {
+      return NextResponse.json({ success: true, message: 'Password reset email sent successfully.' }, { status: 200 });
+    }
+
     // Provide general 500 error, or handle specific firebase admin / nodemailer errors if needed
     return NextResponse.json(
-      { error: error?.message || 'An error occurred while sending the password reset email.' },
+      { error: 'An error occurred while sending the password reset email.' },
       { status: 500 }
     );
   }

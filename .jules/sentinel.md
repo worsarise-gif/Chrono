@@ -1,0 +1,4 @@
+## 2025-03-09 - Fix Information Leakage and User Enumeration in Auth Endpoints
+**Vulnerability:** The authentication endpoints (`/api/auth/reset-password`, `/api/auth/send-otp`, `/api/auth/verify-otp`) were leaking internal stack traces/messages to the client by directly sending `error?.message` in 500 responses. Furthermore, the `reset-password` endpoint allowed user enumeration by throwing errors on `auth/user-not-found`, signaling if an email existed.
+**Learning:** Returning `error.message` on 500s exposes backend details (e.g., Firebase errors) to frontend clients. Returning errors for unknown users during reset flows allows attackers to scrape valid email addresses.
+**Prevention:** Hardcode static error messages for 500 catch blocks. For password resets and similar flows, catch `user-not-found` and return the identical success payload as if the user existed.
