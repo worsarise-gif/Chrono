@@ -1,0 +1,4 @@
+## 2024-05-15 - Auth Information Leakage
+**Vulnerability:** The authentication endpoints exposed internal error messages to the client on failure, and the reset-password endpoint allowed user enumeration by throwing an error if the user didn't exist instead of returning a generic success response.
+**Learning:** Returning `error.message` on 500s leaks stack traces/DB errors. Returning a generic success message regardless of whether a user exists on password reset endpoints is critical to prevent attackers from harvesting valid user emails.
+**Prevention:** Never pass `error.message` to API responses in catch blocks for 500s. For authentication endpoints (password reset, OTP), always return a generic success message so attackers cannot discern if a user exists.
