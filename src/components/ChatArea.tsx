@@ -2899,6 +2899,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="relative" ref={mobileModeDropdownRef}>
                 <button
                   type="button"
+                  aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                   onClick={() => setShowMobileModeDropdown(!showMobileModeDropdown)}
                   className="h-9 px-3 flex items-center gap-1.5 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground text-[13px] font-medium transition-all shadow-lg"
                 >
@@ -2907,11 +2908,13 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 </button>
 
                 {showMobileModeDropdown && (
-                  <div className="absolute top-full mt-2 left-0 w-[240px] bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
+                  <div role="listbox" className="absolute top-full mt-2 left-0 w-[240px] bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
                     {(Object.keys(modeLabels) as ChatMode[]).filter(m => m !== 'flash' && m !== 'search').map((m) => (
                       <button
                         key={m}
                         type="button"
+                        role="option"
+                        aria-selected={mode === m}
                         onClick={() => { setMode(m); setShowMobileModeDropdown(false); }}
                         className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors relative ${mode === m ? 'bg-surface-hover/50' : ''}`}
                       >
@@ -3480,6 +3483,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   <div className="relative hidden md:block" ref={modeDropdownRef}>
                     <button 
                       type="button" 
+                      aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                       onClick={() => setShowModeDropdown(!showModeDropdown)}
                       className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-foreground text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
                     >
@@ -3489,11 +3493,13 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                     </button>
                     
                     {showModeDropdown && (
-                      <div className="absolute bottom-full mb-2 right-0 md:left-0 w-[240px] md:w-64 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
+                      <div role="listbox" className="absolute bottom-full mb-2 right-0 md:left-0 w-[240px] md:w-64 bg-surface border border-border rounded-xl shadow-xl overflow-hidden z-50 py-1">
                         {(Object.keys(modeLabels) as ChatMode[]).filter(m => m !== 'flash' && m !== 'search').map((m) => (
                           <button
                             key={m}
                             type="button"
+                            role="option"
+                            aria-selected={mode === m}
                             onClick={() => { setMode(m); setShowModeDropdown(false); }}
                             className={`w-full flex items-start gap-3 px-4 py-3 text-left hover:bg-surface-hover transition-colors relative ${mode === m ? 'bg-surface-hover/50' : ''}`}
                           >
