@@ -2890,6 +2890,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             <div className="flex items-center gap-2 pointer-events-auto md:hidden">
               <button
                 onClick={onMenuClick}
+                aria-label="Open sidebar menu"
                 className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
               >
                 <Menu size={18} />
@@ -3576,6 +3577,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <h3 className="font-medium text-foreground text-base">Sources</h3>
               <button 
                 onClick={() => setShowSourcesPanel(false)}
+                aria-label="Close sources panel"
                 className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
               >
                 <X size={18} />
@@ -3608,6 +3610,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 <h3 className="font-medium text-foreground text-base">Sources</h3>
                 <button 
                   onClick={() => setShowSourcesPanel(false)}
+                  aria-label="Close sources panel"
                   className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
                 >
                   <X size={18} />

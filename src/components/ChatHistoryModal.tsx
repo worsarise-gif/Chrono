@@ -173,6 +173,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
               </div>
               <button
                 onClick={onClose}
+                aria-label="Close chat history"
                 className="p-2 rounded-full hover:bg-surface-hover text-foreground/60 hover:text-foreground transition-all"
               >
                 <X size={24} />
@@ -309,6 +310,7 @@ export const ChatHistoryModal: React.FC<ChatHistoryModalProps> = ({
                                 e.stopPropagation();
                                 onDeleteChat(chat.id, chat.title);
                               }}
+                              aria-label="Delete chat"
                               className="p-2 rounded-lg hover:bg-destructive/10 text-destructive text-foreground/40 hover:text-destructive transition-all"
                               title="Delete"
                             >
