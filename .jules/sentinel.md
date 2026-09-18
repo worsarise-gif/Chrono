@@ -1,0 +1,4 @@
+## 2025-02-20 - Auth Endpoints Leaking Errors and Enabling User Enumeration
+**Vulnerability:** The password reset endpoint leaked information on whether a user existed by throwing an `auth/user-not-found` error. Additionally, auth API routes (`send-otp`, `verify-otp`, `reset-password`) were passing `error?.message` directly in 500 responses, leaking internal stack details or provider errors to the client.
+**Learning:** Returning detailed error messages or differing HTTP statuses based on user existence in authentication flows violates secure design principles by enabling user enumeration and data leakage.
+**Prevention:** Always catch user-not-found errors in reset flows to return a generic success message, and replace detailed exception messages with generic, safe string responses when returning 500 status codes.
