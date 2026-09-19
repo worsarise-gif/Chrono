@@ -7,7 +7,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import 'katex/dist/katex.min.css';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import dynamic from 'next/dynamic';
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Search, ExternalLink, ChevronDown, Maximize2, Download, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
@@ -19,6 +19,14 @@ interface ResponseFormatterProps {
 }
 
 let globalMounted = false;
+
+const SyntaxHighlighter = dynamic(
+  () => import('react-syntax-highlighter').then(mod => mod.Prism),
+  {
+    ssr: false,
+    loading: () => <div className="animate-pulse bg-surface/50 rounded-lg h-32 w-full" />
+  }
+);
 
 const sanitizeSchema = {
   ...defaultSchema,
