@@ -1,0 +1,4 @@
+## 2024-05-24 - Information Leakage and User Enumeration in Auth Endpoints
+**Vulnerability:** The authentication endpoints (`/api/auth/reset-password`, `/api/auth/send-otp`, `/api/auth/verify-otp`) were exposing raw error messages (`error?.message`) in 500 responses. Additionally, the `/api/auth/reset-password` endpoint did not handle `auth/user-not-found` errors, which could allow an attacker to enumerate valid user accounts by observing the response.
+**Learning:** Returning detailed error messages or differing responses based on user existence can inadvertently leak sensitive internal details or confirm user accounts, making the system vulnerable to enumeration and information disclosure.
+**Prevention:** Always return generic error messages for 500 errors to avoid leaking stack traces or internal errors. For authentication-related actions (like password reset), return a generic success message regardless of whether the user exists to prevent enumeration.
