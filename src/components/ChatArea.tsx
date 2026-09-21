@@ -487,6 +487,12 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
     return images;
   }, [messages]);
 
+  // ⚡ Bolt: Memoize the filtered messages array to prevent O(N) filtering on every render
+  // and to maintain a stable array reference, preventing unnecessary re-renders of child components
+  const displayedMessages = useMemo(() => {
+    return messages.filter(msg => msg.id !== currentStreamingMessageId);
+  }, [messages, currentStreamingMessageId]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (previewImageIndex === null) return;
@@ -2968,7 +2974,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         ) : (
           <div className="max-w-3xl mx-auto w-full px-4 pb-40 md:pb-32 space-y-6 md:space-y-8 flex-1">
             <AnimatePresence initial={false}>
-              {messages.filter(msg => msg.id !== currentStreamingMessageId).map((msg, index) => (
+              {displayedMessages.map((msg, index) => (
                 <motion.div 
                   key={msg.id} 
                   initial={{ opacity: 0 }}
@@ -3107,7 +3113,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               </div>
 
                               {/* Suggestions */}
-                              {msg.recommendations && msg.recommendations.length > 0 && index === messages.filter(m => m.id !== currentStreamingMessageId).length - 1 && (
+                              {msg.recommendations && msg.recommendations.length > 0 && index === displayedMessages.length - 1 && (
                                 <div className="mt-5 space-y-3">
                                   {msg.recommendations.map((rec, i) => (
                                     <button 
