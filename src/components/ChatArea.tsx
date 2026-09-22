@@ -439,6 +439,11 @@ export default function ChatArea({ onMenuClick }: { onMenuClick?: () => void }) 
   const [previewImageIndex, setPreviewImageIndex] = useState<number | null>(null);
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+
+  const visibleMessages = useMemo(() =>
+    messages.filter(msg => msg.id !== currentStreamingMessageId),
+  [messages, currentStreamingMessageId]);
+
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [speakingMessageId, setSpeakingMessageId] = useState<string | null>(null);
   const [guestRequestCount, setGuestRequestCount] = useState<number>(0);
@@ -2968,7 +2973,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
         ) : (
           <div className="max-w-3xl mx-auto w-full px-4 pb-40 md:pb-32 space-y-6 md:space-y-8 flex-1">
             <AnimatePresence initial={false}>
-              {messages.filter(msg => msg.id !== currentStreamingMessageId).map((msg, index) => (
+              {visibleMessages.map((msg, index) => (
                 <motion.div 
                   key={msg.id} 
                   initial={{ opacity: 0 }}
@@ -3107,7 +3112,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                               </div>
 
                               {/* Suggestions */}
-                              {msg.recommendations && msg.recommendations.length > 0 && index === messages.filter(m => m.id !== currentStreamingMessageId).length - 1 && (
+                              {msg.recommendations && msg.recommendations.length > 0 && index === visibleMessages.length - 1 && (
                                 <div className="mt-5 space-y-3">
                                   {msg.recommendations.map((rec, i) => (
                                     <button 
