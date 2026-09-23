@@ -7,9 +7,13 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import 'katex/dist/katex.min.css';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+
 import { vscDarkPlus, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Check, Copy, Search, ExternalLink, ChevronDown, Maximize2, Download, X } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+const SyntaxHighlighter = dynamic(() => import('react-syntax-highlighter').then(mod => mod.Prism), { ssr: false, loading: () => <div className="relative group my-6 rounded-xl overflow-hidden border border-border/30 bg-surface/50 font-sans animate-pulse h-32 w-full" /> });
+
 import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
 
