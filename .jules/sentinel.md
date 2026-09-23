@@ -1,0 +1,4 @@
+## 2024-10-23 - Authentication User Enumeration and Information Leakage
+**Vulnerability:** The password reset route leaked whether an email existed in the system based on its success or failure (`auth/user-not-found`). In addition, the catch blocks for the `reset-password`, `send-otp`, and `verify-otp` API routes were returning internal stack error strings (`error?.message`) directly to the user in the 500 error response.
+**Learning:** Returning `error?.message` in serverless API routes exposes internal logic and potentially stack information, while unhandled conditional errors during user operations allow malicious actors to brute-force enumerating valid user emails in the system.
+**Prevention:** Authentication endpoints should always return generic messages ("If an account exists...") regardless of if the user actually exists in the database. 500 error catches must fall back to generic fixed strings without interpolating the caught `error` object.
