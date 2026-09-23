@@ -3327,6 +3327,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={(e) => e.stopPropagation()}
             >
               <button 
+                aria-label="Close modal"
                 onClick={() => setShowSignInModal(false)}
                 className="absolute top-4 right-4 p-2 text-foreground/60 hover:text-foreground hover:bg-surface-hover rounded-full transition-colors"
               >
@@ -3575,6 +3576,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
             <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
               <h3 className="font-medium text-foreground text-base">Sources</h3>
               <button 
+                aria-label="Close sources panel"
                 onClick={() => setShowSourcesPanel(false)}
                 className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
               >
@@ -3607,6 +3609,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="flex items-center justify-between p-4 border-b border-border shrink-0">
                 <h3 className="font-medium text-foreground text-base">Sources</h3>
                 <button 
+                  aria-label="Close sources panel"
                   onClick={() => setShowSourcesPanel(false)}
                   className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
                 >

@@ -143,7 +143,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     <>
       <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
         <div className="bg-surface border border-border/40 rounded-2xl shadow-xl w-full max-w-sm overflow-hidden relative">
-          <button onClick={onClose} className="absolute top-4 right-4 text-foreground/50 hover:text-foreground z-10">
+          <button aria-label="Close profile" onClick={onClose} className="absolute top-4 right-4 text-foreground/50 hover:text-foreground z-10">
             <X size={20} />
           </button>
           <div className="p-8">
