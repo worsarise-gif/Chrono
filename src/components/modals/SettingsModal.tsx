@@ -49,7 +49,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="bg-surface border border-border/40 rounded-2xl shadow-xl w-full max-w-md overflow-hidden relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-foreground/50 hover:text-foreground">
+        <button
+          onClick={onClose}
+          aria-label="Close settings"
+          className="absolute top-4 right-4 p-1 rounded-md text-foreground/50 hover:text-foreground transition-colors focus-visible:ring-2 focus-visible:ring-foreground/50 focus-visible:outline-none"
+        >
           <X size={20} />
         </button>
         <div className="p-6">
