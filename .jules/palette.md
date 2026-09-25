@@ -1,0 +1,3 @@
+## 2024-11-20 - Accessible Names for Dynamic Chat Controls
+**Learning:** In the `ChatArea.tsx` component, icon-only action buttons (like mobile menu, stop responding) and dropdown selectors containing visually dynamic text (like `modeLabels[mode]`) were lacking accessible names, which could lead to WCAG 2.5.3 (Label in Name) regressions and poor screen reader experiences.
+**Action:** Always add descriptive `aria-label`s to icon-only interactive elements and ensure that for elements containing visually dynamic state text, the `aria-label` dynamically includes that same text state (e.g., ``aria-label={`Select chat mode, currently ${modeLabels[mode]}`}``).
