@@ -2889,6 +2889,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
           ) : (
             <div className="flex items-center gap-2 pointer-events-auto md:hidden">
               <button
+                aria-label="Open menu"
                 onClick={onMenuClick}
                 className="p-2 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground/60 hover:text-foreground transition-all shadow-lg"
               >
@@ -2899,6 +2900,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <div className="relative" ref={mobileModeDropdownRef}>
                 <button
                   type="button"
+                  aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                   onClick={() => setShowMobileModeDropdown(!showMobileModeDropdown)}
                   className="h-9 px-3 flex items-center gap-1.5 bg-surface/80 backdrop-blur-md border border-border/50 hover:bg-surface-hover rounded-full text-foreground text-[13px] font-medium transition-all shadow-lg"
                 >
@@ -3480,6 +3482,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                   <div className="relative hidden md:block" ref={modeDropdownRef}>
                     <button 
                       type="button" 
+                      aria-label={`Select chat mode, currently ${modeLabels[mode]}`}
                       onClick={() => setShowModeDropdown(!showModeDropdown)}
                       className="h-9 md:h-10 px-2 md:px-3 flex items-center gap-1 md:gap-1.5 rounded-full text-foreground text-[12px] md:text-[13px] font-medium hover:bg-surface-hover transition-colors"
                     >
@@ -3524,6 +3527,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   {isLoading ? (
                                     <motion.button 
                                       key="stop"
+                                      aria-label="Stop responding"
                                       initial={{ opacity: 0, scale: 0.8 }}
                                       animate={{ opacity: 1, scale: 1 }}
                                       exit={{ opacity: 0, scale: 0.8 }}
@@ -3538,6 +3542,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                   ) : (
                                     <motion.button 
                                       key="send"
+                                      aria-label="Send message"
                                       initial={{ opacity: 0, scale: 0.8 }}
                                       animate={{ opacity: 1, scale: 1 }}
                                       exit={{ opacity: 0, scale: 0.8 }}
