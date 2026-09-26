@@ -11,9 +11,18 @@ export async function POST(request: Request) {
     }
 
     // Generate the Firebase reset password link
-    const resetLink = await auth.generatePasswordResetLink(email, {
-      url: 'https://chronoaiassistant.vercel.app/reset-password',
-    });
+    let resetLink;
+    try {
+      resetLink = await auth.generatePasswordResetLink(email, {
+        url: 'https://chronoaiassistant.vercel.app/reset-password',
+      });
+    } catch (error: any) {
+      if (error.code === 'auth/user-not-found') {
+        // Return a generic success response to prevent user enumeration
+        return NextResponse.json({ success: true, message: 'If an account with that email exists, a password reset link has been sent.' }, { status: 200 });
+      }
+      throw error; // Re-throw other errors
+    }
 
     // Setup nodemailer transporter
     const transporter = nodemailer.createTransport({
@@ -108,13 +117,13 @@ export async function POST(request: Request) {
       html: htmlTemplate,
     });
 
-    return NextResponse.json({ success: true, message: 'Password reset email sent successfully.' }, { status: 200 });
+    return NextResponse.json({ success: true, message: 'If an account with that email exists, a password reset link has been sent.' }, { status: 200 });
   } catch (error: any) {
     console.error('Error sending reset password email:', error);
 
-    // Provide general 500 error, or handle specific firebase admin / nodemailer errors if needed
+    // Provide general 500 error without leaking internal details
     return NextResponse.json(
-      { error: error?.message || 'An error occurred while sending the password reset email.' },
+      { error: 'An error occurred while processing your request.' },
       { status: 500 }
     );
   }
