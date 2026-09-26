@@ -3381,6 +3381,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               onClick={() => scrollToBottom(true)}
               className="absolute -top-12 left-1/2 -translate-x-1/2 p-2.5 bg-surface/80 backdrop-blur-md border border-border/50 rounded-full text-foreground/60 hover:text-foreground shadow-xl transition-all hover:scale-110 active:scale-95 z-30 flex items-center justify-center"
               title="Scroll to bottom"
+              aria-label="Scroll to bottom"
             >
               <ChevronDown size={20} />
             </motion.button>
@@ -3426,6 +3427,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                         onClick={() => setSelectedImage(null)} 
                         className="bg-foreground text-background rounded-full p-1 shadow-lg hover:scale-110 transition-transform"
                         title="Remove image"
+                        aria-label="Remove image"
                       >
                         <X size={14} />
                       </button>
@@ -3435,6 +3437,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                       onClick={() => fileInputRef.current?.click()} 
                       className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl text-white"
                       title="Replace image"
+                      aria-label="Replace image"
                     >
                       <RefreshCw size={18} />
                     </button>
@@ -3457,6 +3460,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 onClick={() => fileInputRef.current?.click()}
                 className="w-10 h-10 flex items-center justify-center text-muted hover:text-foreground hover:bg-surface-hover rounded-full transition-colors shrink-0"
                 title="Attach image"
+                aria-label="Attach image"
               >
                 <Paperclip size={20} />
               </button>
@@ -3532,6 +3536,7 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                       onClick={handleStop}
                                       className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-foreground text-background rounded-full hover:opacity-90 transition-colors shrink-0"
                                       title="Stop responding"
+                                      aria-label="Stop responding"
                                     >
                                       <Square size={16} className="md:w-4 md:h-4 fill-current" />
                                     </motion.button>
@@ -3549,6 +3554,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                                           ? 'bg-muted/20 text-muted cursor-not-allowed' 
                                           : 'bg-foreground text-background hover:opacity-90'
                                       }`}
+                                      title="Send message"
+                                      aria-label="Send message"
                                     >
                                       <ArrowUp size={18} className="md:w-5 md:h-5" strokeWidth={2.5} />
                                     </motion.button>
@@ -3577,6 +3584,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
               <button 
                 onClick={() => setShowSourcesPanel(false)}
                 className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
+                title="Close sources panel"
+                aria-label="Close sources panel"
               >
                 <X size={18} />
               </button>
@@ -3609,6 +3618,8 @@ Output strictly ONE WORD: "PRO", "SEARCH", or "FAST". No other text.`;
                 <button 
                   onClick={() => setShowSourcesPanel(false)}
                   className="p-1.5 rounded-md hover:bg-surface text-foreground/60 hover:text-foreground transition-colors"
+                  title="Close sources panel"
+                  aria-label="Close sources panel"
                 >
                   <X size={18} />
                 </button>
