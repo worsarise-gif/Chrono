@@ -1,0 +1,4 @@
+## 2024-05-24 - Prevent User Enumeration and Error Leakage in Auth Routes
+**Vulnerability:** Authentication endpoints (`reset-password`, `send-otp`, `verify-otp`) were leaking internal errors by returning `error?.message` directly to the client in 500 responses. Additionally, password reset could potentially leak user existence by throwing errors instead of returning a generic success message.
+**Learning:** Detailed error messages in HTTP 500 responses can expose internal system state or library-specific details to an attacker. Authentication APIs must return consistent, generic responses regardless of user existence to prevent user enumeration.
+**Prevention:** Always return generic error messages (e.g., 'An internal error occurred.') in catch blocks of API routes. Ensure endpoints like password reset return identical success responses whether the email exists in the database or not.

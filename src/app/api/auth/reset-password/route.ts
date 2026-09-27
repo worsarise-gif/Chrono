@@ -11,9 +11,18 @@ export async function POST(request: Request) {
     }
 
     // Generate the Firebase reset password link
-    const resetLink = await auth.generatePasswordResetLink(email, {
-      url: 'https://chronoaiassistant.vercel.app/reset-password',
-    });
+    let resetLink;
+    try {
+      resetLink = await auth.generatePasswordResetLink(email, {
+        url: 'https://chronoaiassistant.vercel.app/reset-password',
+      });
+    } catch (err: any) {
+      if (err.code === 'auth/user-not-found') {
+        // Return generic success to prevent user enumeration
+        return NextResponse.json({ success: true, message: 'Password reset email sent successfully.' }, { status: 200 });
+      }
+      throw err;
+    }
 
     // Setup nodemailer transporter
     const transporter = nodemailer.createTransport({
@@ -114,7 +123,7 @@ export async function POST(request: Request) {
 
     // Provide general 500 error, or handle specific firebase admin / nodemailer errors if needed
     return NextResponse.json(
-      { error: error?.message || 'An error occurred while sending the password reset email.' },
+      { error: 'An internal error occurred while processing the request.' },
       { status: 500 }
     );
   }
