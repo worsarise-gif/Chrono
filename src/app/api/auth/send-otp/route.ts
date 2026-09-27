@@ -127,7 +127,7 @@ export async function POST(request: Request) {
     console.error('Error sending OTP email:', error);
 
     return NextResponse.json(
-      { error: error?.message || 'An error occurred while sending the OTP email.' },
+      { error: 'An internal error occurred while processing the request.' },
       { status: 500 }
     );
   }
